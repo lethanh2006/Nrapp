@@ -17,18 +17,11 @@ const TOKEN_KEY = "token";
 
 export default function VerifyScreen() {
   const { email } = useLocalSearchParams<{ email: string }>();
-  const {
-    user,
-    isAuth,
-    setUser,
-    setIsAuth,
-    loading: userLoading,
-    fetchChats,
-    fetchUsers,
-  } = useAppData();
+  const { isAuth, setUser, setIsAuth, loading: userLoading } = useAppData();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const inputRefs = useRef<(TextInput | null)[]>([]);
+  const hasRedirectedRef = useRef(false);
 
   const normalizeUser = (raw: any): User => ({
     _id: String(raw?._id ?? ""),
@@ -39,7 +32,10 @@ export default function VerifyScreen() {
   });
 
   useEffect(() => {
-    if (!userLoading && isAuth) router.replace("/(main)/home");
+    if (!userLoading && isAuth && !hasRedirectedRef.current) {
+      hasRedirectedRef.current = true;
+      router.replace("/(main)/home");
+    }
   }, [isAuth, userLoading]);
 
   useEffect(() => {
@@ -76,9 +72,6 @@ export default function VerifyScreen() {
       await AsyncStorage.setItem(TOKEN_KEY, data.token);
       setUser(normalizedUser);
       setIsAuth(true);
-      await fetchChats();
-      await fetchUsers();
-      router.replace("/(main)/home");
     } catch {
       Alert.alert("Lỗi", "OTP sai hoặc hết hạn");
     } finally {
