@@ -22,7 +22,6 @@ export default function ChatScreen() {
   const {
     loading,
     isAuth,
-    logoutUser,
     chats,
     user: loggedInUser,
     users,
@@ -46,13 +45,6 @@ export default function ChatScreen() {
   useEffect(() => {
     if (!loading && !isAuth) router.replace("/(auth)/login");
   }, [isAuth, loading]);
-
-  const handleLogout = () => {
-    Alert.alert("Đăng xuất", "Bạn có chắc?", [
-      { text: "Hủy", style: "cancel" },
-      { text: "Đăng xuất", style: "destructive", onPress: logoutUser },
-    ]);
-  };
 
   async function fetchChat() {
     if (!selectedUser) return;
@@ -100,26 +92,12 @@ export default function ChatScreen() {
       formData.append("chatId", selectedUser!);
       if (message.trim()) formData.append("text", message.trim());
 
-      if (imageUri) {
-        console.log(imageUri);
-        formData.append("image", {
-          uri: imageUri,
-          type: "image/jpeg",
-          name: "image.jpg",
-        } as any);
-      }
-
-      console.log(`${BASE_URL}/chat/message`);
-      console.log(token?.substring(0, 20) + "...");
-
       const { data } = await axios.post(`${BASE_URL}/chat/message`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
           "Content-Type": "multipart/form-data",
         },
       });
-
-      console.log("Message sent successfully:", data);
 
       setMessages((prev) => {
         const current = prev ? [...prev] : [];
@@ -128,11 +106,7 @@ export default function ChatScreen() {
       });
       setMessage("");
     } catch (err: any) {
-      console.log("MESSAGE:", err?.message);
-      console.log("RESPONSE STATUS:", err?.response?.status);
-      console.log("RESPONSE DATA:", err?.response?.data);
-      console.log("REQUEST URL:", err?.config?.url);
-      console.log("REQUEST HEADERS:", err?.config?.headers);
+      console.error(err);
 
       Alert.alert(
         "Lỗi",
@@ -218,7 +192,6 @@ export default function ChatScreen() {
         chats={chats}
         selectedUser={selectedUser}
         setSelectedUser={setSelectedUser}
-        handleLogout={handleLogout}
         createChat={createChat}
         onlineUsers={onlineUsers}
       />

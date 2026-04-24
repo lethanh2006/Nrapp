@@ -10,6 +10,7 @@ export interface User {
   name: string;
   username?: string;
   email: string;
+  role?: "admin" | "user";
 }
 
 export interface Chat {
@@ -52,6 +53,7 @@ const normalizeUser = (raw: any): User => ({
   name: String(raw?.name ?? raw?.username ?? raw?.email ?? "Unknown"),
   username: raw?.username ? String(raw.username) : undefined,
   email: String(raw?.email ?? ""),
+  role: raw?.role === "admin" ? "admin" : "user",
 });
 
 const normalizeChatItem = (raw: any): Chats => {
@@ -111,9 +113,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   }
 
   async function logoutUser() {
-    await AsyncStorage.removeItem(TOKEN_KEY);
-    setUser(null);
-    setIsAuth(false);
+    try {
+      await AsyncStorage.removeItem(TOKEN_KEY);
+    } catch {
+      // keep UI consistent even if storage operation fails
+    } finally {
+      setUser(null);
+      setIsAuth(false);
+      setChats(null);
+      setUsers(null);
+      setLoading(false);
+    }
   }
 
   async function fetchChats() {

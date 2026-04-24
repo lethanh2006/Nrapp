@@ -13,17 +13,17 @@ export default function HomeScreen() {
           opacity: pressed ? 0.7 : 1,
         })}
       >
-        <Text className="text-white text-lg font-semibold">💬 Chat</Text>
+        <Text className="text-white text-lg font-semibold">Chat</Text>
       </Pressable>
 
       <Pressable
-        // onPress={() => router.push("/(main)/feature1")}
+        onPress={() => router.push("/(main)/todo")}
         className="bg-green-500 p-5 rounded-2xl mb-4 items-center"
         style={({ pressed }) => ({
           opacity: pressed ? 0.7 : 1,
         })}
       >
-        <Text className="text-white text-lg font-semibold">📅 Tiện ích 1</Text>
+        <Text className="text-white text-lg font-semibold">Todo</Text>
       </Pressable>
 
       <Pressable
@@ -33,7 +33,7 @@ export default function HomeScreen() {
           opacity: pressed ? 0.7 : 1,
         })}
       >
-        <Text className="text-white text-lg font-semibold">⚙️ Tiện ích 2</Text>
+        <Text className="text-white text-lg font-semibold">Tiện ích 2</Text>
       </Pressable>
     </View>
   );

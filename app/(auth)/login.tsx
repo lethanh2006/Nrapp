@@ -22,7 +22,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!userLoading && isAuth) router.replace("/(main)/chat");
+    if (!userLoading && isAuth) router.replace("/(main)/home");
   }, [isAuth, userLoading]);
 
   const handleSubmit = async () => {

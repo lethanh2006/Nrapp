@@ -1,5 +1,5 @@
 import { BASE_URL } from "@/constants/api";
-import { useAppData } from "@/context/AppContext";
+import { User, useAppData } from "@/context/AppContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import axios from "axios";
 import { router, useLocalSearchParams } from "expo-router";
@@ -18,6 +18,7 @@ const TOKEN_KEY = "token";
 export default function VerifyScreen() {
   const { email } = useLocalSearchParams<{ email: string }>();
   const {
+    user,
     isAuth,
     setUser,
     setIsAuth,
@@ -28,6 +29,14 @@ export default function VerifyScreen() {
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const inputRefs = useRef<(TextInput | null)[]>([]);
+
+  const normalizeUser = (raw: any): User => ({
+    _id: String(raw?._id ?? ""),
+    name: String(raw?.name ?? raw?.username ?? raw?.email ?? "Unknown"),
+    username: raw?.username ? String(raw.username) : undefined,
+    email: String(raw?.email ?? ""),
+    role: raw?.role === "admin" ? "admin" : "user",
+  });
 
   useEffect(() => {
     if (!userLoading && isAuth) router.replace("/(main)/home");
@@ -63,12 +72,13 @@ export default function VerifyScreen() {
         email: email || "",
         otp: code,
       });
+      const normalizedUser = normalizeUser(data.user);
       await AsyncStorage.setItem(TOKEN_KEY, data.token);
-      setUser(data.user);
+      setUser(normalizedUser);
       setIsAuth(true);
       await fetchChats();
       await fetchUsers();
-      router.replace("/(main)/chat");
+      router.replace("/(main)/home");
     } catch {
       Alert.alert("Lỗi", "OTP sai hoặc hết hạn");
     } finally {

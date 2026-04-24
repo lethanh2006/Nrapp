@@ -2,18 +2,22 @@ import { Platform } from "react-native";
 
 const getBaseUrl = () => {
   if (__DEV__) {
-    // Web
     if (Platform.OS === "web") {
       return "http://localhost";
     }
 
-    // Android Emulator (Android Studio)
     if (Platform.OS === "android") {
-      return "http://10.0.2.2";
+      const isEmulator = /google_sdk|emulator|android_x86/i.test(
+        Platform.constants?.Model || ""
+      );
+      
+      if (isEmulator) {
+        return "http://10.0.2.2";
+      }
+      return "http://192.168.30.178";  // ← IP WiFi của bạn
     }
 
-    // iOS Simulator hoặc máy thật
-    return "http://192.168.0.102";
+    return "http://192.168.30.178";    // ← iOS máy thật
   }
 
   return "https://your-backend.com";

@@ -1,6 +1,5 @@
-import { User } from '@/context/AppContext';
-import { Chats } from '@/context/AppContext';
-import React, { useState } from 'react';
+import { Chats, User } from "@/context/AppContext";
+import React, { useState } from "react";
 import {
   Modal,
   Pressable,
@@ -9,8 +8,8 @@ import {
   Text,
   TextInput,
   View,
-} from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+} from "react-native";
+import { Ionicons } from "@expo/vector-icons";
 
 interface ChatSideBarProps {
   sidebarOpen: boolean;
@@ -22,7 +21,6 @@ interface ChatSideBarProps {
   chats: Chats[] | null;
   selectedUser: string | null;
   setSelectedUser: (id: string | null) => void;
-  handleLogout: () => void;
   createChat: (user: User) => void;
   onlineUsers?: string[];
 }
@@ -37,11 +35,10 @@ export default function ChatSideBar({
   chats,
   selectedUser,
   setSelectedUser,
-  handleLogout,
   createChat,
   onlineUsers = [],
 }: ChatSideBarProps) {
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
 
   const normalizedQuery = searchQuery.trim().toLowerCase();
   const filteredUsers = users?.filter((u) => {
@@ -52,12 +49,7 @@ export default function ChatSideBar({
 
   const getDisplayName = (raw: any) => {
     const u = raw?.user ?? raw;
-    return (
-      u?.name ||
-      u?.username ||
-      u?.email ||
-      "Unknown user"
-    );
+    return u?.name || u?.username || u?.email || "Unknown user";
   };
 
   const content = (
@@ -68,14 +60,14 @@ export default function ChatSideBar({
             <Ionicons name="chatbubbles" size={24} color="#fff" />
           </View>
           <Text style={styles.headerTitle}>
-            {showAllUsers ? 'Chat mới' : 'Tin nhắn'}
+            {showAllUsers ? "Chat mới" : "Tin nhắn"}
           </Text>
           <Pressable
             style={[styles.toggleBtn, showAllUsers && styles.toggleBtnActive]}
             onPress={() => setShowAllUsers((p) => !p)}
           >
             <Ionicons
-              name={showAllUsers ? 'close' : 'add'}
+              name={showAllUsers ? "close" : "add"}
               size={22}
               color="#fff"
             />
@@ -96,7 +88,10 @@ export default function ChatSideBar({
                 onChangeText={setSearchQuery}
               />
             </View>
-            <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
+            <ScrollView
+              style={styles.list}
+              showsVerticalScrollIndicator={false}
+            >
               {filteredUsers?.map((u) => (
                 <Pressable
                   key={u._id || u.email}
@@ -125,12 +120,16 @@ export default function ChatSideBar({
               const latest = chat.chat.latestMessage;
               const isMe = latest?.sender === loggedInUser?._id;
               const otherUser = chat.user || (chat as any).users?.user;
-              const otherOnline = otherUser?._id && onlineUsers.includes(otherUser._id);
+              const otherOnline =
+                otherUser?._id && onlineUsers.includes(otherUser._id);
 
               return (
                 <Pressable
                   key={chat.chat._id}
-                  style={[styles.chatItem, isSelected && styles.chatItemSelected]}
+                  style={[
+                    styles.chatItem,
+                    isSelected && styles.chatItemSelected,
+                  ]}
                   onPress={() => {
                     setSelectedUser(chat.chat._id);
                     setSidebarOpen(false);
@@ -144,14 +143,18 @@ export default function ChatSideBar({
                   </View>
                   <View style={styles.chatText}>
                     <Text
-                      style={[styles.chatName, isSelected && styles.chatNameSelected]}
+                      style={[
+                        styles.chatName,
+                        isSelected && styles.chatNameSelected,
+                      ]}
                       numberOfLines={1}
                     >
                       {getDisplayName(otherUser)}
                     </Text>
                     {latest && (
                       <Text style={styles.chatPreview} numberOfLines={1}>
-                        {isMe ? 'Bạn: ' : ''}{latest.text}
+                        {isMe ? "Bạn: " : ""}
+                        {latest.text}
                       </Text>
                     )}
                   </View>
@@ -159,7 +162,7 @@ export default function ChatSideBar({
                     <View style={styles.badge}>
                       <Text style={styles.badgeText}>
                         {chat.chat.unseenCount! > 99
-                          ? '99+'
+                          ? "99+"
                           : chat.chat.unseenCount}
                       </Text>
                     </View>
@@ -177,13 +180,6 @@ export default function ChatSideBar({
             <Text style={styles.emptySub}>Tạo chat mới để bắt đầu</Text>
           </View>
         )}
-      </View>
-
-      <View style={styles.footer}>
-        <Pressable style={styles.logoutBtn} onPress={handleLogout}>
-          <Ionicons name="log-out-outline" size={20} color="#ef4444" />
-          <Text style={styles.logoutText}>Đăng xuất</Text>
-        </Pressable>
       </View>
     </View>
   );
@@ -216,74 +212,74 @@ export default function ChatSideBar({
 const styles = StyleSheet.create({
   modalWrapper: {
     flex: 1,
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   overlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.5)',
+    backgroundColor: "rgba(0,0,0,0.5)",
   },
   modalContent: {
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    height: '85%',
+    height: "85%",
   },
   modalHandle: {
     width: 40,
     height: 4,
-    backgroundColor: '#e5e5ea',
+    backgroundColor: "#e5e5ea",
     borderRadius: 2,
-    alignSelf: 'center',
+    alignSelf: "center",
     marginTop: 12,
     marginBottom: 8,
   },
   sidebar: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
   },
   header: {
     padding: 16,
     paddingTop: 8,
     borderBottomWidth: 1,
-    borderBottomColor: '#e5e5ea',
+    borderBottomColor: "#e5e5ea",
   },
   headerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
   },
   logo: {
     padding: 8,
-    backgroundColor: '#0084FF',
+    backgroundColor: "#0084FF",
     borderRadius: 10,
   },
   headerTitle: {
     flex: 1,
     fontSize: 18,
-    fontWeight: '700',
-    color: '#000000',
+    fontWeight: "700",
+    color: "#000000",
   },
   toggleBtn: {
     padding: 10,
-    backgroundColor: '#22c55e',
+    backgroundColor: "#22c55e",
     borderRadius: 10,
   },
   toggleBtnActive: {
-    backgroundColor: '#ef4444',
+    backgroundColor: "#ef4444",
   },
   content: {
     flex: 1,
     padding: 16,
   },
   searchWrap: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 10,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: "#f5f5f5",
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
@@ -292,63 +288,63 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: '#000000',
+    color: "#000000",
     padding: 0,
   },
   list: {
     flex: 1,
   },
   userItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e5e5ea',
+    borderColor: "#e5e5ea",
     marginBottom: 8,
   },
   chatItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: 12,
     padding: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#e5e5ea',
+    borderColor: "#e5e5ea",
     marginBottom: 8,
   },
   chatItemSelected: {
-    backgroundColor: '#e8f0ff',
-    borderColor: '#0084FF',
+    backgroundColor: "#e8f0ff",
+    borderColor: "#0084FF",
   },
   avatarWrap: {
-    position: 'relative',
+    position: "relative",
   },
   avatar: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#f0f0f0',
-    alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: "#f0f0f0",
+    alignItems: "center",
+    justifyContent: "center",
   },
   onlineDot: {
-    position: 'absolute',
+    position: "absolute",
     bottom: 2,
     right: 2,
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#22c55e',
+    backgroundColor: "#22c55e",
     borderWidth: 2,
-    borderColor: '#ffffff',
+    borderColor: "#ffffff",
   },
   userName: {
     flex: 1,
     fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
+    fontWeight: "600",
+    color: "#000000",
   },
   chatText: {
     flex: 1,
@@ -356,69 +352,51 @@ const styles = StyleSheet.create({
   },
   chatName: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#000000',
+    fontWeight: "600",
+    color: "#000000",
   },
   chatNameSelected: {
-    color: '#0084FF',
+    color: "#0084FF",
   },
   chatPreview: {
     fontSize: 13,
-    color: '#999999',
+    color: "#999999",
     marginTop: 2,
   },
   badge: {
-    backgroundColor: '#ef4444',
+    backgroundColor: "#ef4444",
     borderRadius: 12,
     minWidth: 24,
     height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingHorizontal: 6,
   },
   badgeText: {
-    color: '#fff',
+    color: "#fff",
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: "700",
   },
   empty: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
     paddingVertical: 40,
   },
   emptyIcon: {
     padding: 16,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: "#f0f0f0",
     borderRadius: 40,
     marginBottom: 16,
   },
   emptyText: {
     fontSize: 16,
-    fontWeight: '600',
-    color: '#999999',
+    fontWeight: "600",
+    color: "#999999",
   },
   emptySub: {
     fontSize: 14,
-    color: '#aaaaaa',
+    color: "#aaaaaa",
     marginTop: 8,
-  },
-  footer: {
-    padding: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#e5e5ea',
-  },
-  logoutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    padding: 14,
-    borderRadius: 10,
-    backgroundColor: 'rgba(239,68,68,0.1)',
-  },
-  logoutText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#ef4444',
   },
 });
