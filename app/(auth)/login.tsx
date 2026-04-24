@@ -1,38 +1,54 @@
-import { useAppData } from '@/context/AppContext';
-import { user_service } from '@/constants/api';
-import axios from 'axios';
-import { router } from 'expo-router';
-import React, { useEffect, useState } from 'react';
+import { useAppData } from "@/context/AppContext";
+import axios from "axios";
+import { router } from "expo-router";
+import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
   KeyboardAvoidingView,
   Platform,
   Pressable,
-  StyleSheet,
   Text,
   TextInput,
   View,
-} from 'react-native';
+} from "react-native";
 
 export default function LoginScreen() {
   const { isAuth, loading: userLoading } = useAppData();
-  const [email, setEmail] = useState('');
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!userLoading && isAuth) router.replace('/(main)/chat');
+    if (!userLoading && isAuth) router.replace("/(main)/chat");
   }, [isAuth, userLoading]);
 
   const handleSubmit = async () => {
-    if (!email.trim()) return;
+    if (!username.trim() || !email.trim() || !password.trim()) {
+      Alert.alert("Thông báo", "Vui lòng nhập đầy đủ thông tin");
+      return;
+    }
+
     setLoading(true);
     try {
-      const { data } = await axios.post(`${user_service}/api/v1/login`, { email: email.trim() });
-      Alert.alert('Thành công', data.message);
-      router.push({ pathname: '/(auth)/verify', params: { email: email.trim() } });
+      const { data } = await axios.post(
+        `http://localhost:3000/api/user/login`,
+        {
+          username: username.trim(),
+          email: email.trim(),
+          password: password.trim(),
+        },
+      );
+
+      Alert.alert("Thành công", data.message || "Đăng nhập thành công");
+
+      router.push({
+        pathname: "/(auth)/verify",
+        params: { email: email.trim() },
+      });
     } catch (err: any) {
-      Alert.alert('Lỗi', err.response?.data?.message || 'Có lỗi xảy ra');
+      Alert.alert("Lỗi", err.response?.data?.message || "Có lỗi xảy ra");
     } finally {
       setLoading(false);
     }
@@ -40,7 +56,7 @@ export default function LoginScreen() {
 
   if (userLoading) {
     return (
-      <View style={styles.center}>
+      <View className="flex-1 items-center justify-center bg-white">
         <ActivityIndicator size="large" color="#3b82f6" />
       </View>
     );
@@ -48,96 +64,63 @@ export default function LoginScreen() {
 
   return (
     <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      className="flex-1 justify-center bg-white p-4"
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
     >
-      <View style={styles.card}>
-        <Text style={styles.title}>Welcome to ChatApp</Text>
-        <Text style={styles.subtitle}>Nhập email để nhận mã xác thực</Text>
+      <View className="rounded-2xl border border-[#e5e5ea] bg-white p-6">
+        <Text className="mb-2 text-center text-[22px] font-semibold text-black">
+          Công ty TNHH HDG
+        </Text>
+        <Text className="mb-6 text-center text-sm text-[#999999]">
+          Đăng nhập hệ thống
+        </Text>
 
         <TextInput
-          style={styles.input}
-          placeholder="you@example.com"
+          className="mb-3 rounded-lg border border-[#e5e5ea] bg-[#f5f5f5] p-[14px] text-base text-black"
+          placeholder="Tên đăng nhập"
+          placeholderTextColor="#aaaaaa"
+          value={username}
+          onChangeText={setUsername}
+          autoCapitalize="none"
+          editable={!loading}
+        />
+
+        <TextInput
+          className="mb-3 rounded-lg border border-[#e5e5ea] bg-[#f5f5f5] p-[14px] text-base text-black"
+          placeholder="nhập email"
           placeholderTextColor="#aaaaaa"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
-          autoCorrect={false}
+          editable={!loading}
+        />
+
+        <TextInput
+          className="mb-5 rounded-lg border border-[#e5e5ea] bg-[#f5f5f5] p-[14px] text-base text-black"
+          placeholder="Mật khẩu"
+          placeholderTextColor="#aaaaaa"
+          value={password}
+          onChangeText={setPassword}
+          secureTextEntry
           editable={!loading}
         />
 
         <Pressable
-          style={[styles.button, loading && styles.buttonDisabled]}
+          className="items-center rounded-lg bg-[#0084FF] p-[14px]"
+          style={loading ? { opacity: 0.6 } : undefined}
           onPress={handleSubmit}
           disabled={loading}
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.buttonText}>Gửi mã xác thực</Text>
+            <Text className="text-base font-semibold text-white">
+              Đăng nhập
+            </Text>
           )}
         </Pressable>
       </View>
     </KeyboardAvoidingView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-    padding: 16,
-  },
-  center: {
-    flex: 1,
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  card: {
-    backgroundColor: '#ffffff',
-    borderRadius: 16,
-    padding: 24,
-    borderWidth: 1,
-    borderColor: '#e5e5ea',
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '600',
-    color: '#000000',
-    textAlign: 'center',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#999999',
-    textAlign: 'center',
-    marginBottom: 24,
-  },
-  input: {
-    backgroundColor: '#f5f5f5',
-    borderWidth: 1,
-    borderColor: '#e5e5ea',
-    borderRadius: 8,
-    padding: 14,
-    fontSize: 16,
-    color: '#000000',
-    marginBottom: 20,
-  },
-  button: {
-    backgroundColor: '#0084FF',
-    borderRadius: 8,
-    padding: 14,
-    alignItems: 'center',
-  },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-});
