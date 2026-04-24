@@ -43,11 +43,22 @@ export default function ChatSideBar({
 }: ChatSideBarProps) {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredUsers = users?.filter(
-    (u) =>
-      u._id !== loggedInUser?._id &&
-      u.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const normalizedQuery = searchQuery.trim().toLowerCase();
+  const filteredUsers = users?.filter((u) => {
+    if (!u || u._id === loggedInUser?._id) return false;
+    const normalizedName = String(u.name ?? "").toLowerCase();
+    return normalizedName.includes(normalizedQuery);
+  });
+
+  const getDisplayName = (raw: any) => {
+    const u = raw?.user ?? raw;
+    return (
+      u?.name ||
+      u?.username ||
+      u?.email ||
+      "Unknown user"
+    );
+  };
 
   const content = (
     <View style={styles.sidebar}>
@@ -88,7 +99,7 @@ export default function ChatSideBar({
             <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
               {filteredUsers?.map((u) => (
                 <Pressable
-                  key={u._id}
+                  key={u._id || u.email}
                   style={styles.userItem}
                   onPress={() => createChat(u)}
                 >
@@ -101,7 +112,7 @@ export default function ChatSideBar({
                     )}
                   </View>
                   <Text style={styles.userName} numberOfLines={1}>
-                    {u.name}
+                    {u.name || u.email || "Unknown user"}
                   </Text>
                 </Pressable>
               ))}
@@ -136,7 +147,7 @@ export default function ChatSideBar({
                       style={[styles.chatName, isSelected && styles.chatNameSelected]}
                       numberOfLines={1}
                     >
-                      {otherUser?.name || chat.user?.name}
+                      {getDisplayName(otherUser)}
                     </Text>
                     {latest && (
                       <Text style={styles.chatPreview} numberOfLines={1}>

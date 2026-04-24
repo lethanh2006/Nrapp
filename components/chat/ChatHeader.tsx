@@ -18,6 +18,12 @@ export default function ChatHeader({
   onlineUsers = [],
 }: ChatHeaderProps) {
   const isOnline = otherUserId && onlineUsers.includes(otherUserId);
+  const normalizedUser = user?.user ?? user;
+  const displayName =
+    normalizedUser?.name ||
+    normalizedUser?.username ||
+    normalizedUser?.email ||
+    "Unknown user";
 
   return (
     <View style={styles.header}>
@@ -36,7 +42,7 @@ export default function ChatHeader({
             </View>
             <View style={styles.textWrap}>
               <Text style={styles.name} numberOfLines={1}>
-                {user.user?.name || user.name}
+                {displayName}
               </Text>
               {isTyping && (
                 <Text style={styles.typing}>đang nhập...</Text>

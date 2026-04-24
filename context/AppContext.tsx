@@ -1,16 +1,14 @@
-/**
- * AppContext - Quản lý auth, user, chats (giống frontend web)
- */
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import axios from 'axios';
-import React, { createContext, useContext, useEffect, useState } from 'react';
-import { user_service, chat_service } from '@/constants/api';
+import { BASE_URL } from "@/constants/api";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import axios from "axios";
+import React, { createContext, useContext, useEffect, useState } from "react";
 
-const TOKEN_KEY = 'token';
+const TOKEN_KEY = "token";
 
 export interface User {
   _id: string;
   name: string;
+  username?: string;
   email: string;
 }
 
@@ -49,7 +47,39 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const normalizeUser = (raw: any): User => ({
+  _id: String(raw?._id ?? ""),
+  name: String(raw?.name ?? raw?.username ?? raw?.email ?? "Unknown"),
+  username: raw?.username ? String(raw.username) : undefined,
+  email: String(raw?.email ?? ""),
+});
+
+const normalizeChatItem = (raw: any): Chats => {
+  const rawUser = raw?.user?.user ?? raw?.user ?? raw?.users?.user ?? {};
+  const chatData = raw?.chat ?? {};
+  return {
+    _id: String(raw?._id ?? chatData?._id ?? ""),
+    user: normalizeUser(rawUser),
+    chat: {
+      _id: String(chatData?._id ?? ""),
+      users: Array.isArray(chatData?.users)
+        ? chatData.users.map((id: any) => String(id))
+        : [],
+      latestMessage: {
+        text: String(chatData?.latestMessage?.text ?? ""),
+        sender: String(chatData?.latestMessage?.sender ?? ""),
+      },
+      createdAt: String(chatData?.createdAt ?? ""),
+      updatedAt: String(chatData?.updatedAt ?? ""),
+      unseenCount:
+        typeof chatData?.unseenCount === "number" ? chatData.unseenCount : 0,
+    },
+  };
+};
+
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
   const [isAuth, setIsAuth] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -67,11 +97,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setLoading(false);
         return;
       }
-      const { data } = await axios.get(`${user_service}/api/v1/me`, {
+      const { data } = await axios.get(`${BASE_URL}/user/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const userData = data.user || data;
-      setUser(userData);
+      setUser(normalizeUser(userData));
       setIsAuth(true);
     } catch {
       // ignore
@@ -90,10 +120,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const token = await getToken();
     if (!token) return;
     try {
-      const { data } = await axios.get(`${chat_service}/api/v1/chat/all`, {
+      const { data } = await axios.get(`${BASE_URL}/chat/chat/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setChats(data.chats);
+      const rawChats = Array.isArray(data?.chats) ? data.chats : [];
+      setChats(rawChats.map(normalizeChatItem));
     } catch (e) {
       console.error(e);
     }
@@ -103,11 +134,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const token = await getToken();
     if (!token) return;
     try {
-      const { data } = await axios.get(`${user_service}/api/v1/user/all`, {
+      const { data } = await axios.get(`${BASE_URL}/user/user/all`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (Array.isArray(data)) setUsers(data);
-      else if (data?.users) setUsers(data.users);
+      if (Array.isArray(data)) setUsers(data.map(normalizeUser));
+      else if (data?.users) setUsers(data.users.map(normalizeUser));
       else setUsers([]);
     } catch (e) {
       console.error(e);
@@ -149,6 +180,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
 export const useAppData = (): AppContextType => {
   const ctx = useContext(AppContext);
-  if (!ctx) throw new Error('useAppData must be used within AppProvider');
+  if (!ctx) throw new Error("useAppData must be used within AppProvider");
   return ctx;
 };

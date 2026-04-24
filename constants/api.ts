@@ -21,7 +21,4 @@ const getBaseUrl = () => {
 
 const base = getBaseUrl();
 
-export const user_service = `${base}:3000`;
-export const chat_service = `${base}:5002`;
-
-console.log(chat_service);
+export const BASE_URL = `${base}:3000/api`;

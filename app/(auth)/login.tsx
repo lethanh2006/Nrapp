@@ -1,3 +1,4 @@
+import { BASE_URL } from "@/constants/api";
 import { useAppData } from "@/context/AppContext";
 import axios from "axios";
 import { router } from "expo-router";
@@ -32,14 +33,11 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const { data } = await axios.post(
-        `http://localhost:3000/api/user/login`,
-        {
-          username: username.trim(),
-          email: email.trim(),
-          password: password.trim(),
-        },
-      );
+      const { data } = await axios.post(`${BASE_URL}/user/login`, {
+        username: username.trim(),
+        email: email.trim(),
+        password: password.trim(),
+      });
 
       Alert.alert("Thành công", data.message || "Đăng nhập thành công");
 
@@ -120,6 +118,13 @@ export default function LoginScreen() {
             </Text>
           )}
         </Pressable>
+
+        <View className="mt-4 flex-row justify-center">
+          <Text className="text-[#999999]">Chưa có tài khoản? </Text>
+          <Pressable onPress={() => router.push("/(auth)/register")}>
+            <Text className="font-semibold text-[#0084FF]">Đăng ký ngay</Text>
+          </Pressable>
+        </View>
       </View>
     </KeyboardAvoidingView>
   );

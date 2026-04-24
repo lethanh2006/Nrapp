@@ -1,13 +1,14 @@
-/**
- * Chat Screen - Màn chat chính (giống frontend web)
- */
-import { User, useAppData } from '@/context/AppContext';
-import { useSocketData } from '@/context/SocketContext';
-import { chat_service } from '@/constants/api';
-import type { Message } from '@/types/chat';
-import axios from 'axios';
-import { router } from 'expo-router';
-import React, { useEffect, useRef, useState } from 'react';
+import ChatHeader from "@/components/chat/ChatHeader";
+import ChatMessages from "@/components/chat/ChatMessages";
+import ChatSideBar from "@/components/chat/ChatSideBar";
+import MessageInput from "@/components/chat/MessageInput";
+import { BASE_URL } from "@/constants/api";
+import { User, useAppData } from "@/context/AppContext";
+import { useSocketData } from "@/context/SocketContext";
+import type { Message } from "@/types/chat";
+import axios from "axios";
+import { router } from "expo-router";
+import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -15,11 +16,7 @@ import {
   Platform,
   StyleSheet,
   View,
-} from 'react-native';
-import ChatHeader from '@/components/chat/ChatHeader';
-import ChatMessages from '@/components/chat/ChatMessages';
-import ChatSideBar from '@/components/chat/ChatSideBar';
-import MessageInput from '@/components/chat/MessageInput';
+} from "react-native";
 
 export default function ChatScreen() {
   const {
@@ -36,7 +33,7 @@ export default function ChatScreen() {
   const { socket, onlineUsers } = useSocketData();
 
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState("");
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [chatUser, setChatUser] = useState<any>(null);
@@ -47,13 +44,13 @@ export default function ChatScreen() {
   const otherUserId = chatUser?.user?._id || chatUser?._id;
 
   useEffect(() => {
-    if (!loading && !isAuth) router.replace('/(auth)/login');
+    if (!loading && !isAuth) router.replace("/(auth)/login");
   }, [isAuth, loading]);
 
   const handleLogout = () => {
-    Alert.alert('Đăng xuất', 'Bạn có chắc?', [
-      { text: 'Hủy', style: 'cancel' },
-      { text: 'Đăng xuất', style: 'destructive', onPress: logoutUser },
+    Alert.alert("Đăng xuất", "Bạn có chắc?", [
+      { text: "Hủy", style: "cancel" },
+      { text: "Đăng xuất", style: "destructive", onPress: logoutUser },
     ]);
   };
 
@@ -61,15 +58,18 @@ export default function ChatScreen() {
     if (!selectedUser) return;
     const token = await getToken();
     try {
-      const { data } = await axios.get(`${chat_service}/api/v1/message/${selectedUser}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await axios.get(
+        `${BASE_URL}/chat/message/${selectedUser}`,
+        {
+          headers: { Authorization: `Bearer ${token}` },
+        },
+      );
       setMessages(data.messages);
       setChatUser(data.user);
       await fetchChats();
     } catch (e) {
       console.error(e);
-      Alert.alert('Lỗi', 'Không tải được tin nhắn');
+      Alert.alert("Lỗi", "Không tải được tin nhắn");
     }
   }
 
@@ -77,16 +77,16 @@ export default function ChatScreen() {
     const token = await getToken();
     try {
       const { data } = await axios.post(
-        `${chat_service}/api/v1/chat/new`,
+        `${BASE_URL}/chat/chat/new`,
         { userId: loggedInUser?._id, otherUserId: u._id },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: { Authorization: `Bearer ${token}` } },
       );
       setSelectedUser(data.chatId);
       setShowAllUser(false);
       await fetchChats();
     } catch (e) {
       console.error(e);
-      Alert.alert('Lỗi', 'Không tạo được chat');
+      Alert.alert("Lỗi", "Không tạo được chat");
     }
   }
 
@@ -97,25 +97,25 @@ export default function ChatScreen() {
     const token = await getToken();
     try {
       const formData = new FormData();
-      formData.append('chatId', selectedUser!);
-      if (message.trim()) formData.append('text', message.trim());
-      
+      formData.append("chatId", selectedUser!);
+      if (message.trim()) formData.append("text", message.trim());
+
       if (imageUri) {
         console.log(imageUri);
-        formData.append('image', {
+        formData.append("image", {
           uri: imageUri,
-          type: 'image/jpeg',
-          name: 'image.jpg',
+          type: "image/jpeg",
+          name: "image.jpg",
         } as any);
       }
 
-      console.log(`${chat_service}/api/v1/message`);
+      console.log(`${BASE_URL}/chat/message`);
       console.log(token?.substring(0, 20) + "...");
-      
-      const { data } = await axios.post(`${chat_service}/api/v1/message`, formData, {
-        headers: { 
+
+      const { data } = await axios.post(`${BASE_URL}/chat/message`, formData, {
+        headers: {
           Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data',
+          "Content-Type": "multipart/form-data",
         },
       });
 
@@ -126,29 +126,31 @@ export default function ChatScreen() {
         if (current.some((m) => m._id === data.message._id)) return prev;
         return [...current, data.message];
       });
-      setMessage('');
+      setMessage("");
     } catch (err: any) {
-        console.log("MESSAGE:", err?.message);
-        console.log("RESPONSE STATUS:", err?.response?.status);
-        console.log("RESPONSE DATA:", err?.response?.data);
-        console.log("REQUEST URL:", err?.config?.url);
-        console.log("REQUEST HEADERS:", err?.config?.headers);
+      console.log("MESSAGE:", err?.message);
+      console.log("RESPONSE STATUS:", err?.response?.status);
+      console.log("RESPONSE DATA:", err?.response?.data);
+      console.log("REQUEST URL:", err?.config?.url);
+      console.log("REQUEST HEADERS:", err?.config?.headers);
 
-        Alert.alert(
-          'Lỗi',
-          err?.response?.data?.message || err?.message || 'Gửi không thành công'
-        );
-      }
-
+      Alert.alert(
+        "Lỗi",
+        err?.response?.data?.message || err?.message || "Gửi không thành công",
+      );
+    }
   };
 
   const handleTyping = (value: string) => {
     setMessage(value);
     if (!selectedUser || !socket || !otherUserId) return;
-    socket.emit('typing', { chatId: selectedUser, targetUserId: otherUserId });
+    socket.emit("typing", { chatId: selectedUser, targetUserId: otherUserId });
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = setTimeout(() => {
-      socket.emit('typingStop', { chatId: selectedUser, targetUserId: otherUserId });
+      socket.emit("typingStop", {
+        chatId: selectedUser,
+        targetUserId: otherUserId,
+      });
       typingTimeoutRef.current = null;
     }, 800);
   };
@@ -166,18 +168,19 @@ export default function ChatScreen() {
       fetchChats();
     };
     const handleUserTyping = (data: { chatId: string; userId: string }) => {
-      if (data.chatId === selectedUser && data.userId === otherUserId) setIsTyping(true);
+      if (data.chatId === selectedUser && data.userId === otherUserId)
+        setIsTyping(true);
     };
     const handleUserTypingStop = (data: { chatId: string }) => {
       if (data.chatId === selectedUser) setIsTyping(false);
     };
-    socket.on('newMessage', handleNewMessage);
-    socket.on('userTyping', handleUserTyping);
-    socket.on('userTypingStop', handleUserTypingStop);
+    socket.on("newMessage", handleNewMessage);
+    socket.on("userTyping", handleUserTyping);
+    socket.on("userTypingStop", handleUserTypingStop);
     return () => {
-      socket.off('newMessage', handleNewMessage);
-      socket.off('userTyping', handleUserTyping);
-      socket.off('userTypingStop', handleUserTypingStop);
+      socket.off("newMessage", handleNewMessage);
+      socket.off("userTyping", handleUserTyping);
+      socket.off("userTypingStop", handleUserTypingStop);
     };
   }, [socket, selectedUser, otherUserId]);
 
@@ -202,7 +205,7 @@ export default function ChatScreen() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={0}
     >
       <ChatSideBar
@@ -247,17 +250,17 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
   },
   center: {
     flex: 1,
-    backgroundColor: '#ffffff',
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: "#ffffff",
+    justifyContent: "center",
+    alignItems: "center",
   },
   chatArea: {
     flex: 1,
     padding: 16,
-    backgroundColor: '#ffffff',
+    backgroundColor: "#ffffff",
   },
 });
