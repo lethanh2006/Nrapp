@@ -17,9 +17,12 @@ type Props = {
   onRemoveTask: (taskId: string) => void;
 };
 
-const displayName = (value?: string | RelatedUser) => {
+const displayName = (value?: string | RelatedUser, users: User[] = []) => {
   if (!value) return "Chua giao";
-  if (typeof value === "string") return value;
+  if (typeof value === "string") {
+    const matchedUser = users.find((user) => user._id === value);
+    return matchedUser ? matchedUser.username || matchedUser.name : value;
+  }
   return value.username || value.name || value.email || value._id;
 };
 
@@ -63,10 +66,10 @@ export default function TodoTaskListCard({
               </Text>
               <Text className="text-gray-600">Uu tien: {task.priority}</Text>
               <Text className="text-gray-600">
-                Nguoi giao: {displayName(task.createdBy)}
+                Nguoi giao: {displayName(task.createdBy, users)}
               </Text>
               <Text className="text-gray-600">
-                Nguoi nhan: {displayName(task.assignedTo)}
+                Nguoi nhan: {displayName(task.assignedTo, users)}
               </Text>
 
               <Text className="text-gray-600">

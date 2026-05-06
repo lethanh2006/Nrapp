@@ -42,6 +42,8 @@ export default function TodoCreateTaskCard({
   setCreateAssignee,
   onCreateTask,
 }: Props) {
+  const [showPriorityOptions, setShowPriorityOptions] = React.useState(false);
+
   const openDeadlinePicker = () => {
     const currentValue = deadline ?? new Date();
 
@@ -121,18 +123,41 @@ export default function TodoCreateTaskCard({
       </View>
 
       <Text className="text-sm text-gray-700 mb-2">Muc uu tien</Text>
-      <View className="flex-row mb-3" style={{ gap: 8 }}>
-        {PRIORITY_OPTIONS.map((p) => (
-          <Pressable
-            key={p}
-            onPress={() => setPriority(p)}
-            className={`px-3 py-2 rounded-lg border ${priority === p ? "bg-blue-600 border-blue-600" : "bg-white border-gray-300"}`}
-          >
-            <Text className={priority === p ? "text-white" : "text-black"}>
-              {p}
-            </Text>
-          </Pressable>
-        ))}
+      <View className="mb-3" style={{ gap: 8 }}>
+        <Pressable
+          onPress={() => setShowPriorityOptions((value) => !value)}
+          className="border border-gray-300 rounded-xl px-3 py-3 bg-white flex-row items-center justify-between"
+        >
+          <Text className="text-black capitalize">{priority}</Text>
+          <Text className="text-gray-400">
+            {showPriorityOptions ? "▲" : "▼"}
+          </Text>
+        </Pressable>
+
+        {showPriorityOptions ? (
+          <View className="border border-gray-200 rounded-xl bg-white overflow-hidden">
+            {PRIORITY_OPTIONS.map((p) => {
+              const isSelected = priority === p;
+
+              return (
+                <Pressable
+                  key={p}
+                  onPress={() => {
+                    setPriority(p);
+                    setShowPriorityOptions(false);
+                  }}
+                  className={`px-3 py-3 border-b border-gray-100 ${isSelected ? "bg-blue-50" : "bg-white"}`}
+                >
+                  <Text
+                    className={`capitalize ${isSelected ? "text-blue-600 font-semibold" : "text-black"}`}
+                  >
+                    {p}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        ) : null}
       </View>
 
       <Text className="text-sm text-gray-700 mb-2">

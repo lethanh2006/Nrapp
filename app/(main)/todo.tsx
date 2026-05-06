@@ -1,8 +1,8 @@
-import { BASE_URL } from "@/constants/api";
 import TodoCreateTaskCard from "@/components/todo/TodoCreateTaskCard";
 import TodoIntroCard from "@/components/todo/TodoIntroCard";
 import TodoTaskListCard from "@/components/todo/TodoTaskListCard";
 import { TaskItem, TaskPriority, TaskStatus } from "@/components/todo/types";
+import { BASE_URL } from "@/constants/api";
 import { useAppData } from "@/context/AppContext";
 import axios from "axios";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -34,6 +34,10 @@ export default function TodoScreen() {
   const [assignByTask, setAssignByTask] = useState<Record<string, string>>({});
 
   const isAdmin = user?.role === "admin";
+  const selectableUsers = useMemo(() => {
+    const currentUserId = user?._id;
+    return (users || []).filter((candidate) => candidate._id !== currentUserId);
+  }, [users, user?._id]);
 
   const api = useMemo(() => {
     return axios.create({
@@ -91,6 +95,11 @@ export default function TodoScreen() {
     const headers = await authHeader();
     if (!headers) return;
 
+    if (createAssignee && createAssignee === user?._id) {
+      Alert.alert("Thong bao", "Khong the tu giao viec cho chinh minh");
+      return;
+    }
+
     try {
       setCreating(true);
       const payload: Record<string, unknown> = {
@@ -124,6 +133,11 @@ export default function TodoScreen() {
     const assignedTo = assignByTask[taskId];
     if (!assignedTo) {
       Alert.alert("Thong bao", "Hay chon nguoi duoc giao");
+      return;
+    }
+
+    if (assignedTo === user?._id) {
+      Alert.alert("Thong bao", "Khong the tu giao viec cho chinh minh");
       return;
     }
 
@@ -207,7 +221,7 @@ export default function TodoScreen() {
           deadline={deadline}
           priority={priority}
           createAssignee={createAssignee}
-          users={users || []}
+          users={selectableUsers}
           creating={creating}
           setTitle={setTitle}
           setDescription={setDescription}
@@ -221,7 +235,7 @@ export default function TodoScreen() {
       <TodoTaskListCard
         isAdmin={isAdmin}
         tasks={tasks}
-        users={users || []}
+        users={selectableUsers}
         assignByTask={assignByTask}
         assigningTaskId={assigningTaskId}
         updatingTaskId={updatingTaskId}

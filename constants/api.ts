@@ -8,16 +8,16 @@ const getBaseUrl = () => {
 
     if (Platform.OS === "android") {
       const isEmulator = /google_sdk|emulator|android_x86/i.test(
-        Platform.constants?.Model || ""
+        Platform.constants?.Model || "",
       );
-      
+
       if (isEmulator) {
         return "http://10.0.2.2";
       }
-      return "http://192.168.30.178";  // ← IP WiFi của bạn
+      return "http://192.168.30.211"; // ← IP WiFi
     }
 
-    return "http://192.168.30.178";    // ← iOS máy thật
+    return "http://192.168.30.178"; // ← iOS máy thật
   }
 
   return "https://your-backend.com";
