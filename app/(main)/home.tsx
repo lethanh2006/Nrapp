@@ -27,13 +27,13 @@ export default function HomeScreen() {
       </Pressable>
 
       <Pressable
-        // onPress={() => router.push("/(main)/feature2")}
+        onPress={() => router.push("/(main)/workschedule")}
         className="bg-purple-500 p-5 rounded-2xl items-center"
         style={({ pressed }) => ({
           opacity: pressed ? 0.7 : 1,
         })}
       >
-        <Text className="text-white text-lg font-semibold">Tiện ích 2</Text>
+        <Text className="text-white text-lg font-semibold">Workschedule</Text>
       </Pressable>
     </View>
   );
