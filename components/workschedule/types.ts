@@ -23,4 +23,5 @@ export interface IScheduleRequest {
 export interface IWorkPolicy {
   submit_deadline_day: number;
   submit_deadline_hour: number;
+  lock_schedule_days: number;
 }

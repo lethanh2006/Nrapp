@@ -13,7 +13,6 @@ export default function WorkscheduleIndex() {
     );
   }
 
-  // Chuyển hướng dựa trên role
   if (user?.role === "admin") {
     return <Redirect href="/(main)/workschedule/admin" />;
   }
