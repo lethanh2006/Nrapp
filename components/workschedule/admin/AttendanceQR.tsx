@@ -1,5 +1,6 @@
 import React from "react";
 import { View, Text, Pressable } from "react-native";
+import QRCode from "react-native-qrcode-svg";
 import { useAdminData } from "@/context/AdminContext";
 
 export function AttendanceQR() {
@@ -42,15 +43,23 @@ export function AttendanceQR() {
               </Text>
             </View>
           </View>
-          <View className="bg-white rounded-2xl border border-cyan-100 p-4">
-            <Text className="text-[11px] uppercase tracking-[2px] text-cyan-700">
-              Token
+          <View className="bg-white rounded-2xl border border-cyan-100 p-6 items-center">
+            <View className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100 mb-4">
+              <QRCode
+                value={generatedQr.token}
+                size={180}
+                color="#0f172a"
+                backgroundColor="white"
+              />
+            </View>
+            <Text className="text-[11px] uppercase tracking-[2px] text-cyan-700 font-bold mb-1">
+              Token Check-in
             </Text>
-            <Text className="text-slate-900 font-semibold mt-2">
+            <Text className="text-slate-900 font-bold text-lg mb-1">
               {generatedQr.token}
             </Text>
-            <Text className="text-slate-500 text-sm mt-2">
-              Hết hạn: {formatDateTime(generatedQr.expires_at)}
+            <Text className="text-slate-500 text-sm">
+              Hết hạn lúc: {formatDateTime(generatedQr.expires_at)}
             </Text>
           </View>
         </View>

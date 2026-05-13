@@ -76,9 +76,9 @@ export function PolicySection() {
             <Pressable
               onPress={handleSavePolicy}
               disabled={savingPolicy}
-              className={`flex-1 min-w-[150px] rounded-2xl py-3 items-center ${savingPolicy ? "bg-slate-300" : "bg-slate-900"}`}
+              className={`flex-1 min-w-[150px] rounded-2xl py-3 items-center justify-center ${savingPolicy ? "bg-slate-300" : "bg-slate-900"}`}
             >
-              <Text className="text-white font-semibold">
+              <Text className="text-white font-semibold text-center">
                 {savingPolicy ? "Đang lưu..." : "Lưu chính sách"}
               </Text>
             </Pressable>
