@@ -155,7 +155,7 @@ function AdminDashboardContent() {
         {activeTab === "reports" && (
           <View style={{ gap: 16 }}>
             <ReportSummary />
-            <WorkHeatmap />
+            {/* <WorkHeatmap /> */}
           </View>
         )}
       </ScrollView>
