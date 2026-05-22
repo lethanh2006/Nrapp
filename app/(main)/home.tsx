@@ -236,7 +236,13 @@ export default function HomeScreen() {
             </Pressable>
 
             <Pressable
-              onPress={() => router.push("/(main)/workschedule")}
+              onPress={() =>
+                router.push(
+                  isAdmin
+                    ? "/(main)/workschedule/admin"
+                    : "/(main)/workschedule/user"
+                )
+              }
               className="w-10 h-10 rounded-full bg-white/15 items-center justify-center active:scale-95"
             >
               <Ionicons name="calendar" size={20} color="white" />
@@ -267,8 +273,15 @@ export default function HomeScreen() {
           </Pressable>
         </View>
       ) : (
-        <View
-          className="mx-4 bg-white rounded-3xl p-5 -mt-8 shadow-md border border-slate-100 flex-row justify-between min-h-[110px]"
+        <Pressable
+          onPress={() =>
+            router.push(
+              isAdmin
+                ? "/(main)/workschedule/admin"
+                : "/(main)/workschedule/user"
+            )
+          }
+          className="mx-4 bg-white rounded-3xl p-5 -mt-8 shadow-md border border-slate-100 flex-row justify-between min-h-[110px] active:opacity-90"
           style={{
             elevation: 4,
           }}
@@ -324,7 +337,7 @@ export default function HomeScreen() {
               </View>
             </>
           )}
-        </View>
+        </Pressable>
       )}
 
       <View className="p-4 space-y-5">
@@ -361,7 +374,13 @@ export default function HomeScreen() {
             </Pressable>
 
             <Pressable
-              onPress={() => router.push("/(main)/workschedule")}
+              onPress={() =>
+                router.push(
+                  isAdmin
+                    ? "/(main)/workschedule/admin"
+                    : "/(main)/workschedule/user"
+                )
+              }
               className="items-center justify-center flex-1"
             >
               <View className="w-14 h-14 bg-purple-50 rounded-2xl items-center justify-center shadow-xs active:scale-95 transition-all">
