@@ -295,6 +295,23 @@ export function useWorkscheduleAdmin() {
     [api, getHeaders, handleError],
   );
 
+  const adminUpdateEntries = useCallback(
+    async (id: string, entries: Array<{ date: string; type: string; note?: string }>, silent = false): Promise<boolean> => {
+      try {
+        setLoading(true);
+        const headers = await getHeaders();
+        await api.patch(`/schedule/requests/${id}`, { entries }, { headers });
+        return true;
+      } catch (error: any) {
+        handleError(error, "Không thể cập nhật lịch làm việc của nhân viên", silent);
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [api, getHeaders, handleError],
+  );
+
   return {
     loading,
     getPolicy,
@@ -309,5 +326,6 @@ export function useWorkscheduleAdmin() {
     generateQrToken,
     getTodayAttendance,
     getReport,
+    adminUpdateEntries,
   };
 }

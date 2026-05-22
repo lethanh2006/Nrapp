@@ -1,7 +1,9 @@
-import React from "react";
-import { View, Text, Pressable, ScrollView, TextInput } from "react-native";
+import React, { useState } from "react";
+import { View, Text, Pressable, ScrollView, TextInput, ActivityIndicator } from "react-native";
 import { useAdminData } from "@/context/AdminContext";
 import { Ionicons } from "@expo/vector-icons";
+import { useWorkscheduleAdmin } from "@/hooks/useWorkscheduleAdmin";
+import ScheduleForm from "../user/ScheduleForm";
 
 type RequestStatus = "all" | "draft" | "pending" | "approved" | "rejected";
 
@@ -54,7 +56,51 @@ export function RequestManager() {
     bulkBusy,
     selectedWeekLabel,
     setSelectedWeekOffset,
+    handleAdminUpdateEntries,
   } = useAdminData();
+
+  const { getScheduleDetail } = useWorkscheduleAdmin();
+
+  // Expanded and Editing States
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [loadingDetailId, setLoadingDetailId] = useState<string | null>(null);
+  const [editEntries, setEditEntries] = useState<any[]>([]);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const handleToggleExpand = async (request: any) => {
+    if (expandedId === request._id) {
+      setExpandedId(null);
+      setIsEditing(false);
+      return;
+    }
+
+    setLoadingDetailId(request._id);
+    const detail = await getScheduleDetail(request._id);
+    setLoadingDetailId(null);
+
+    if (detail) {
+      setEditEntries(detail.entries || []);
+      setExpandedId(request._id);
+      setIsEditing(false);
+    }
+  };
+
+  const handleChangeEntry = (date: string, field: "type" | "note", value: string) => {
+    setEditEntries((prev) =>
+      prev.map((e) => (e.date.startsWith(date) ? { ...e, [field]: value } : e))
+    );
+  };
+
+  const handleSave = async (id: string) => {
+    const success = await handleAdminUpdateEntries(id, editEntries);
+    if (success) {
+      setIsEditing(false);
+      const detail = await getScheduleDetail(id);
+      if (detail) {
+        setEditEntries(detail.entries || []);
+      }
+    }
+  };
 
   return (
     <View style={{ gap: 16 }}>
@@ -93,6 +139,7 @@ export function RequestManager() {
             {pendingSchedules.map((request) => {
               const isSelected = selectedPendingIds.includes(request._id);
               const isRejecting = rejectingRequestId === request._id;
+              const isPendingExpanded = expandedId === request._id;
               return (
                 <View
                   key={request._id}
@@ -108,17 +155,29 @@ export function RequestManager() {
                       ) : null}
                     </Pressable>
 
-                    <View className="flex-1">
-                      <Text className="text-base font-semibold text-slate-900">
-                        {formatEmployee(request.employee, "Nhân viên")}
-                      </Text>
-                      <Text className="text-slate-600 mt-1">
-                        Tuần: {formatDate(request.week_start)}
-                      </Text>
-                      <Text className="text-slate-600">
-                        Nộp lúc: {formatDateTime(request.submitted_at)}
-                      </Text>
-                    </View>
+                    <Pressable
+                      onPress={() => handleToggleExpand(request)}
+                      className="flex-1 flex-row items-center justify-between"
+                    >
+                      <View className="flex-1">
+                        <Text className="text-base font-semibold text-slate-900">
+                          {formatEmployee(request.employee, "Nhân viên")}
+                        </Text>
+                        <Text className="text-slate-600 mt-1">
+                          Tuần: {formatDate(request.week_start)}
+                        </Text>
+                        <Text className="text-slate-600">
+                          Nộp lúc: {formatDateTime(request.submitted_at)}
+                        </Text>
+                      </View>
+                      <View className="ml-2 bg-white w-8 h-8 rounded-full border border-slate-100 items-center justify-center shadow-sm">
+                        <Ionicons
+                          name={isPendingExpanded ? "chevron-up" : "chevron-down"}
+                          size={18}
+                          color="#64748b"
+                        />
+                      </View>
+                    </Pressable>
 
                     <View
                       className={`rounded-full px-3 py-1 ${statusStyle[request.status] || statusStyle.pending}`}
@@ -129,6 +188,54 @@ export function RequestManager() {
                       </Text>
                     </View>
                   </View>
+
+                  {/* Expanded Detail and Edit Section for Pending */}
+                  {isPendingExpanded && (
+                    <View className="mt-4 border-t border-slate-200 pt-4">
+                      {loadingDetailId === request._id ? (
+                        <ActivityIndicator size="small" color="#2563eb" className="py-4" />
+                      ) : (
+                        <View className="gap-4">
+                          <View className="flex-row items-center justify-between">
+                            <Text className="font-semibold text-slate-700">Chi tiết lịch làm việc:</Text>
+                            <Pressable
+                              onPress={() => {
+                                if (isEditing) {
+                                  handleSave(request._id);
+                                } else {
+                                  setIsEditing(true);
+                                }
+                              }}
+                              className={`rounded-lg px-3 py-1.5 ${isEditing ? "bg-cyan-600" : "bg-slate-200"}`}
+                            >
+                              <Text className={`text-xs font-semibold ${isEditing ? "text-white" : "text-slate-700"}`}>
+                                {isEditing ? "Lưu thay đổi" : "Sửa lịch"}
+                              </Text>
+                            </Pressable>
+                          </View>
+
+                          <ScheduleForm
+                            startDate={new Date(request.week_start)}
+                            entries={editEntries}
+                            onChangeEntry={handleChangeEntry}
+                            readOnly={!isEditing}
+                          />
+
+                          {isEditing && (
+                            <Pressable
+                              onPress={() => {
+                                setIsEditing(false);
+                                handleToggleExpand(request); // refetch / reset
+                              }}
+                              className="rounded-lg bg-slate-100 py-2 items-center"
+                            >
+                              <Text className="text-slate-600 font-semibold text-xs">Hủy bỏ chỉnh sửa</Text>
+                            </Pressable>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  )}
 
                   <View className="flex-row mt-4" style={{ gap: 10 }}>
                     <Pressable
@@ -265,42 +372,107 @@ export function RequestManager() {
           </View>
         ) : (
           <View style={{ gap: 10 }}>
-            {allSchedules.map((request) => (
-              <View
-                key={request._id}
-                className="rounded-2xl border border-slate-200 p-4 bg-slate-50"
-              >
-                <View className="flex-row items-start justify-between gap-3">
-                  <View className="flex-1">
-                    <Text className="text-base font-semibold text-slate-900">
-                      {formatEmployee(request.employee, "Nhân viên")}
-                    </Text>
-                    <Text className="text-slate-600 mt-1">
-                      Tuần: {formatDate(request.week_start)}
-                    </Text>
-                    <Text className="text-slate-600">
-                      Nộp lúc: {formatDateTime(request.submitted_at)}
-                    </Text>
-                    <Text className="text-slate-600">
-                      Duyệt lúc: {formatDateTime(request.reviewed_at)}
-                    </Text>
-                    {request.reject_reason && (
-                      <Text className="text-rose-700 mt-1">
-                        Lý do từ chối: {request.reject_reason}
+            {allSchedules.map((request) => {
+              const isAllExpanded = expandedId === request._id;
+              return (
+                <View
+                  key={request._id}
+                  className="rounded-2xl border border-slate-200 p-4 bg-slate-50"
+                >
+                  <View className="flex-row items-start justify-between gap-3">
+                    <Pressable
+                      onPress={() => handleToggleExpand(request)}
+                      className="flex-1 flex-row items-center justify-between"
+                    >
+                      <View className="flex-1">
+                        <Text className="text-base font-semibold text-slate-900">
+                          {formatEmployee(request.employee, "Nhân viên")}
+                        </Text>
+                        <Text className="text-slate-600 mt-1">
+                          Tuần: {formatDate(request.week_start)}
+                        </Text>
+                        <Text className="text-slate-600">
+                          Nộp lúc: {formatDateTime(request.submitted_at)}
+                        </Text>
+                        {request.reviewed_at && (
+                          <Text className="text-slate-600">
+                            Duyệt lúc: {formatDateTime(request.reviewed_at)}
+                          </Text>
+                        )}
+                        {request.reject_reason && (
+                          <Text className="text-rose-700 mt-1">
+                            Lý do từ chối: {request.reject_reason}
+                          </Text>
+                        )}
+                      </View>
+                      <View className="ml-2 bg-white w-8 h-8 rounded-full border border-slate-100 items-center justify-center shadow-sm">
+                        <Ionicons
+                          name={isAllExpanded ? "chevron-up" : "chevron-down"}
+                          size={18}
+                          color="#64748b"
+                        />
+                      </View>
+                    </Pressable>
+                    <View
+                      className={`rounded-full px-3 py-1 ${statusStyle[request.status] || statusStyle.pending}`}
+                    >
+                      <Text className="text-xs font-semibold uppercase">
+                        {requestStatusLabels[request.status as RequestStatus] ||
+                          request.status}
                       </Text>
-                    )}
+                    </View>
                   </View>
-                  <View
-                    className={`rounded-full px-3 py-1 ${statusStyle[request.status] || statusStyle.pending}`}
-                  >
-                    <Text className="text-xs font-semibold uppercase">
-                      {requestStatusLabels[request.status as RequestStatus] ||
-                        request.status}
-                    </Text>
-                  </View>
+
+                  {/* Expanded Detail and Edit Section for All */}
+                  {isAllExpanded && (
+                    <View className="mt-4 border-t border-slate-200 pt-4">
+                      {loadingDetailId === request._id ? (
+                        <ActivityIndicator size="small" color="#2563eb" className="py-4" />
+                      ) : (
+                        <View className="gap-4">
+                          <View className="flex-row items-center justify-between">
+                            <Text className="font-semibold text-slate-700">Chi tiết lịch làm việc:</Text>
+                            <Pressable
+                              onPress={() => {
+                                if (isEditing) {
+                                  handleSave(request._id);
+                                } else {
+                                  setIsEditing(true);
+                                }
+                              }}
+                              className={`rounded-lg px-3 py-1.5 ${isEditing ? "bg-cyan-600" : "bg-slate-200"}`}
+                            >
+                              <Text className={`text-xs font-semibold ${isEditing ? "text-white" : "text-slate-700"}`}>
+                                {isEditing ? "Lưu thay đổi" : "Sửa lịch"}
+                              </Text>
+                            </Pressable>
+                          </View>
+
+                          <ScheduleForm
+                            startDate={new Date(request.week_start)}
+                            entries={editEntries}
+                            onChangeEntry={handleChangeEntry}
+                            readOnly={!isEditing}
+                          />
+
+                          {isEditing && (
+                            <Pressable
+                              onPress={() => {
+                                setIsEditing(false);
+                                handleToggleExpand(request); // refetch / reset
+                              }}
+                              className="rounded-lg bg-slate-100 py-2 items-center"
+                            >
+                              <Text className="text-slate-600 font-semibold text-xs">Hủy bỏ chỉnh sửa</Text>
+                            </Pressable>
+                          )}
+                        </View>
+                      )}
+                    </View>
+                  )}
                 </View>
-              </View>
-            ))}
+              );
+            })}
           </View>
         )}
       </View>

@@ -129,6 +129,7 @@ export interface AdminContextValue {
 
   // Actions
   loadAdminData: (showRefreshing?: boolean) => Promise<void>;
+  handleAdminUpdateEntries: (id: string, entries: Array<{ date: string; type: string; note?: string }>) => Promise<boolean>;
 }
 
 const AdminContext = createContext<AdminContextValue | null>(null);
@@ -147,7 +148,8 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     generateQrToken,
     getTodayAttendance,
     getReport,
-    updatePolicy
+    updatePolicy,
+    adminUpdateEntries
   } = useWorkscheduleAdmin();
 
   const currentWeek = useMemo(() => getIsoWeekString(new Date()), []);
@@ -342,6 +344,16 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const handleAdminUpdateEntries = async (id: string, entries: Array<{ date: string; type: string; note?: string }>) => {
+    setBusyRequestId(id);
+    const success = await adminUpdateEntries(id, entries);
+    setBusyRequestId(null);
+    if (success) {
+      await loadAdminData();
+    }
+    return success;
+  };
+
   const handleGenerateQr = async () => {
     setQrBusy(true);
     const token = await generateQrToken();
@@ -371,7 +383,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     qrBusy, generatedQr, qrRemaining, handleGenerateQr,
     todayAttendance, todayExpected, missingToday, checkedInMap, totalTodayExpected, totalTodayCheckedIn, totalTodayMissing,
     reportRows, reportRange, setReportRange, totalReportEmployees, totalReportRemote, heatmapRows,
-    loadAdminData
+    loadAdminData, handleAdminUpdateEntries
   };
 
   return <AdminContext.Provider value={value}>{children}</AdminContext.Provider>;
