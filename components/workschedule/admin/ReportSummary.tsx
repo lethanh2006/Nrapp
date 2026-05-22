@@ -45,8 +45,8 @@ export function ReportSummary() {
     <View style={{ gap: 16 }}>
       {/* Chấm công hôm nay */}
       <View className="bg-white rounded-3xl p-5 border border-slate-200">
-        <View className="flex-row items-center justify-between mb-4">
-          <View>
+        <View className="flex-row items-center justify-between mb-4 gap-3">
+          <View className="flex-1">
             <Text className="text-lg font-bold text-slate-900">
               Chấm công hôm nay
             </Text>
@@ -154,8 +154,8 @@ export function ReportSummary() {
 
       {/* Báo cáo tổng hợp */}
       <View className="bg-white rounded-3xl p-5 border border-slate-200">
-        <View className="flex-row items-center justify-between mb-4">
-          <View>
+        <View className="flex-row items-center justify-between mb-4 gap-3">
+          <View className="flex-1">
             <Text className="text-lg font-bold text-slate-900">
               Báo cáo tổng hợp
             </Text>

@@ -51,12 +51,12 @@ export default function ScheduleList({ schedules }: Props) {
                 params: { id },
               } as any)
             }
-            className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex-row justify-between items-center"
+            className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex-row justify-between items-center gap-3"
             style={({ pressed }) => ({
               opacity: pressed ? 0.7 : 1,
             })}
           >
-            <View>
+            <View className="flex-1">
               <Text className="text-base font-semibold mb-1">
                 Tuần:{" "}
                 {new Date(schedule.week_start).toLocaleDateString("vi-VN")}

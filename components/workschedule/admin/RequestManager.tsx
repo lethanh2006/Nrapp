@@ -106,8 +106,8 @@ export function RequestManager() {
     <View style={{ gap: 16 }}>
       {/* Duyệt lịch chờ xử lý */}
       <View className="bg-white rounded-3xl p-5 border border-slate-200">
-        <View className="flex-row items-center justify-between mb-4">
-          <View>
+        <View className="flex-row items-center justify-between mb-4 gap-3">
+          <View className="flex-1">
             <Text className="text-lg font-bold text-slate-900">
               Duyệt lịch chờ xử lý
             </Text>
@@ -301,8 +301,8 @@ export function RequestManager() {
 
       {/* Toàn bộ request */}
       <View className="bg-white rounded-3xl p-5 border border-slate-200">
-        <View className="flex-row items-center justify-between mb-4">
-          <View>
+        <View className="flex-row items-center justify-between mb-4 gap-3">
+          <View className="flex-1">
             <Text className="text-lg font-bold text-slate-900">
               Toàn bộ request
             </Text>
@@ -338,31 +338,25 @@ export function RequestManager() {
           </Pressable>
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="mb-4"
-        >
-          <View className="flex-row" style={{ gap: 8 }}>
-            {(Object.keys(requestStatusLabels) as RequestStatus[]).map((status) => (
-              <Pressable
-                key={status}
-                onPress={() => setRequestFilter(status)}
-                className={`px-4 py-2 rounded-full border ${requestFilter === status ? "bg-slate-900 border-slate-900" : "bg-white border-slate-200"}`}
+        <View className="flex-row flex-wrap mb-4" style={{ gap: 8 }}>
+          {(Object.keys(requestStatusLabels) as RequestStatus[]).map((status) => (
+            <Pressable
+              key={status}
+              onPress={() => setRequestFilter(status)}
+              className={`px-4 py-2 rounded-full border ${requestFilter === status ? "bg-slate-900 border-slate-900" : "bg-white border-slate-200"}`}
+            >
+              <Text
+                className={
+                  requestFilter === status
+                    ? "text-white font-semibold"
+                    : "text-slate-700 font-semibold"
+                }
               >
-                <Text
-                  className={
-                    requestFilter === status
-                      ? "text-white font-semibold"
-                      : "text-slate-700 font-semibold"
-                  }
-                >
-                  {requestStatusLabels[status]}
-                </Text>
-              </Pressable>
-            ))}
-          </View>
-        </ScrollView>
+                {requestStatusLabels[status]}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
 
         {allSchedules.length === 0 ? (
           <View className="bg-slate-50 rounded-2xl p-4 border border-slate-200">

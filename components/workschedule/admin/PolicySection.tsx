@@ -11,9 +11,9 @@ export function PolicySection() {
     <View className="bg-white rounded-3xl border border-slate-200 overflow-hidden mb-6">
       <Pressable
         onPress={() => setIsOpen(!isOpen)}
-        className="flex-row items-center justify-between p-5 bg-white"
+        className="flex-row items-center justify-between p-5 bg-white gap-3"
       >
-        <View>
+        <View className="flex-1">
           <Text className="text-lg font-bold text-slate-900">
             Chính sách làm việc
           </Text>

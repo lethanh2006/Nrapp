@@ -13,8 +13,8 @@ export function AttendanceQR() {
 
   return (
     <View className="bg-white rounded-3xl p-5 border border-slate-200">
-      <View className="flex-row items-center justify-between mb-4">
-        <View>
+      <View className="flex-row items-center justify-between mb-4 gap-3">
+        <View className="flex-1">
           <Text className="text-lg font-bold text-slate-900">QR chấm công</Text>
           <Text className="text-slate-500 mt-1">
             Tạo token 30 giây cho nhân viên quét check-in.
