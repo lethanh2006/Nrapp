@@ -92,6 +92,26 @@ export default function ChatScreen() {
       formData.append("chatId", selectedUser!);
       if (message.trim()) formData.append("text", message.trim());
 
+      if (imageUri) {
+        if (Platform.OS === "web") {
+          const response = await fetch(imageUri);
+          const blob = await response.blob();
+          const fileType = blob.type || "image/jpeg";
+          const extension = fileType.split("/")[1] || "jpg";
+          formData.append("image", blob, `photo.${extension}`);
+        } else {
+          const uriParts = imageUri.split("/");
+          const fileName = uriParts[uriParts.length - 1] || "photo.jpg";
+          const extParts = fileName.split(".");
+          const fileType = extParts[extParts.length - 1] || "jpg";
+          formData.append("image", {
+            uri: imageUri,
+            name: fileName,
+            type: `image/${fileType === "png" ? "png" : fileType === "gif" ? "gif" : "jpeg"}`,
+          } as any);
+        }
+      }
+
       const { data } = await axios.post(`${BASE_URL}/chat/message`, formData, {
         headers: {
           Authorization: `Bearer ${token}`,
