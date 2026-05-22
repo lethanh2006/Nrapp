@@ -114,27 +114,22 @@ export default function MainLayout() {
 
   return (
     <View className="flex-1 bg-white">
-      {/* Top Header */}
-      <View
-        className="flex-row items-center justify-between px-4 border-b border-gray-100 bg-white shadow-xs"
-        style={{
-          paddingTop: insets.top + 8,
-          paddingBottom: 8,
-          minHeight: 56 + insets.top,
-        }}
-      >
-        <Text className="text-xl font-extrabold text-slate-800 tracking-tight">
-          Work<Text className="text-blue-600">Space</Text>
-        </Text>
-
-        <Pressable
-          onPress={handleLogout}
-          className="px-3 py-1.5 bg-rose-50 rounded-lg flex-row items-center active:opacity-75"
+      {/* Top Header - Hidden on Home screen for premium custom banner */}
+      {!isHomeActive && (
+        <View
+          className="flex-row items-center justify-between px-4 border-b border-gray-100 bg-white shadow-xs"
+          style={{
+            paddingTop: insets.top + 8,
+            paddingBottom: 8,
+            minHeight: 56 + insets.top,
+          }}
         >
-          <Ionicons name="log-out-outline" size={16} color="#f43f5e" />
-          <Text className="text-rose-600 font-bold text-xs ml-1">Đăng xuất</Text>
-        </Pressable>
-      </View>
+          <Text className="text-xl font-extrabold text-slate-800 tracking-tight">
+            Work<Text className="text-blue-600">Space</Text>
+          </Text>
+
+        </View>
+      )}
 
       {/* Screen Router Stack */}
       <View className="flex-1">
