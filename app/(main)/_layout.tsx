@@ -32,12 +32,11 @@ export default function MainLayout() {
   const pathname = usePathname();
   const { loading, isAuth, logoutUser, user, getToken } = useAppData();
 
-  // Modals state
   const [scanVisible, setScanVisible] = useState(false);
   const [profileVisible, setProfileVisible] = useState(false);
   const [notifVisible, setNotifVisible] = useState(false);
 
-  // Scanner state
+
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
   const [scanLoading, setScanLoading] = useState(false);
@@ -108,13 +107,10 @@ export default function MainLayout() {
     }
   };
 
-  // Determine active states for bottom navigation tabs
   const isHomeActive = pathname === "/home";
-  const isWorkscheduleActive = pathname.includes("/workschedule");
 
   return (
     <View className="flex-1 bg-white">
-      {/* Top Header - Hidden on Home screen for premium custom banner */}
       {!isHomeActive && (
         <View
           className="flex-row items-center justify-between px-4 border-b border-gray-100 bg-white shadow-xs"
@@ -131,7 +127,6 @@ export default function MainLayout() {
         </View>
       )}
 
-      {/* Screen Router Stack */}
       <View className="flex-1">
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="home" />
@@ -140,7 +135,7 @@ export default function MainLayout() {
         </Stack>
       </View>
 
-      {/* Premium UX Bottom Navigation Tab Bar */}
+
       <View
         className="flex-row items-center justify-around border-t border-gray-100 bg-white"
         style={{
@@ -149,7 +144,6 @@ export default function MainLayout() {
           minHeight: 64 + insets.bottom,
         }}
       >
-        {/* Tab 1: Trang chủ */}
         <Pressable
           onPress={() => router.replace("/(main)/home")}
           className="items-center justify-center flex-1"
@@ -219,7 +213,6 @@ export default function MainLayout() {
           </Text>
         </Pressable> */}
 
-        {/* Tab 5: Cá nhân */}
         <Pressable
           onPress={() => setProfileVisible(true)}
           className="items-center justify-center flex-1"
@@ -239,7 +232,6 @@ export default function MainLayout() {
         </Pressable>
       </View>
 
-      {/* 1. Camera Scan QR Modal */}
       <Modal
         animationType="slide"
         transparent={false}
@@ -247,7 +239,6 @@ export default function MainLayout() {
         onRequestClose={() => setScanVisible(false)}
       >
         <View className="flex-1 bg-slate-950">
-          {/* Header */}
           <View
             className="flex-row items-center justify-between px-4 pb-4 pt-10 border-b border-slate-900 bg-slate-950"
             style={{ paddingTop: insets.top + 8 }}
@@ -263,7 +254,6 @@ export default function MainLayout() {
             </Pressable>
           </View>
 
-          {/* Body Content */}
           <View className="flex-1 relative justify-center items-center">
             {!permission?.granted ? (
               <View className="p-6 items-center justify-center">
@@ -285,7 +275,6 @@ export default function MainLayout() {
               </View>
             ) : (
               <View className="w-full h-full justify-center items-center">
-                {/* Camera View */}
                 {!scanned && (
                   <CameraView
                     style={StyleSheet.absoluteFillObject}
@@ -297,10 +286,9 @@ export default function MainLayout() {
                   />
                 )}
 
-                {/* QR Target Framing HUD */}
+
                 {!scanned && (
                   <View className="absolute items-center justify-center">
-                    {/* Visual target bracket */}
                     <View className="w-64 h-64 border-2 border-red-500 rounded-3xl items-center justify-center">
                       <View className="w-60 h-60 border border-red-500/20 border-dashed rounded-2xl" />
                     </View>
@@ -310,7 +298,6 @@ export default function MainLayout() {
                   </View>
                 )}
 
-                {/* Loading indicator */}
                 {scanLoading && (
                   <View className="absolute inset-0 bg-slate-950/80 items-center justify-center">
                     <ActivityIndicator size="large" color="#ef4444" />
@@ -320,7 +307,6 @@ export default function MainLayout() {
                   </View>
                 )}
 
-                {/* Success or Error Popup Card */}
                 {scanResult && (
                   <View className="absolute p-6 w-full max-w-sm bg-slate-900 border border-slate-800 rounded-3xl shadow-2xl items-center">
                     <View
@@ -404,7 +390,7 @@ export default function MainLayout() {
         </View>
       </Modal>
 
-      {/* 2. Notification Overlay Modal */}
+
       <Modal
         animationType="fade"
         transparent={true}
@@ -486,7 +472,7 @@ export default function MainLayout() {
         </View>
       </Modal>
 
-      {/* 3. User Profile Modal */}
+
       <Modal
         animationType="fade"
         transparent={true}
@@ -497,10 +483,9 @@ export default function MainLayout() {
           <Pressable className="absolute inset-0" onPress={() => setProfileVisible(false)} />
 
           <View className="bg-white rounded-t-3xl p-6 min-h-[420px] border-t border-slate-100 items-center">
-            {/* Top Pull Bar */}
             <View className="w-12 h-1.5 bg-slate-200 rounded-full mb-6" />
 
-            {/* Profile Header */}
+
             <View className="flex-row justify-between w-full items-center mb-6">
               <Text className="text-lg font-black text-slate-800">Cá nhân</Text>
               <Pressable
@@ -511,7 +496,7 @@ export default function MainLayout() {
               </Pressable>
             </View>
 
-            {/* Avatar block */}
+
             <View className="w-20 h-20 bg-red-100 rounded-full items-center justify-center mb-4">
               <Text className="text-red-700 text-3xl font-black">
                 {user?.name ? user.name.charAt(0).toUpperCase() : "U"}
@@ -525,7 +510,7 @@ export default function MainLayout() {
               </Text>
             </View>
 
-            {/* Account Info Details */}
+
             <View className="w-full bg-slate-50 border border-slate-100 rounded-2xl p-4 mb-6">
               <View className="flex-row items-center justify-between border-b border-slate-200/60 pb-3 mb-3">
                 <Text className="text-slate-400 text-xs">Email tài khoản</Text>
@@ -537,7 +522,7 @@ export default function MainLayout() {
               </View>
             </View>
 
-            {/* Actions */}
+
             <Pressable
               onPress={handleLogout}
               className="w-full bg-red-600 py-3.5 rounded-xl items-center flex-row justify-center active:opacity-90 shadow-sm"

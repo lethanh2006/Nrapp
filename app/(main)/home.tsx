@@ -1,7 +1,7 @@
 import { useAppData } from "@/context/AppContext";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
-import React, { useEffect, useState } from "react";
+import { router, useFocusEffect } from "expo-router";
+import React, { useEffect, useState, useCallback } from "react";
 import {
   Alert,
   Dimensions,
@@ -10,13 +10,21 @@ import {
   ScrollView,
   Text,
   View,
+  ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useWorkscheduleUser } from "@/hooks/useWorkscheduleUser";
+import { IScheduleRequest, IScheduleEntry } from "@/components/workschedule/types";
 
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAppData();
+  const isAdmin = user?.role === "admin";
   const [todayDate, setTodayDate] = useState(new Date());
+
+  const { getMySchedules, loading } = useWorkscheduleUser();
+  const [currentWeekSchedule, setCurrentWeekSchedule] = useState<IScheduleRequest | null>(null);
+  const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -25,6 +33,50 @@ export default function HomeScreen() {
     return () => clearInterval(timer);
   }, []);
 
+  const getMonday = (d: Date) => {
+    const date = new Date(d);
+    const day = date.getDay();
+    const diff = date.getDate() - (day === 0 ? 6 : day - 1);
+    const monday = new Date(date.setDate(diff));
+    monday.setHours(0, 0, 0, 0);
+    return monday;
+  };
+
+  const isSameDay = (date1: Date, date2: Date) => {
+    return (
+      date1.getFullYear() === date2.getFullYear() &&
+      date1.getMonth() === date2.getMonth() &&
+      date1.getDate() === date2.getDate()
+    );
+  };
+
+  useFocusEffect(
+    useCallback(() => {
+      if (isAdmin) {
+        setHasLoaded(true);
+        return;
+      }
+      let isActive = true;
+      const loadSchedule = async () => {
+        const schedules = await getMySchedules();
+        if (!isActive) return;
+
+        const thisWeekMonday = getMonday(new Date());
+        const found = schedules.find((s) => {
+          const sDate = new Date(s.week_start);
+          return isSameDay(sDate, thisWeekMonday);
+        });
+
+        setCurrentWeekSchedule(found || null);
+        setHasLoaded(true);
+      };
+
+      loadSchedule();
+      return () => {
+        isActive = false;
+      };
+    }, [getMySchedules, isAdmin])
+  );
 
   const getVietnameseDayName = (date: Date) => {
     const days = [
@@ -47,6 +99,94 @@ export default function HomeScreen() {
   };
 
   const tomorrow = new Date(todayDate.getTime() + 24 * 60 * 60 * 1000);
+
+  const renderScheduleBox = (entry: IScheduleEntry | undefined) => {
+    if (!entry) {
+      return (
+        <View className="bg-slate-50 border border-slate-100 rounded-xl p-2">
+          <Text className="text-slate-500 text-[11px] font-extrabold leading-tight">
+            Nghỉ ngơi
+          </Text>
+          <Text className="text-slate-400 text-[9px] font-semibold mt-1">
+            Không có lịch làm việc
+          </Text>
+        </View>
+      );
+    }
+
+    switch (entry.type) {
+      case "office":
+        return (
+          <View className="bg-blue-50/70 border-l-4 border-blue-500 rounded-r-xl p-2">
+            <Text className="text-blue-900 text-[11px] font-extrabold leading-tight">
+              Lên công ty
+            </Text>
+            <Text className="text-blue-700 text-[9px] font-bold mt-1">
+              08:30 - 17:30
+            </Text>
+            <Text className="text-blue-500 text-[9px] font-semibold mt-0.5" numberOfLines={1}>
+              {entry.note || "Gaming Studio 1"}
+            </Text>
+          </View>
+        );
+      case "remote":
+        return (
+          <View className="bg-purple-50/70 border-l-4 border-purple-500 rounded-r-xl p-2">
+            <Text className="text-purple-900 text-[11px] font-extrabold leading-tight">
+              Làm việc từ xa
+            </Text>
+            <Text className="text-purple-700 text-[9px] font-bold mt-1">
+              08:30 - 17:30
+            </Text>
+            <Text className="text-purple-500 text-[9px] font-semibold mt-0.5" numberOfLines={1}>
+              {entry.note || "Online qua Slack/Meet"}
+            </Text>
+          </View>
+        );
+      case "day_off":
+        return (
+          <View className="bg-slate-50 border border-slate-200 rounded-xl p-2">
+            <Text className="text-slate-700 text-[11px] font-extrabold leading-tight">
+              Ngày nghỉ
+            </Text>
+            <Text className="text-slate-500 text-[9px] font-bold mt-1">
+              Cả ngày
+            </Text>
+            <Text className="text-slate-400 text-[9px] font-semibold mt-0.5" numberOfLines={1}>
+              {entry.note || "Nghỉ tuần"}
+            </Text>
+          </View>
+        );
+      case "leave":
+        return (
+          <View className="bg-orange-50 border border-orange-200 rounded-xl p-2">
+            <Text className="text-orange-800 text-[11px] font-extrabold leading-tight">
+              Nghỉ phép
+            </Text>
+            <Text className="text-orange-600 text-[9px] font-bold mt-1">
+              Cả ngày
+            </Text>
+            <Text className="text-orange-500 text-[9px] font-semibold mt-0.5" numberOfLines={1}>
+              {entry.note || "Đã đăng ký phép"}
+            </Text>
+          </View>
+        );
+      default:
+        return (
+          <View className="bg-slate-50 border border-slate-100 rounded-xl p-2">
+            <Text className="text-slate-500 text-[11px] font-extrabold leading-tight">
+              Nghỉ ngơi
+            </Text>
+            <Text className="text-slate-400 text-[9px] font-semibold mt-1">
+              Không có lịch làm việc
+            </Text>
+          </View>
+        );
+    }
+  };
+
+  const todayEntry = currentWeekSchedule?.entries?.find(e => isSameDay(new Date(e.date), todayDate));
+  const tomorrowEntry = currentWeekSchedule?.entries?.find(e => isSameDay(new Date(e.date), tomorrow));
 
   return (
     <ScrollView
@@ -105,50 +245,87 @@ export default function HomeScreen() {
         </View>
       </ImageBackground>
 
-      <View
-        className="mx-4 bg-white rounded-3xl p-5 -mt-8 shadow-md border border-slate-100 flex-row justify-between"
-        style={{
-          elevation: 4,
-        }}
-      >
-        <View className="flex-1 pr-4 border-r border-slate-100">
-          <Text className="text-rose-600 text-xs font-black tracking-wider uppercase mb-1">
-            {getVietnameseDayName(todayDate)}
+      {!isAdmin && !currentWeekSchedule && hasLoaded ? (
+        <View
+          className="mx-4 bg-white rounded-3xl p-5 -mt-8 shadow-md border border-slate-100 items-center justify-center min-h-[110px]"
+          style={{
+            elevation: 4,
+          }}
+        >
+          <Ionicons name="calendar-outline" size={28} color="#94a3b8" className="mb-1.5" />
+          <Text className="text-slate-500 text-xs font-bold text-center">
+            Bạn không có lịch trong tuần này
           </Text>
-          <Text className="text-slate-800 text-4xl font-black tracking-tighter mb-3">
-            {todayDate.getDate()}
-          </Text>
-
-          <View className="bg-blue-50/70 border-l-4 border-blue-500 rounded-r-xl p-2">
-            <Text className="text-blue-900 text-[11px] font-extrabold leading-tight">
-              Ca làm việc HDG
+          <Pressable
+            onPress={() => router.push("/(main)/workschedule/user/create")}
+            className="mt-2 bg-blue-50 px-4 py-1.5 rounded-full active:scale-95 flex-row items-center space-x-1"
+          >
+            <Ionicons name="add-circle" size={14} color="#2563eb" />
+            <Text className="text-blue-600 text-[10px] font-extrabold uppercase tracking-wider ml-0.5">
+              Đăng ký lịch ngay
             </Text>
-            <Text className="text-blue-700 text-[9px] font-bold mt-1">
-              08:30 - 17:30
-            </Text>
-            <Text className="text-blue-500 text-[9px] font-semibold mt-0.5">
-              Gaming Studio 1
-            </Text>
-          </View>
+          </Pressable>
         </View>
-        <View className="flex-1 pl-4 justify-between">
-          <Text className="text-slate-400 text-[10px] font-extrabold uppercase tracking-wider mb-2">
-            {getVietnameseFullDate(tomorrow)}
-          </Text>
-
-          <View className="bg-rose-50/70 border border-rose-100 rounded-2xl p-2.5">
-            <Text className="text-rose-800 text-[11px] font-extrabold leading-tight">
-              Review Dự Án Game RPG
-            </Text>
-            <Text className="text-rose-600 text-[9px] font-bold mt-1">
-              13:30 - 15:30
-            </Text>
-            <Text className="text-rose-400 text-[9px] font-semibold mt-0.5">
-              Phòng họp 304-A3
-            </Text>
-          </View>
+      ) : (
+        <View
+          className="mx-4 bg-white rounded-3xl p-5 -mt-8 shadow-md border border-slate-100 flex-row justify-between min-h-[110px]"
+          style={{
+            elevation: 4,
+          }}
+        >
+          {loading && !hasLoaded && !isAdmin ? (
+            <View className="flex-1 items-center justify-center py-4">
+              <ActivityIndicator size="small" color="#3b82f6" />
+            </View>
+          ) : (
+            <>
+              <View className="flex-1 pr-4 border-r border-slate-100">
+                <Text className="text-rose-600 text-xs font-black tracking-wider uppercase mb-1">
+                  {getVietnameseDayName(todayDate)}
+                </Text>
+                <Text className="text-slate-800 text-4xl font-black tracking-tighter mb-3">
+                  {todayDate.getDate()}
+                </Text>
+                {isAdmin ? (
+                  <View className="bg-rose-50/70 border-l-4 border-rose-500 rounded-r-xl p-2">
+                    <Text className="text-rose-900 text-[11px] font-extrabold leading-tight">
+                      Lịch trình Admin
+                    </Text>
+                    <Text className="text-rose-700 text-[9px] font-bold mt-1">
+                      Linh hoạt
+                    </Text>
+                    <Text className="text-rose-500 text-[9px] font-semibold mt-0.5" numberOfLines={1}>
+                      Quyền Quản Lý / Điều Hành
+                    </Text>
+                  </View>
+                ) : (
+                  renderScheduleBox(todayEntry)
+                )}
+              </View>
+              <View className="flex-1 pl-4 justify-between">
+                <Text className="text-slate-400 text-[10px] font-extrabold uppercase tracking-wider mb-2">
+                  {getVietnameseFullDate(tomorrow)}
+                </Text>
+                {isAdmin ? (
+                  <View className="bg-rose-50/70 border-l-4 border-rose-500 rounded-r-xl p-2">
+                    <Text className="text-rose-900 text-[11px] font-extrabold leading-tight">
+                      Lịch trình Admin
+                    </Text>
+                    <Text className="text-rose-700 text-[9px] font-bold mt-1">
+                      Linh hoạt
+                    </Text>
+                    <Text className="text-rose-500 text-[9px] font-semibold mt-0.5" numberOfLines={1}>
+                      Quyền Quản Lý / Điều Hành
+                    </Text>
+                  </View>
+                ) : (
+                  renderScheduleBox(tomorrowEntry)
+                )}
+              </View>
+            </>
+          )}
         </View>
-      </View>
+      )}
 
       <View className="p-4 space-y-5">
         <View className="mt-2">
