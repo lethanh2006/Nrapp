@@ -55,6 +55,7 @@ export function RequestManager() {
     busyRequestId,
     bulkBusy,
     selectedWeekLabel,
+    selectedWeekOffset,
     setSelectedWeekOffset,
     handleAdminUpdateEntries,
   } = useAdminData();
@@ -131,7 +132,7 @@ export function RequestManager() {
         {pendingSchedules.length === 0 ? (
           <View className="bg-slate-50 rounded-2xl p-4 border border-slate-200">
             <Text className="text-slate-500">
-              Không có request chờ duyệt trong tuần này.
+              Không có request nào đang chờ duyệt.
             </Text>
           </View>
         ) : (
@@ -320,26 +321,26 @@ export function RequestManager() {
         <View className="flex-row flex-wrap mb-4" style={{ gap: 8 }}>
           <Pressable
             onPress={() => setSelectedWeekOffset((previous) => previous - 1)}
-            className="px-3 py-2 rounded-xl bg-slate-100 border border-slate-200"
+            className={`px-3 py-2 rounded-xl border ${selectedWeekOffset < 0 ? "bg-cyan-600 border-cyan-600" : "bg-slate-100 border-slate-200"}`}
           >
-            <Text className="text-slate-700 font-semibold">Tuần trước</Text>
+            <Text className={`font-semibold ${selectedWeekOffset < 0 ? "text-white" : "text-slate-700"}`}>Tuần trước</Text>
           </Pressable>
           <Pressable
             onPress={() => setSelectedWeekOffset(0)}
-            className="px-3 py-2 rounded-xl bg-cyan-50 border border-cyan-100"
+            className={`px-3 py-2 rounded-xl border ${selectedWeekOffset === 0 ? "bg-cyan-600 border-cyan-600" : "bg-slate-100 border-slate-200"}`}
           >
-            <Text className="text-cyan-800 font-semibold">Hiện tại</Text>
+            <Text className={`font-semibold ${selectedWeekOffset === 0 ? "text-white" : "text-slate-700"}`}>Hiện tại</Text>
           </Pressable>
           <Pressable
             onPress={() => setSelectedWeekOffset((previous) => previous + 1)}
-            className="px-3 py-2 rounded-xl bg-slate-100 border border-slate-200"
+            className={`px-3 py-2 rounded-xl border ${selectedWeekOffset > 0 ? "bg-cyan-600 border-cyan-600" : "bg-slate-100 border-slate-200"}`}
           >
-            <Text className="text-slate-700 font-semibold">Tuần sau</Text>
+            <Text className={`font-semibold ${selectedWeekOffset > 0 ? "text-white" : "text-slate-700"}`}>Tuần sau</Text>
           </Pressable>
         </View>
 
         <View className="flex-row flex-wrap mb-4" style={{ gap: 8 }}>
-          {(Object.keys(requestStatusLabels) as RequestStatus[]).map((status) => (
+          {(Object.keys(requestStatusLabels) as RequestStatus[]).filter((status) => status !== "draft").map((status) => (
             <Pressable
               key={status}
               onPress={() => setRequestFilter(status)}

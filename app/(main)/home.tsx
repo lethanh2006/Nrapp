@@ -351,9 +351,9 @@ export default function HomeScreen() {
           <View className="flex-row justify-between items-center bg-white p-4 rounded-3xl border border-slate-100/80 shadow-xs">
             <Pressable
               onPress={() => router.push("/(main)/chat")}
-              className="items-center justify-center flex-1"
+              className="items-center justify-center flex-1 active:scale-95 active:opacity-80 transition-all"
             >
-              <View className="w-14 h-14 bg-blue-50 rounded-2xl items-center justify-center shadow-xs active:scale-95 transition-all">
+              <View className="w-14 h-14 bg-blue-50 rounded-2xl items-center justify-center shadow-xs">
                 <Ionicons name="chatbubbles" size={24} color="#3b82f6" />
               </View>
               <Text className="text-[11px] text-slate-700 font-extrabold text-center mt-2.5">
@@ -363,9 +363,9 @@ export default function HomeScreen() {
 
             <Pressable
               onPress={() => router.push("/(main)/todo")}
-              className="items-center justify-center flex-1"
+              className="items-center justify-center flex-1 active:scale-95 active:opacity-80 transition-all"
             >
-              <View className="w-14 h-14 bg-emerald-50 rounded-2xl items-center justify-center shadow-xs active:scale-95 transition-all">
+              <View className="w-14 h-14 bg-emerald-50 rounded-2xl items-center justify-center shadow-xs">
                 <Ionicons name="checkbox" size={24} color="#10b981" />
               </View>
               <Text className="text-[11px] text-slate-700 font-extrabold text-center mt-2.5">
@@ -381,9 +381,9 @@ export default function HomeScreen() {
                     : "/(main)/workschedule/user"
                 )
               }
-              className="items-center justify-center flex-1"
+              className="items-center justify-center flex-1 active:scale-95 active:opacity-80 transition-all"
             >
-              <View className="w-14 h-14 bg-purple-50 rounded-2xl items-center justify-center shadow-xs active:scale-95 transition-all">
+              <View className="w-14 h-14 bg-purple-50 rounded-2xl items-center justify-center shadow-xs">
                 <Ionicons name="calendar-sharp" size={24} color="#a855f7" />
               </View>
               <Text className="text-[11px] text-slate-700 font-extrabold text-center mt-2.5">

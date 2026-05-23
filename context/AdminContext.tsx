@@ -67,6 +67,18 @@ const getReportRange = (range: ReportRange) => {
   };
 };
 
+const formatDateString = (dateVal: string | Date | undefined | null) => {
+  if (!dateVal) return "";
+  const d = new Date(dateVal);
+  if (isNaN(d.getTime())) return "";
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+};
+
 export interface AdminContextValue {
   appLoading: boolean;
   initialLoading: boolean;
@@ -75,10 +87,11 @@ export interface AdminContextValue {
   
   // Policy
   policy: IWorkPolicy | null;
-  policyDraft: { submit_deadline_day: string; submit_deadline_hour: string; lock_schedule_days: string; };
-  setPolicyDraft: React.Dispatch<React.SetStateAction<{ submit_deadline_day: string; submit_deadline_hour: string; lock_schedule_days: string; }>>;
+  policyDraft: { registration_start: string; registration_end: string; locked: boolean; };
+  setPolicyDraft: React.Dispatch<React.SetStateAction<{ registration_start: string; registration_end: string; locked: boolean; }>>;
   savingPolicy: boolean;
   handleSavePolicy: () => Promise<void>;
+  handleLockPolicy: () => Promise<void>;
 
   // Week selection
   currentWeek: string;
@@ -164,9 +177,9 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   );
 
   const [policyDraft, setPolicyDraft] = useState({
-    submit_deadline_day: "5",
-    submit_deadline_hour: "17",
-    lock_schedule_days: "7",
+    registration_start: "",
+    registration_end: "",
+    locked: true,
   });
   const [policy, setPolicy] = useState<IWorkPolicy | null>(null);
 
@@ -206,7 +219,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       reportData,
     ] = await Promise.all([
       getPolicy(true),
-      getPendingSchedules(selectedWeek, true),
+      getPendingSchedules(undefined, true),
       getAllSchedules({ week: selectedWeek, status: requestFilter }, true),
       getHeatmap(selectedWeek, true),
       getTodayAttendance(true),
@@ -236,9 +249,9 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     setPolicy(policyData);
     if (policyData) {
       setPolicyDraft({
-        submit_deadline_day: String(policyData.submit_deadline_day ?? 5),
-        submit_deadline_hour: String(policyData.submit_deadline_hour ?? 17),
-        lock_schedule_days: String(policyData.lock_schedule_days ?? 7),
+        registration_start: formatDateString(policyData.registration_start),
+        registration_end: formatDateString(policyData.registration_end),
+        locked: policyData.locked ?? true,
       });
     }
     setPendingSchedules(pendingData);
@@ -254,6 +267,10 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   }, [
     currentWeek, getPolicy, getPendingSchedules, getAllSchedules, getHeatmap, getTodayAttendance, getReport, getScheduleDetail, requestFilter, reportRange, selectedWeek, user
   ]);
+
+  useEffect(() => {
+    loadAdminData();
+  }, [selectedWeek, requestFilter, reportRange, loadAdminData]);
 
   useEffect(() => {
     if (!generatedQr?.expires_at) {
@@ -285,16 +302,34 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   }, [checkedInMap, todayExpected]);
 
   const handleSavePolicy = async () => {
-    const payload = {
-      submit_deadline_day: Number(policyDraft.submit_deadline_day),
-      submit_deadline_hour: Number(policyDraft.submit_deadline_hour),
-      lock_schedule_days: Number(policyDraft.lock_schedule_days),
-    };
+    const startStr = policyDraft.registration_start.trim();
+    const endStr = policyDraft.registration_end.trim();
 
-    if (!Number.isFinite(payload.submit_deadline_day) || !Number.isFinite(payload.submit_deadline_hour) || !Number.isFinite(payload.lock_schedule_days)) {
-      Alert.alert("Lỗi", "Vui lòng nhập đầy đủ giá trị số hợp lệ cho chính sách");
+    // Regex check for YYYY-MM-DD HH:mm
+    const dateRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
+    if (!dateRegex.test(startStr) || !dateRegex.test(endStr)) {
+      Alert.alert("Lỗi", "Thời gian phải có định dạng YYYY-MM-DD HH:mm (Ví dụ: 2026-05-22 17:00)");
       return;
     }
+
+    const start = new Date(startStr);
+    const end = new Date(endStr);
+
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      Alert.alert("Lỗi", "Ngày giờ nhập vào không hợp lệ");
+      return;
+    }
+
+    if (start >= end) {
+      Alert.alert("Lỗi", "Thời gian bắt đầu phải trước thời gian kết thúc");
+      return;
+    }
+
+    const payload = {
+      registration_start: start.toISOString(),
+      registration_end: end.toISOString(),
+      locked: policyDraft.locked,
+    };
 
     setSavingPolicy(true);
     const updated = await updatePolicy(payload);
@@ -303,11 +338,31 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     if (updated) {
       setPolicy(updated);
       setPolicyDraft({
-        submit_deadline_day: String(updated.submit_deadline_day),
-        submit_deadline_hour: String(updated.submit_deadline_hour),
-        lock_schedule_days: String(updated.lock_schedule_days),
+        registration_start: formatDateString(updated.registration_start),
+        registration_end: formatDateString(updated.registration_end),
+        locked: updated.locked ?? true,
       });
       Alert.alert("Thành công", "Đã cập nhật chính sách làm việc");
+    }
+  };
+
+  const handleLockPolicy = async () => {
+    if (!policy) return;
+    setSavingPolicy(true);
+    const updated = await updatePolicy({
+      registration_start: policy.registration_start,
+      registration_end: policy.registration_end,
+      locked: true,
+    });
+    setSavingPolicy(false);
+    if (updated) {
+      setPolicy(updated);
+      setPolicyDraft({
+        registration_start: formatDateString(updated.registration_start),
+        registration_end: formatDateString(updated.registration_end),
+        locked: true,
+      });
+      Alert.alert("Thành công", "Đã khóa đăng ký lịch làm việc");
     }
   };
 
@@ -376,7 +431,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
   const value: AdminContextValue = {
     appLoading, initialLoading, refreshing, user,
-    policy, policyDraft, setPolicyDraft, savingPolicy, handleSavePolicy,
+    policy, policyDraft, setPolicyDraft, savingPolicy, handleSavePolicy, handleLockPolicy,
     currentWeek, selectedWeekOffset, setSelectedWeekOffset, selectedWeek, selectedWeekLabel,
     pendingSchedules, allSchedules, requestFilter, setRequestFilter, selectedPendingIds, togglePendingSelection,
     handleApprove, handleBulkApprove, handleReject, rejectingRequestId, setRejectingRequestId, rejectReason, setRejectReason, busyRequestId, bulkBusy,
