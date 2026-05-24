@@ -21,6 +21,11 @@ export function useWorkscheduleUser() {
     return { Authorization: `Bearer ${token}` };
   }, [getToken]);
 
+  const handleError = useCallback((error: any, fallback: string) => {
+    if (error?.response?.status === 401) return;
+    Alert.alert("Lỗi", error?.response?.data?.message || fallback);
+  }, []);
+
   const getPolicy = useCallback(async (): Promise<IWorkPolicy | null> => {
     try {
       const headers = await getHeaders();
@@ -40,13 +45,13 @@ export function useWorkscheduleUser() {
         const res = await api.get("/schedule/my", { headers, params });
         return res.data.data || [];
       } catch (err: any) {
-        Alert.alert("Lỗi", err?.response?.data?.message || "Không thể tải danh sách lịch");
+        handleError(err, "Không thể tải danh sách lịch");
         return [];
       } finally {
         setLoading(false);
       }
     },
-    [api, getHeaders]
+    [api, getHeaders, handleError]
   );
 
   const createRequest = useCallback(
@@ -58,13 +63,13 @@ export function useWorkscheduleUser() {
         Alert.alert("Thành công", "Đã tạo lịch nháp");
         return res.data.data;
       } catch (err: any) {
-        Alert.alert("Lỗi", err?.response?.data?.message || "Không thể tạo lịch");
+        handleError(err, "Không thể tạo lịch");
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [api, getHeaders]
+    [api, getHeaders, handleError]
   );
 
   const getRequestInfo = useCallback(
@@ -75,13 +80,13 @@ export function useWorkscheduleUser() {
         const res = await api.get(`/schedule/requests/${id}`, { headers });
         return res.data.data;
       } catch (err: any) {
-        Alert.alert("Lỗi", err?.response?.data?.message || "Không thể tải thông tin lịch");
+        handleError(err, "Không thể tải thông tin lịch");
         return null;
       } finally {
         setLoading(false);
       }
     },
-    [api, getHeaders]
+    [api, getHeaders, handleError]
   );
 
   const updateEntries = useCallback(
@@ -93,13 +98,13 @@ export function useWorkscheduleUser() {
         Alert.alert("Thành công", "Đã cập nhật lịch");
         return true;
       } catch (err: any) {
-        Alert.alert("Lỗi", err?.response?.data?.message || "Không thể cập nhật lịch");
+        handleError(err, "Không thể cập nhật lịch");
         return false;
       } finally {
         setLoading(false);
       }
     },
-    [api, getHeaders]
+    [api, getHeaders, handleError]
   );
 
   const submitRequest = useCallback(
@@ -111,13 +116,13 @@ export function useWorkscheduleUser() {
         Alert.alert("Thành công", "Đã nộp lịch để chờ duyệt");
         return true;
       } catch (err: any) {
-        Alert.alert("Lỗi", err?.response?.data?.message || "Không thể nộp lịch");
+        handleError(err, "Không thể nộp lịch");
         return false;
       } finally {
         setLoading(false);
       }
     },
-    [api, getHeaders]
+    [api, getHeaders, handleError]
   );
 
   const deleteRequest = useCallback(
@@ -129,13 +134,13 @@ export function useWorkscheduleUser() {
         Alert.alert("Thành công", "Đã xoá lịch nháp");
         return true;
       } catch (err: any) {
-        Alert.alert("Lỗi", err?.response?.data?.message || "Không thể xoá lịch");
+        handleError(err, "Không thể xoá lịch");
         return false;
       } finally {
         setLoading(false);
       }
     },
-    [api, getHeaders]
+    [api, getHeaders, handleError]
   );
 
   return {

@@ -1,7 +1,126 @@
 import React, { useState } from "react";
-import { View, Text, TextInput, Pressable } from "react-native";
+import { View, Text, Pressable, Platform } from "react-native";
 import { useAdminData } from "@/context/AdminContext";
 import { Ionicons } from "@expo/vector-icons";
+import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
+
+interface AdminDatePickerProps {
+  value: string;
+  onChange: (value: string) => void;
+  disabled: boolean;
+  placeholder: string;
+}
+
+const formatToYYYYMMDDHHmm = (d: Date) => {
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+};
+
+function AdminDatePicker({ value, onChange, disabled, placeholder }: AdminDatePickerProps) {
+  let dateValue = new Date(value.replace(" ", "T"));
+  if (isNaN(dateValue.getTime())) {
+    dateValue = new Date();
+  }
+
+  if (Platform.OS === "web") {
+    const webVal = value ? value.replace(" ", "T") : "";
+    return (
+      <input
+        type="datetime-local"
+        value={webVal}
+        disabled={disabled}
+        onChange={(e) => {
+          const val = e.target.value; // YYYY-MM-DDTHH:mm
+          const formatted = val.replace("T", " ");
+          onChange(formatted);
+        }}
+        style={{
+          borderWidth: 1,
+          borderColor: '#cbd5e1',
+          borderRadius: 16,
+          padding: '12px 16px',
+          backgroundColor: disabled ? '#f1f5f9' : '#f8fafc',
+          color: disabled ? '#94a3b8' : '#0f172a',
+          fontSize: 16,
+          fontFamily: 'inherit',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}
+      />
+    );
+  }
+
+  if (Platform.OS === "android") {
+    const handlePress = () => {
+      if (disabled) return;
+      
+      DateTimePickerAndroid.open({
+        value: dateValue,
+        mode: "date",
+        is24Hour: true,
+        onChange: (_event, selectedDate) => {
+          if (!selectedDate) return;
+          const baseDate = new Date(selectedDate);
+
+          DateTimePickerAndroid.open({
+            value: dateValue,
+            mode: "time",
+            is24Hour: true,
+            onChange: (_timeEvent, selectedTime) => {
+              const finalDate = new Date(baseDate);
+              if (selectedTime) {
+                finalDate.setHours(selectedTime.getHours());
+                finalDate.setMinutes(selectedTime.getMinutes());
+              }
+              finalDate.setSeconds(0);
+              finalDate.setMilliseconds(0);
+              onChange(formatToYYYYMMDDHHmm(finalDate));
+            },
+          });
+        },
+      });
+    };
+
+    return (
+      <Pressable
+        onPress={handlePress}
+        disabled={disabled}
+        className={`border rounded-2xl px-4 py-3 flex-row items-center justify-between ${disabled ? "bg-slate-100 border-slate-200/50" : "bg-slate-50 border-slate-200"}`}
+      >
+        <Text className={`font-medium ${disabled ? "text-slate-400" : "text-slate-900"}`}>
+          {value || placeholder}
+        </Text>
+        <Ionicons name="calendar-outline" size={18} color={disabled ? "#94a3b8" : "#64748b"} />
+      </Pressable>
+    );
+  }
+
+  // iOS Platform
+  return (
+    <View 
+      className={`border rounded-2xl px-4 py-2 flex-row items-center justify-between ${disabled ? "bg-slate-100 border-slate-200/50" : "bg-slate-50 border-slate-200"}`}
+    >
+      <Text className={`font-medium mr-2 ${disabled ? "text-slate-400" : "text-slate-900"}`}>
+        {value || placeholder}
+      </Text>
+      <DateTimePicker
+        value={dateValue}
+        mode="datetime"
+        display="compact"
+        disabled={disabled}
+        onChange={(_event, date) => {
+          if (date) {
+            onChange(formatToYYYYMMDDHHmm(date));
+          }
+        }}
+      />
+    </View>
+  );
+}
 
 export function PolicySection() {
   const { policy, policyDraft, setPolicyDraft, savingPolicy, handleSavePolicy, handleLockPolicy } = useAdminData();
@@ -56,26 +175,24 @@ export function PolicySection() {
 
           <View className="flex-row flex-wrap mt-4" style={{ gap: 12 }}>
             <View className="flex-1 min-w-[200px]">
-              <Text className="text-slate-600 text-xs font-semibold mb-2">Thời gian bắt đầu (YYYY-MM-DD HH:mm)</Text>
-              <TextInput
+              <Text className="text-slate-600 text-xs font-semibold mb-2">Thời gian bắt đầu</Text>
+              <AdminDatePicker
                 value={policyDraft.registration_start}
-                onChangeText={(text) =>
+                onChange={(text) =>
                   setPolicyDraft((previous) => ({ ...previous, registration_start: text }))
                 }
-                editable={!policyDraft.locked}
-                className={`border rounded-2xl px-4 py-3 font-medium ${policyDraft.locked ? "bg-slate-100 text-slate-400 border-slate-200/50" : "bg-slate-50 text-slate-900 border-slate-200"}`}
+                disabled={policyDraft.locked}
                 placeholder="2026-05-01 00:00"
               />
             </View>
             <View className="flex-1 min-w-[200px]">
-              <Text className="text-slate-600 text-xs font-semibold mb-2">Thời gian kết thúc (YYYY-MM-DD HH:mm)</Text>
-              <TextInput
+              <Text className="text-slate-600 text-xs font-semibold mb-2">Thời gian kết thúc</Text>
+              <AdminDatePicker
                 value={policyDraft.registration_end}
-                onChangeText={(text) =>
+                onChange={(text) =>
                   setPolicyDraft((previous) => ({ ...previous, registration_end: text }))
                 }
-                editable={!policyDraft.locked}
-                className={`border rounded-2xl px-4 py-3 font-medium ${policyDraft.locked ? "bg-slate-100 text-slate-400 border-slate-200/50" : "bg-slate-50 text-slate-900 border-slate-200"}`}
+                disabled={policyDraft.locked}
                 placeholder="2026-05-31 23:59"
               />
             </View>

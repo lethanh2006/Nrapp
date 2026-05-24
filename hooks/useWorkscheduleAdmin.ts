@@ -77,6 +77,7 @@ export function useWorkscheduleAdmin() {
 
   const handleError = useCallback((error: any, fallback: string, silent?: boolean) => {
     if (silent) return;
+    if (error?.response?.status === 401) return;
     Alert.alert("Lỗi", error?.response?.data?.message || fallback);
   }, []);
 

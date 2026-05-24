@@ -12,7 +12,7 @@ export default function IndexScreen() {
   useEffect(() => {
     if (loading) return;
     if (isAuth) {
-      router.replace('/(main)/chat');
+      router.replace('/(main)/home');
     } else {
       router.replace('/(auth)/login');
     }
