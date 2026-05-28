@@ -339,6 +339,8 @@ export default function MainLayout() {
                           <Text className="text-white text-xs font-bold uppercase">
                             {scanResult.data.schedule_type === "office"
                               ? "Lên văn phòng (Office)"
+                              : scanResult.data.schedule_type === "remote"
+                              ? "Làm việc từ xa (Remote)"
                               : scanResult.data.schedule_type}
                           </Text>
                         </View>
