@@ -236,6 +236,7 @@ export default function TodoScreen() {
         isAdmin={isAdmin}
         tasks={tasks}
         users={selectableUsers}
+        currentUser={user}
         assignByTask={assignByTask}
         assigningTaskId={assigningTaskId}
         updatingTaskId={updatingTaskId}
@@ -251,5 +252,6 @@ export default function TodoScreen() {
         onRemoveTask={removeTask}
       />
     </ScrollView>
+
   );
 }

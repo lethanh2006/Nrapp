@@ -14,7 +14,7 @@ const getBaseUrl = () => {
       if (isEmulator) {
         return "http://10.0.2.2";
       }
-      return "http://172.16.8.112"; // ← IP WiFi
+      return "http://172.16.8.139"; // ← IP WiFi
     }
 
     return "http://192.168.30.178"; // ← iOS máy thật

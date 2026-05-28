@@ -1,3 +1,4 @@
+import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Text, View } from "react-native";
 
@@ -7,13 +8,19 @@ type Props = {
 
 export default function TodoIntroCard({ isAdmin }: Props) {
   return (
-    <View className="bg-gray-100 rounded-2xl p-4 border border-gray-200">
-      <Text className="text-xl font-semibold text-black">Todo</Text>
-      <Text className="text-gray-600 mt-1">
-        {isAdmin
-          ? "Che do admin: tao, giao va quan ly toan bo cong viec"
-          : "Che do user: theo doi va cap nhat cong viec duoc giao"}
-      </Text>
+    <View className="bg-blue-50/50 rounded-2xl p-4 border border-blue-100/60 flex-row items-center">
+      <View className="bg-blue-500/10 p-2.5 rounded-xl mr-3">
+        <Ionicons name="clipboard-outline" size={24} color="#3b82f6" />
+      </View>
+      <View className="flex-1">
+        <Text className="text-lg font-bold text-slate-800">Không gian công việc</Text>
+        <Text className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+          {isAdmin
+            ? "Chế độ quản trị: Tạo mới, bàn giao và giám sát tiến độ công việc toàn hệ thống."
+            : "Chế độ nhân viên: Theo dõi, thực hiện và cập nhật trạng thái công việc được giao."}
+        </Text>
+      </View>
     </View>
   );
 }
+
