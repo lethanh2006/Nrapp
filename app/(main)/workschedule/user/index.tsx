@@ -66,6 +66,28 @@ export default function WorkscheduleUserDashboard() {
     return `${hh}:${min} ngày ${dd}/${mm}/${yyyy}`;
   };
 
+  const formatDateVi = (dateVal: string | Date | undefined) => {
+    if (!dateVal) return "";
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return "";
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  };
+
+  const formatDateTimeVi = (dateVal: string | Date | undefined) => {
+    if (!dateVal) return "";
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return "";
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    const hh = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    return `${hh}:${min} - ${dd}/${mm}/${yyyy}`;
+  };
+
   const isOutsideRegistrationWindow = useMemo(() => {
     if (!policy) return false;
     if (policy.locked) return true;
@@ -74,6 +96,17 @@ export default function WorkscheduleUserDashboard() {
     const end = new Date(policy.registration_end);
     return now < start || now > end;
   }, [policy]);
+
+  const allowedWeeksRange = useMemo(() => {
+    const now = new Date();
+    const currentWeekMon = getWeekStartMonday(now);
+    const maxAllowedWeekMon = new Date(currentWeekMon);
+    maxAllowedWeekMon.setDate(maxAllowedWeekMon.getDate() + 28);
+    return {
+      start: currentWeekMon,
+      end: maxAllowedWeekMon,
+    };
+  }, []);
 
   // View Mode: "calendar" or "list"
   const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
@@ -145,7 +178,14 @@ export default function WorkscheduleUserDashboard() {
     return days;
   }, [selectedMonth, selectedYear]);
 
-  // Handle Month Navigation
+
+  const canGoNextMonth = useMemo(() => {
+    const maxDate = new Date(allowedWeeksRange.end.getFullYear(), allowedWeeksRange.end.getMonth(), 1);
+    const currentDisplayedDate = new Date(selectedYear, selectedMonth, 1);
+    return currentDisplayedDate < maxDate;
+  }, [selectedMonth, selectedYear, allowedWeeksRange]);
+
+
   const handlePrevMonth = () => {
     setCurrentDate(new Date(selectedYear, selectedMonth - 1, 1));
     const firstDayStr = toLocalISOString(new Date(selectedYear, selectedMonth - 1, 1));
@@ -153,6 +193,7 @@ export default function WorkscheduleUserDashboard() {
   };
 
   const handleNextMonth = () => {
+    if (!canGoNextMonth) return;
     setCurrentDate(new Date(selectedYear, selectedMonth + 1, 1));
     const firstDayStr = toLocalISOString(new Date(selectedYear, selectedMonth + 1, 1));
     setSelectedDateStr(firstDayStr);
@@ -189,9 +230,43 @@ export default function WorkscheduleUserDashboard() {
     return selectedDateWeekStatus === "approved" || selectedDateWeekStatus === "pending";
   }, [selectedDateWeekStatus]);
 
+  const isSelectedWeekAllowed = useMemo(() => {
+    const monday = getWeekStartMonday(selectedDate);
+    return monday >= allowedWeeksRange.start && monday <= allowedWeeksRange.end;
+  }, [selectedDate, allowedWeeksRange]);
+
+  const isSelectedDateReadOnly = useMemo(() => {
+    if (isSelectedDateInPast) return true;
+    if (isOutsideRegistrationWindow) return true;
+    if (isSelectedWeekReadOnly) return true;
+    if (!isSelectedWeekAllowed) return true;
+    return false;
+  }, [isSelectedDateInPast, isOutsideRegistrationWindow, isSelectedWeekReadOnly, isSelectedWeekAllowed]);
+
+  const readOnlyReason = useMemo(() => {
+    if (isSelectedDateInPast) {
+      return "Ngày đã trôi qua (Không thể chỉnh sửa)";
+    }
+    if (isOutsideRegistrationWindow) {
+      return "Hệ thống đang khóa cổng đăng ký";
+    }
+    if (isSelectedWeekReadOnly) {
+      if (selectedDateWeekStatus === "approved") {
+        return "Lịch tuần này đã được duyệt";
+      }
+      if (selectedDateWeekStatus === "pending") {
+        return "Lịch tuần này đang chờ duyệt";
+      }
+    }
+    if (!isSelectedWeekAllowed) {
+      return "Nằm ngoài phạm vi tuần được đăng ký";
+    }
+    return null;
+  }, [isSelectedDateInPast, isOutsideRegistrationWindow, isSelectedWeekReadOnly, selectedDateWeekStatus, isSelectedWeekAllowed]);
+
   // Modify schedule locally
   const handleUpdateLocalEntry = (field: "type" | "note", value: string) => {
-    if (isSelectedDateInPast || isSelectedWeekReadOnly) return;
+    if (isSelectedDateReadOnly) return;
     setModifiedEntries((prev) => ({
       ...prev,
       [selectedDateStr]: {
@@ -229,7 +304,7 @@ export default function WorkscheduleUserDashboard() {
   const handleSaveDraft = async () => {
     if (isOutsideRegistrationWindow) {
       Alert.alert("Lỗi", "Ngoài khoảng thời gian đăng ký lịch làm việc");
-      return;
+      return false;
     }
     try {
       setSaving(true);
@@ -251,6 +326,8 @@ export default function WorkscheduleUserDashboard() {
         if (!weekGroups[mondayStr]) weekGroups[mondayStr] = {};
         weekGroups[mondayStr][dateStr] = entriesToSave[dateStr];
       });
+
+      let allSuccess = true;
 
       // Persist week by week
       const groupMondays = Object.keys(weekGroups);
@@ -292,18 +369,31 @@ export default function WorkscheduleUserDashboard() {
 
         if (existingReq) {
           if (existingReq.status === "draft") {
-            await updateEntries(existingReq._id, weekEntries);
+            const success = await updateEntries(existingReq._id, weekEntries, false);
+            if (!success) {
+              allSuccess = false;
+            }
           }
         } else {
-          await createRequest(monday.toISOString(), weekEntries);
+          const result = await createRequest(monday.toISOString(), weekEntries, false);
+          if (!result) {
+            allSuccess = false;
+          }
         }
       }
 
-      setModifiedEntries({});
-      await loadData();
-      Alert.alert("Thành công", "Đã lưu nháp lịch làm việc thành công!");
+      if (allSuccess) {
+        setModifiedEntries({});
+        await loadData();
+        Alert.alert("Thành công", "Đã lưu nháp lịch làm việc thành công!");
+        return true;
+      } else {
+        await loadData();
+        return false;
+      }
     } catch (error) {
       Alert.alert("Lỗi", "Không thể lưu lịch làm việc");
+      return false;
     } finally {
       setSaving(false);
     }
@@ -321,8 +411,10 @@ export default function WorkscheduleUserDashboard() {
         { text: "Hủy", style: "cancel" },
         {
           text: "Lưu & Nộp", onPress: async () => {
-            await handleSaveDraft();
-            submitAllDrafts();
+            const success = await handleSaveDraft();
+            if (success) {
+              submitAllDrafts();
+            }
           }
         }
       ]);
@@ -409,30 +501,45 @@ export default function WorkscheduleUserDashboard() {
       ) : viewMode === "list" ? (
         <ScrollView contentContainerStyle={{ padding: 16 }}>
           {policy && (
-            <View className={`mb-4 p-4 rounded-3xl border flex-row items-center gap-3 shadow-xs ${
-              isOutsideRegistrationWindow 
-                ? "bg-rose-50 border-rose-100" 
-                : "bg-blue-50/60 border-blue-100/50"
-            }`}>
-              <View className={isOutsideRegistrationWindow ? "bg-rose-100 p-2 rounded-2xl" : "bg-blue-100 p-2 rounded-2xl"}>
-                <Ionicons 
-                  name={isOutsideRegistrationWindow ? "lock-closed" : "information-circle"} 
-                  size={18} 
-                  color={isOutsideRegistrationWindow ? "#e11d48" : "#2563eb"} 
-                />
+            <View className="mb-4 p-4 rounded-3xl border border-slate-200/80 bg-white shadow-xs">
+              <View className="flex-row items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                <View className="flex-row items-center space-x-2">
+                  <View className="bg-blue-50 p-1.5 rounded-xl">
+                    <Ionicons name="information-circle-outline" size={16} color="#2563eb" />
+                  </View>
+                  <Text className="text-xs font-black text-slate-800 ml-1.5">Thông tin đăng ký lịch</Text>
+                </View>
+                <View className={`px-2.5 py-0.5 rounded-full border ${isOutsideRegistrationWindow ? "bg-rose-50 border-rose-100" : "bg-emerald-50 border-emerald-100"}`}>
+                  <Text className={`text-[10px] font-black uppercase ${isOutsideRegistrationWindow ? "text-rose-600" : "text-emerald-600"}`}>
+                    {isOutsideRegistrationWindow ? "Đang Khóa" : "Đang Mở"}
+                  </Text>
+                </View>
               </View>
-              <View className="flex-1">
-                <Text className={`text-xs font-black mb-0.5 ${isOutsideRegistrationWindow ? "text-rose-900" : "text-blue-900"}`}>
-                  {isOutsideRegistrationWindow ? "Đã khóa đăng ký lịch làm việc" : "Thời gian đăng ký lịch làm việc"}
-                </Text>
-                <Text className={`text-[11px] font-bold leading-normal ${isOutsideRegistrationWindow ? "text-rose-700" : "text-blue-700"}`}>
-                  {policy.locked
-                    ? "Hệ thống hiện đang khóa đăng ký lịch làm việc. Bạn chỉ có thể xem lịch biểu hiện tại."
-                    : isOutsideRegistrationWindow 
-                      ? `Hệ thống hiện đang đóng đăng ký lịch. Thời hạn đăng ký từ ${formatDisplayDate(policy.registration_start)} đến ${formatDisplayDate(policy.registration_end)}.`
-                      : `Hệ thống đang mở đăng ký lịch từ ${formatDisplayDate(policy.registration_start)} đến ${formatDisplayDate(policy.registration_end)}.`
-                  }
-                </Text>
+
+              <View style={{ gap: 12 }}>
+                <View className="flex-row items-start space-x-3">
+                  <View className="bg-slate-50 p-2 rounded-2xl border border-slate-100 mt-0.5">
+                    <Ionicons name="time-outline" size={16} color="#64748b" />
+                  </View>
+                  <View className="flex-1 ml-2">
+                    <Text className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Thời gian mở cổng đăng ký</Text>
+                    <Text className="text-xs font-bold text-slate-700 mt-0.5">
+                      Từ {formatDateTimeVi(policy.registration_start)} đến {formatDateTimeVi(policy.registration_end)}
+                    </Text>
+                  </View>
+                </View>
+
+                <View className="flex-row items-start space-x-3">
+                  <View className="bg-slate-50 p-2 rounded-2xl border border-slate-100 mt-0.5">
+                    <Ionicons name="calendar-outline" size={16} color="#64748b" />
+                  </View>
+                  <View className="flex-1 ml-2">
+                    <Text className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Phạm vi các tuần được đăng ký</Text>
+                    <Text className="text-xs font-bold text-slate-700 mt-0.5">
+                      Tuần từ <Text className="text-blue-600 font-extrabold">{formatDateVi(allowedWeeksRange.start)}</Text> đến tuần <Text className="text-blue-600 font-extrabold">{formatDateVi(allowedWeeksRange.end)}</Text>
+                    </Text>
+                  </View>
+                </View>
               </View>
             </View>
           )}
@@ -457,30 +564,45 @@ export default function WorkscheduleUserDashboard() {
       ) : (
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           {policy && (
-            <View className={`mx-4 mt-4 p-4 rounded-3xl border flex-row items-center gap-3 shadow-xs ${
-              isOutsideRegistrationWindow 
-                ? "bg-rose-50 border-rose-100" 
-                : "bg-blue-50/60 border-blue-100/50"
-            }`}>
-              <View className={isOutsideRegistrationWindow ? "bg-rose-100 p-2 rounded-2xl" : "bg-blue-100 p-2 rounded-2xl"}>
-                <Ionicons 
-                  name={isOutsideRegistrationWindow ? "lock-closed" : "information-circle"} 
-                  size={18} 
-                  color={isOutsideRegistrationWindow ? "#e11d48" : "#2563eb"} 
-                />
+            <View className="mx-4 mt-4 p-4 rounded-3xl border border-slate-200/80 bg-white shadow-xs">
+              <View className="flex-row items-center justify-between pb-3 border-b border-slate-100 mb-3">
+                <View className="flex-row items-center space-x-2">
+                  <View className="bg-blue-50 p-1.5 rounded-xl">
+                    <Ionicons name="information-circle-outline" size={16} color="#2563eb" />
+                  </View>
+                  <Text className="text-xs font-black text-slate-800 ml-1.5">Thông tin đăng ký lịch</Text>
+                </View>
+                <View className={`px-2.5 py-0.5 rounded-full border ${isOutsideRegistrationWindow ? "bg-rose-50 border-rose-100" : "bg-emerald-50 border-emerald-100"}`}>
+                  <Text className={`text-[10px] font-black uppercase ${isOutsideRegistrationWindow ? "text-rose-600" : "text-emerald-600"}`}>
+                    {isOutsideRegistrationWindow ? "Đang Khóa" : "Đang Mở"}
+                  </Text>
+                </View>
               </View>
-              <View className="flex-1">
-                <Text className={`text-xs font-black mb-0.5 ${isOutsideRegistrationWindow ? "text-rose-900" : "text-blue-900"}`}>
-                  {isOutsideRegistrationWindow ? "Đã khóa đăng ký lịch làm việc" : "Thời gian đăng ký lịch làm việc"}
-                </Text>
-                <Text className={`text-[11px] font-bold leading-normal ${isOutsideRegistrationWindow ? "text-rose-700" : "text-blue-700"}`}>
-                  {policy.locked
-                    ? "Hệ thống hiện đang khóa đăng ký lịch làm việc. Bạn chỉ có thể xem lịch biểu hiện tại."
-                    : isOutsideRegistrationWindow 
-                      ? `Hệ thống hiện đang đóng đăng ký lịch. Thời hạn đăng ký từ ${formatDisplayDate(policy.registration_start)} đến ${formatDisplayDate(policy.registration_end)}.`
-                      : `Hệ thống đang mở đăng ký lịch từ ${formatDisplayDate(policy.registration_start)} đến ${formatDisplayDate(policy.registration_end)}.`
-                  }
-                </Text>
+
+              <View style={{ gap: 12 }}>
+                <View className="flex-row items-start space-x-3">
+                  <View className="bg-slate-50 p-2 rounded-2xl border border-slate-100 mt-0.5">
+                    <Ionicons name="time-outline" size={16} color="#64748b" />
+                  </View>
+                  <View className="flex-1 ml-2">
+                    <Text className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Thời gian mở cổng đăng ký</Text>
+                    <Text className="text-xs font-bold text-slate-700 mt-0.5">
+                      Từ {formatDateTimeVi(policy.registration_start)} đến {formatDateTimeVi(policy.registration_end)}
+                    </Text>
+                  </View>
+                </View>
+
+                <View className="flex-row items-start space-x-3">
+                  <View className="bg-slate-50 p-2 rounded-2xl border border-slate-100 mt-0.5">
+                    <Ionicons name="calendar-outline" size={16} color="#64748b" />
+                  </View>
+                  <View className="flex-1 ml-2">
+                    <Text className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Phạm vi các tuần được đăng ký</Text>
+                    <Text className="text-xs font-bold text-slate-700 mt-0.5">
+                      Tuần từ <Text className="text-blue-600 font-extrabold">{formatDateVi(allowedWeeksRange.start)}</Text> đến tuần <Text className="text-blue-600 font-extrabold">{formatDateVi(allowedWeeksRange.end)}</Text>
+                    </Text>
+                  </View>
+                </View>
               </View>
             </View>
           )}
@@ -494,8 +616,12 @@ export default function WorkscheduleUserDashboard() {
               <Text className="text-base font-extrabold text-slate-800">
                 Tháng {selectedMonth + 1} - {selectedYear}
               </Text>
-              <Pressable onPress={handleNextMonth} className="p-2 bg-slate-50 rounded-xl active:scale-95 border border-slate-100">
-                <Ionicons name="chevron-forward" size={16} color="#475569" />
+              <Pressable
+                onPress={handleNextMonth}
+                disabled={!canGoNextMonth}
+                className={`p-2 rounded-xl border border-slate-100 ${!canGoNextMonth ? "bg-slate-50 opacity-30" : "bg-slate-50 active:scale-95"}`}
+              >
+                <Ionicons name="chevron-forward" size={16} color={!canGoNextMonth ? "#cbd5e1" : "#475569"} />
               </Pressable>
             </View>
 
@@ -597,28 +723,7 @@ export default function WorkscheduleUserDashboard() {
             </View>
           </View>
 
-          {/* Submit Monthly Schedule Button */}
-          {schedules.some((s) => {
-            const mon = getWeekStartMonday(new Date(s.week_start));
-            return (
-              s.status === "draft" &&
-              (new Date(s.week_start).getMonth() === selectedMonth ||
-                mon.getMonth() === selectedMonth)
-            );
-          }) && !isOutsideRegistrationWindow && (
-              <View className="mx-4 mt-3">
-                <Pressable
-                  onPress={handleSubmitMonth}
-                  disabled={saving}
-                  className="bg-emerald-600 active:scale-95 py-3.5 rounded-2xl flex-row items-center justify-center space-x-2 shadow-md shadow-emerald-100"
-                >
-                  <Ionicons name="paper-plane-outline" size={16} color="white" />
-                  <Text className="text-white font-extrabold text-xs ml-1">
-                    {saving ? "Đang xử lý..." : `Nộp lịch đăng ký tháng ${selectedMonth + 1}`}
-                  </Text>
-                </Pressable>
-              </View>
-            )}
+
 
           {/* Edit Panel for Selected Date */}
           <View className="mx-4 mt-3 mb-24 bg-white p-5 rounded-3xl border border-slate-200/80 shadow-xs">
@@ -652,78 +757,68 @@ export default function WorkscheduleUserDashboard() {
               </View>
             </View>
 
-            {isSelectedDateInPast ? (
-              <View className="bg-rose-50/50 p-4 rounded-2xl border border-rose-100/50 flex-row items-center space-x-2">
-                <Ionicons name="alert-circle-outline" size={18} color="#e11d48" />
-                <Text className="text-[12px] font-bold text-rose-600 flex-1 ml-1 leading-normal">
-                  Ngày này đã trôi qua. Không thể chỉnh sửa lịch làm việc lịch sử.
+            {readOnlyReason && (
+              <View className="mb-4 p-3 bg-slate-50 border border-slate-100 rounded-2xl flex-row items-center space-x-2">
+                <Ionicons name="lock-closed" size={14} color="#64748b" />
+                <Text className="text-[11px] font-black text-slate-500 ml-1.5 flex-1">
+                  Chỉ xem: {readOnlyReason}
                 </Text>
               </View>
-            ) : isOutsideRegistrationWindow ? (
-              <View className="bg-rose-50/50 p-4 rounded-2xl border border-rose-100/50 flex-row items-center space-x-2">
-                <Ionicons name="lock-closed-outline" size={18} color="#e11d48" />
-                <Text className="text-[12px] font-bold text-rose-600 flex-1 ml-1 leading-normal">
-                  Ngoài khoảng thời gian đăng ký lịch làm việc. Vui lòng liên hệ Admin để biết thêm chi tiết.
-                </Text>
-              </View>
-            ) : isSelectedWeekReadOnly ? (
-              <View className="bg-amber-50/50 p-4 rounded-2xl border border-amber-100/50 flex-row items-center space-x-2">
-                <Ionicons name="lock-closed-outline" size={18} color="#d97706" />
-                <Text className="text-[12px] font-bold text-amber-600 flex-1 ml-1 leading-normal">
-                  Tuần này đã được nộp hoặc phê duyệt. Liên hệ Admin nếu cần chỉnh sửa.
-                </Text>
-              </View>
-            ) : (
-              <View style={{ gap: 16 }}>
-                {/* Option Selector Cards */}
-                <View className="flex-row flex-wrap gap-2.5">
-                  {typeOptions
-                    .filter((opt) => opt.value === "office" || opt.value === "remote")
-                    .map((opt) => {
-                      const isSelected = selectedDateEntry.type === opt.value;
-                      return (
-                        <Pressable
-                          key={opt.value}
-                          onPress={() => {
-                            const nextType = isSelected ? "day_off" : opt.value;
-                            handleUpdateLocalEntry("type", nextType);
-                          }}
-                          className={`flex-1 min-w-[120px] p-3 rounded-2xl border flex-row items-center justify-between active:scale-95 ${isSelected
-                              ? "bg-slate-900 border-slate-900 shadow-xs"
-                              : "bg-slate-50 border-slate-200/60"
-                            }`}
-                        >
-                          <View className="flex-row items-center space-x-2">
-                            <Ionicons
-                              name={opt.icon as any}
-                              size={16}
-                              color={isSelected ? "#fff" : "#64748b"}
-                            />
-                            <Text
-                              className={`text-xs font-black ml-1.5 ${isSelected ? "text-white" : "text-slate-600"
-                                }`}
-                            >
-                              {opt.label}
-                            </Text>
-                          </View>
-                          {isSelected && <Ionicons name="checkmark-circle" size={14} color="#fff" />}
-                        </Pressable>
-                      );
-                    })}
-                </View>
+            )}
 
-                {/* Note Field */}
-                <View>
-                  <Text className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider mb-1.5">Ghi chú công việc</Text>
-                  <TextInput
-                    value={selectedDateEntry.note}
-                    onChangeText={(text) => handleUpdateLocalEntry("note", text)}
-                    placeholder="Nhập ghi chú công việc (Ví dụ: Remote buổi sáng...)"
-                    className="bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-3.5 text-xs text-slate-800 font-bold focus:border-slate-800"
-                  />
-                </View>
+            <View style={{ gap: 16 }}>
+              {/* Option Selector Cards */}
+              <View className="flex-row flex-wrap gap-2.5">
+                {typeOptions
+                  .filter((opt) => opt.value === "office" || opt.value === "remote")
+                  .map((opt) => {
+                    const isSelected = selectedDateEntry.type === opt.value;
+                    return (
+                      <Pressable
+                        key={opt.value}
+                        disabled={isSelectedDateReadOnly}
+                        onPress={() => {
+                          const nextType = isSelected ? "day_off" : opt.value;
+                          handleUpdateLocalEntry("type", nextType);
+                        }}
+                        className={`flex-1 min-w-[120px] p-3 rounded-2xl border flex-row items-center justify-between active:scale-95 ${isSelected
+                          ? "bg-slate-900 border-slate-900 shadow-xs"
+                          : "bg-slate-50 border-slate-200/60"
+                          } ${isSelectedDateReadOnly ? "opacity-60" : ""}`}
+                      >
+                        <View className="flex-row items-center space-x-2">
+                          <Ionicons
+                            name={opt.icon as any}
+                            size={16}
+                            color={isSelected ? "#fff" : "#64748b"}
+                          />
+                          <Text
+                            className={`text-xs font-black ml-1.5 ${isSelected ? "text-white" : "text-slate-600"
+                              }`}
+                          >
+                            {opt.label}
+                          </Text>
+                        </View>
+                        {isSelected && <Ionicons name="checkmark-circle" size={14} color="#fff" />}
+                      </Pressable>
+                    );
+                  })}
+              </View>
 
-                {/* Register Draft Button */}
+              {/* Note Field */}
+              <View>
+                <Text className="text-[10px] text-slate-400 font-extrabold uppercase tracking-wider mb-1.5">Ghi chú công việc</Text>
+                <TextInput
+                  value={selectedDateEntry.note}
+                  editable={!isSelectedDateReadOnly}
+                  onChangeText={(text) => handleUpdateLocalEntry("note", text)}
+                  placeholder={isSelectedDateReadOnly ? "Không có ghi chú" : "Nhập ghi chú công việc (Ví dụ: Remote buổi sáng...)"}
+                  className={`bg-slate-50 border border-slate-200/80 rounded-2xl px-4 py-3.5 text-xs text-slate-800 font-bold focus:border-slate-800 ${isSelectedDateReadOnly ? "opacity-60" : ""}`}
+                />
+              </View>
+
+              {/* Register Draft Button */}
+              {!isSelectedDateReadOnly && (
                 <Pressable
                   onPress={handleSaveDraft}
                   disabled={saving}
@@ -734,8 +829,8 @@ export default function WorkscheduleUserDashboard() {
                     {saving ? "Đang xử lý..." : "Đăng ký lịch nháp"}
                   </Text>
                 </Pressable>
-              </View>
-            )}
+              )}
+            </View>
           </View>
         </ScrollView>
       )}

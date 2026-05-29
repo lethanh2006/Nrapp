@@ -6,6 +6,15 @@ const getDayName = (dayNum: number) => {
   const days = ["", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
   return days[dayNum] || `Thứ ${dayNum}`;
 };
+
+const getWeekStartMonday = (d: Date) => {
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = date.getDate() - (day === 0 ? 6 : day - 1);
+  const monday = new Date(date.setDate(diff));
+  monday.setHours(0, 0, 0, 0);
+  return monday;
+};
 import { useWorkscheduleUser } from "@/hooks/useWorkscheduleUser";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -31,6 +40,39 @@ export default function ScheduleDetailScreen() {
     const min = String(d.getMinutes()).padStart(2, "0");
     return `${hh}:${min} ngày ${dd}/${mm}/${yyyy}`;
   };
+
+  const formatDateVi = (dateVal: string | Date | undefined) => {
+    if (!dateVal) return "";
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return "";
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    return `${dd}/${mm}/${yyyy}`;
+  };
+
+  const formatDateTimeVi = (dateVal: string | Date | undefined) => {
+    if (!dateVal) return "";
+    const d = new Date(dateVal);
+    if (isNaN(d.getTime())) return "";
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+    const hh = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+    return `${hh}:${min} - ${dd}/${mm}/${yyyy}`;
+  };
+
+  const allowedWeeksRange = React.useMemo(() => {
+    const now = new Date();
+    const currentWeekMon = getWeekStartMonday(now);
+    const maxAllowedWeekMon = new Date(currentWeekMon);
+    maxAllowedWeekMon.setDate(maxAllowedWeekMon.getDate() + 28);
+    return {
+      start: currentWeekMon,
+      end: maxAllowedWeekMon,
+    };
+  }, []);
 
   const isOutsideRegistrationWindow = React.useMemo(() => {
     if (!policy) return false;
@@ -145,30 +187,45 @@ export default function ScheduleDetailScreen() {
         </View>
 
         {policy && (
-          <View className={`mb-6 p-4 rounded-3xl border flex-row items-center gap-3 shadow-xs ${
-            isOutsideRegistrationWindow 
-              ? "bg-rose-50 border-rose-100" 
-              : "bg-blue-50/60 border-blue-100/50"
-          }`}>
-            <View className={isOutsideRegistrationWindow ? "bg-rose-100 p-2 rounded-2xl" : "bg-blue-100 p-2 rounded-2xl"}>
-              <Ionicons 
-                name={isOutsideRegistrationWindow ? "lock-closed" : "information-circle"} 
-                size={18} 
-                color={isOutsideRegistrationWindow ? "#e11d48" : "#2563eb"} 
-              />
+          <View className="mb-6 p-4 rounded-3xl border border-slate-200/80 bg-white shadow-xs">
+            <View className="flex-row items-center justify-between pb-3 border-b border-slate-100 mb-3">
+              <View className="flex-row items-center space-x-2">
+                <View className="bg-blue-50 p-1.5 rounded-xl">
+                  <Ionicons name="information-circle-outline" size={16} color="#2563eb" />
+                </View>
+                <Text className="text-xs font-black text-slate-800 ml-1.5">Thông tin đăng ký lịch</Text>
+              </View>
+              <View className={`px-2.5 py-0.5 rounded-full border ${isOutsideRegistrationWindow ? "bg-rose-50 border-rose-100" : "bg-emerald-50 border-emerald-100"}`}>
+                <Text className={`text-[10px] font-black uppercase ${isOutsideRegistrationWindow ? "text-rose-600" : "text-emerald-600"}`}>
+                  {isOutsideRegistrationWindow ? "Đang Khóa" : "Đang Mở"}
+                </Text>
+              </View>
             </View>
-            <View className="flex-1">
-              <Text className={`text-xs font-black mb-0.5 ${isOutsideRegistrationWindow ? "text-rose-900" : "text-blue-900"}`}>
-                {isOutsideRegistrationWindow ? "Đã khóa đăng ký lịch làm việc" : "Thời gian đăng ký lịch làm việc"}
-              </Text>
-              <Text className={`text-[11px] font-bold leading-normal ${isOutsideRegistrationWindow ? "text-rose-700" : "text-blue-700"}`}>
-                {policy.locked
-                  ? "Hệ thống hiện đang khóa đăng ký lịch làm việc. Bạn chỉ có thể xem lịch biểu hiện tại."
-                  : isOutsideRegistrationWindow 
-                    ? `Hệ thống hiện đang đóng đăng ký lịch. Thời hạn đăng ký từ ${formatDisplayDate(policy.registration_start)} đến ${formatDisplayDate(policy.registration_end)}.`
-                    : `Hệ thống đang mở đăng ký lịch từ ${formatDisplayDate(policy.registration_start)} đến ${formatDisplayDate(policy.registration_end)}.`
-                }
-              </Text>
+
+            <View style={{ gap: 12 }}>
+              <View className="flex-row items-start space-x-3">
+                <View className="bg-slate-50 p-2 rounded-2xl border border-slate-100 mt-0.5">
+                  <Ionicons name="time-outline" size={16} color="#64748b" />
+                </View>
+                <View className="flex-1 ml-2">
+                  <Text className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Thời gian mở cổng đăng ký</Text>
+                  <Text className="text-xs font-bold text-slate-700 mt-0.5">
+                    Từ {formatDateTimeVi(policy.registration_start)} đến {formatDateTimeVi(policy.registration_end)}
+                  </Text>
+                </View>
+              </View>
+
+              <View className="flex-row items-start space-x-3">
+                <View className="bg-slate-50 p-2 rounded-2xl border border-slate-100 mt-0.5">
+                  <Ionicons name="calendar-outline" size={16} color="#64748b" />
+                </View>
+                <View className="flex-1 ml-2">
+                  <Text className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Phạm vi các tuần được đăng ký</Text>
+                  <Text className="text-xs font-bold text-slate-700 mt-0.5">
+                    Tuần từ <Text className="text-blue-600 font-extrabold">{formatDateVi(allowedWeeksRange.start)}</Text> đến tuần <Text className="text-blue-600 font-extrabold">{formatDateVi(allowedWeeksRange.end)}</Text>
+                  </Text>
+                </View>
+              </View>
             </View>
           </View>
         )}

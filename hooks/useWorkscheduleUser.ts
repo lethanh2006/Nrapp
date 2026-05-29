@@ -55,12 +55,14 @@ export function useWorkscheduleUser() {
   );
 
   const createRequest = useCallback(
-    async (week_start: string, entries: any[]): Promise<IScheduleRequest | null> => {
+    async (week_start: string, entries: any[], showAlert: boolean = true): Promise<IScheduleRequest | null> => {
       try {
         setLoading(true);
         const headers = await getHeaders();
         const res = await api.post("/schedule/requests", { week_start, entries }, { headers });
-        Alert.alert("Thành công", "Đã tạo lịch nháp");
+        if (showAlert) {
+          Alert.alert("Thành công", "Đã tạo lịch nháp");
+        }
         return res.data.data;
       } catch (err: any) {
         handleError(err, "Không thể tạo lịch");
@@ -90,12 +92,14 @@ export function useWorkscheduleUser() {
   );
 
   const updateEntries = useCallback(
-    async (id: string, entries: any[]): Promise<boolean> => {
+    async (id: string, entries: any[], showAlert: boolean = true): Promise<boolean> => {
       try {
         setLoading(true);
         const headers = await getHeaders();
         await api.patch(`/schedule/requests/${id}`, { entries }, { headers });
-        Alert.alert("Thành công", "Đã cập nhật lịch");
+        if (showAlert) {
+          Alert.alert("Thành công", "Đã cập nhật lịch");
+        }
         return true;
       } catch (err: any) {
         handleError(err, "Không thể cập nhật lịch");
