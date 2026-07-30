@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 interface ChatHeaderProps {
   user: any;
-  setSidebarOpen: (open: boolean) => void;
+  onBack: () => void;
   isTyping: boolean;
   otherUserId?: string;
   onlineUsers?: string[];
@@ -12,7 +12,7 @@ interface ChatHeaderProps {
 
 export default function ChatHeader({
   user,
-  setSidebarOpen,
+  onBack,
   isTyping,
   otherUserId,
   onlineUsers = [],
@@ -27,8 +27,8 @@ export default function ChatHeader({
 
   return (
     <View style={styles.header}>
-      <Pressable style={styles.menuBtn} onPress={() => setSidebarOpen(true)}>
-        <Ionicons name="menu" size={24} color="#666666" />
+      <Pressable style={styles.backBtn} onPress={onBack}>
+        <Ionicons name="arrow-back" size={24} color="#2563eb" />
       </Pressable>
 
       <View style={styles.userInfo}>
@@ -67,6 +67,8 @@ export default function ChatHeader({
 
 const styles = StyleSheet.create({
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 16,
     backgroundColor: '#ffffff',
     borderRadius: 12,
@@ -74,14 +76,15 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#e5e5ea',
   },
-  menuBtn: {
-    position: 'absolute',
-    top: 12,
-    right: 12,
-    padding: 8,
-    zIndex: 10,
+  backBtn: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
   },
   userInfo: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,

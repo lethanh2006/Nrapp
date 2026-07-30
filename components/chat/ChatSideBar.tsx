@@ -1,17 +1,18 @@
+import { Ionicons } from "@expo/vector-icons";
 import { Chats, User } from "@/context/AppContext";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import {
+  FlatList,
   Modal,
   Pressable,
-  ScrollView,
   StyleSheet,
   Text,
   TextInput,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 
 interface ChatSideBarProps {
+  embedded?: boolean;
   sidebarOpen: boolean;
   setSidebarOpen: (open: boolean) => void;
   showAllUsers: boolean;
@@ -25,7 +26,25 @@ interface ChatSideBarProps {
   onlineUsers?: string[];
 }
 
+const normalizePerson = (raw: any) => raw?.user ?? raw ?? {};
+
+const displayName = (raw: any) => {
+  const user = normalizePerson(raw);
+  return user.name || user.username || user.email || "Người dùng";
+};
+
+const formatRelativeTime = (value?: string) => {
+  if (!value) return "";
+  const date = new Date(value);
+  const elapsedMinutes = Math.floor((Date.now() - date.getTime()) / 60000);
+  if (elapsedMinutes < 1) return "Vừa xong";
+  if (elapsedMinutes < 60) return `${elapsedMinutes} phút`;
+  if (elapsedMinutes < 1440) return `${Math.floor(elapsedMinutes / 60)} giờ`;
+  return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
+};
+
 export default function ChatSideBar({
+  embedded = false,
   sidebarOpen,
   setSidebarOpen,
   showAllUsers,
@@ -38,365 +57,208 @@ export default function ChatSideBar({
   createChat,
   onlineUsers = [],
 }: ChatSideBarProps) {
-  const [searchQuery, setSearchQuery] = useState("");
+  const [query, setQuery] = useState("");
+  const [unreadOnly, setUnreadOnly] = useState(false);
+  const normalizedQuery = query.trim().toLowerCase();
 
-  const normalizedQuery = searchQuery.trim().toLowerCase();
-  const filteredUsers = users?.filter((u) => {
-    if (!u || u._id === loggedInUser?._id) return false;
-    const normalizedName = String(u.name ?? "").toLowerCase();
-    return normalizedName.includes(normalizedQuery);
-  });
+  const filteredUsers = useMemo(
+    () =>
+      (users ?? []).filter((user) => {
+        if (user._id === loggedInUser?._id) return false;
+        return displayName(user).toLowerCase().includes(normalizedQuery);
+      }),
+    [loggedInUser?._id, normalizedQuery, users],
+  );
 
-  const getDisplayName = (raw: any) => {
-    const u = raw?.user ?? raw;
-    return u?.name || u?.username || u?.email || "Unknown user";
-  };
+  const filteredChats = useMemo(
+    () =>
+      (chats ?? []).filter((item) => {
+        if (unreadOnly && !item.chat.unseenCount) return false;
+        return displayName(item.user).toLowerCase().includes(normalizedQuery);
+      }),
+    [chats, normalizedQuery, unreadOnly],
+  );
 
   const content = (
-    <View style={styles.sidebar}>
-      <View style={styles.header}>
-        <View style={styles.headerRow}>
-          <View style={styles.logo}>
-            <Ionicons name="chatbubbles" size={24} color="#fff" />
-          </View>
-          <Text style={styles.headerTitle}>
-            {showAllUsers ? "Chat mới" : "Tin nhắn"}
-          </Text>
-          <Pressable
-            style={[styles.toggleBtn, showAllUsers && styles.toggleBtnActive]}
-            onPress={() => setShowAllUsers((p) => !p)}
-          >
-            <Ionicons
-              name={showAllUsers ? "close" : "add"}
-              size={22}
-              color="#fff"
-            />
+    <View style={styles.container}>
+      <View style={styles.titleRow}>
+        {showAllUsers && (
+          <Pressable style={styles.iconButton} onPress={() => setShowAllUsers(false)}>
+            <Ionicons name="arrow-back" size={23} color="#111827" />
           </Pressable>
-        </View>
+        )}
+        <Text style={styles.title}>{showAllUsers ? "Tin nhắn mới" : "Đoạn chat"}</Text>
+        <Pressable
+          accessibilityLabel={showAllUsers ? "Đóng" : "Tạo cuộc trò chuyện"}
+          style={[styles.newButton, showAllUsers && styles.closeButton]}
+          onPress={() => setShowAllUsers((current) => !current)}
+        >
+          <Ionicons name={showAllUsers ? "close" : "create-outline"} size={23} color="#fff" />
+        </Pressable>
       </View>
 
-      <View style={styles.content}>
-        {showAllUsers ? (
-          <>
-            <View style={styles.searchWrap}>
-              <Ionicons name="search" size={18} color="#999999" />
-              <TextInput
-                style={styles.searchInput}
-                placeholder="Tìm user..."
-                placeholderTextColor="#aaaaaa"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-              />
-            </View>
-            <ScrollView
-              style={styles.list}
-              showsVerticalScrollIndicator={false}
-            >
-              {filteredUsers?.map((u) => (
-                <Pressable
-                  key={u._id || u.email}
-                  style={styles.userItem}
-                  onPress={() => createChat(u)}
-                >
-                  <View style={styles.avatarWrap}>
-                    <View style={styles.avatar}>
-                      <Ionicons name="person" size={24} color="#9ca3af" />
-                    </View>
-                    {onlineUsers.includes(u._id) && (
-                      <View style={styles.onlineDot} />
-                    )}
-                  </View>
-                  <Text style={styles.userName} numberOfLines={1}>
-                    {u.name || u.email || "Unknown user"}
-                  </Text>
-                </Pressable>
-              ))}
-            </ScrollView>
-          </>
-        ) : chats && chats.length > 0 ? (
-          <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
-            {chats.map((chat) => {
-              const isSelected = selectedUser === chat.chat._id;
-              const latest = chat.chat.latestMessage;
-              const isMe = latest?.sender === loggedInUser?._id;
-              const otherUser = chat.user || (chat as any).users?.user;
-              const otherOnline =
-                otherUser?._id && onlineUsers.includes(otherUser._id);
-
-              return (
-                <Pressable
-                  key={chat.chat._id}
-                  style={[
-                    styles.chatItem,
-                    isSelected && styles.chatItemSelected,
-                  ]}
-                  onPress={() => {
-                    setSelectedUser(chat.chat._id);
-                    setSidebarOpen(false);
-                  }}
-                >
-                  <View style={styles.avatarWrap}>
-                    <View style={styles.avatar}>
-                      <Ionicons name="person" size={24} color="#9ca3af" />
-                    </View>
-                    {otherOnline && <View style={styles.onlineDot} />}
-                  </View>
-                  <View style={styles.chatText}>
-                    <Text
-                      style={[
-                        styles.chatName,
-                        isSelected && styles.chatNameSelected,
-                      ]}
-                      numberOfLines={1}
-                    >
-                      {getDisplayName(otherUser)}
-                    </Text>
-                    {latest && (
-                      <Text style={styles.chatPreview} numberOfLines={1}>
-                        {isMe ? "Bạn: " : ""}
-                        {latest.text}
-                      </Text>
-                    )}
-                  </View>
-                  {(chat.chat.unseenCount || 0) > 0 && (
-                    <View style={styles.badge}>
-                      <Text style={styles.badgeText}>
-                        {chat.chat.unseenCount! > 99
-                          ? "99+"
-                          : chat.chat.unseenCount}
-                      </Text>
-                    </View>
-                  )}
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        ) : (
-          <View style={styles.empty}>
-            <View style={styles.emptyIcon}>
-              <Ionicons name="chatbubbles-outline" size={40} color="#6b7280" />
-            </View>
-            <Text style={styles.emptyText}>Chưa có cuộc trò chuyện</Text>
-            <Text style={styles.emptySub}>Tạo chat mới để bắt đầu</Text>
-          </View>
+      <View style={styles.searchBox}>
+        <Ionicons name="search" size={20} color="#6b7280" />
+        <TextInput
+          value={query}
+          onChangeText={setQuery}
+          placeholder={showAllUsers ? "Tìm người để nhắn tin" : "Tìm kiếm cuộc trò chuyện"}
+          placeholderTextColor="#6b7280"
+          style={styles.searchInput}
+        />
+        {!!query && (
+          <Pressable onPress={() => setQuery("")}>
+            <Ionicons name="close-circle" size={19} color="#9ca3af" />
+          </Pressable>
         )}
       </View>
+
+      {!showAllUsers && (
+        <View style={styles.filters}>
+          <Pressable
+            style={[styles.filter, !unreadOnly && styles.filterActive]}
+            onPress={() => setUnreadOnly(false)}
+          >
+            <Text style={[styles.filterText, !unreadOnly && styles.filterTextActive]}>Tất cả</Text>
+          </Pressable>
+          <Pressable
+            style={[styles.filter, unreadOnly && styles.filterActive]}
+            onPress={() => setUnreadOnly(true)}
+          >
+            <Text style={[styles.filterText, unreadOnly && styles.filterTextActive]}>Chưa đọc</Text>
+          </Pressable>
+        </View>
+      )}
+
+      {showAllUsers ? (
+        <FlatList
+          data={filteredUsers}
+          keyExtractor={(item) => item._id}
+          contentContainerStyle={styles.listContent}
+          keyboardShouldPersistTaps="handled"
+          renderItem={({ item }) => {
+            const online = onlineUsers.includes(item._id);
+            return (
+              <Pressable style={styles.row} onPress={() => createChat(item)}>
+                <View style={styles.avatarWrap}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>{displayName(item).charAt(0).toUpperCase()}</Text>
+                  </View>
+                  {online && <View style={styles.onlineDot} />}
+                </View>
+                <View style={styles.rowBody}>
+                  <Text style={styles.name} numberOfLines={1}>{displayName(item)}</Text>
+                  <Text style={styles.preview}>Nhấn để bắt đầu trò chuyện</Text>
+                </View>
+              </Pressable>
+            );
+          }}
+          ListEmptyComponent={<EmptyState text="Không tìm thấy người dùng" />}
+        />
+      ) : (
+        <FlatList
+          data={filteredChats}
+          keyExtractor={(item) => item.chat._id}
+          contentContainerStyle={styles.listContent}
+          keyboardShouldPersistTaps="handled"
+          renderItem={({ item }) => {
+            const person = normalizePerson(item.user);
+            const latest = item.chat.latestMessage;
+            const unread = item.chat.unseenCount ?? 0;
+            const online = person._id && onlineUsers.includes(String(person._id));
+            const selected = selectedUser === item.chat._id;
+            return (
+              <Pressable
+                style={[styles.row, selected && styles.rowSelected]}
+                onPress={() => {
+                  setSelectedUser(item.chat._id);
+                  setSidebarOpen(false);
+                }}
+              >
+                <View style={styles.avatarWrap}>
+                  <View style={styles.avatar}>
+                    <Text style={styles.avatarText}>{displayName(person).charAt(0).toUpperCase()}</Text>
+                  </View>
+                  {online && <View style={styles.onlineDot} />}
+                </View>
+                <View style={styles.rowBody}>
+                  <View style={styles.nameLine}>
+                    <Text style={[styles.name, unread > 0 && styles.unreadName]} numberOfLines={1}>
+                      {displayName(person)}
+                    </Text>
+                    <Text style={styles.time}>{formatRelativeTime(item.chat.updatedAt)}</Text>
+                  </View>
+                  <View style={styles.previewLine}>
+                    <Text style={[styles.preview, unread > 0 && styles.unreadPreview]} numberOfLines={1}>
+                      {latest ? `${latest.sender === loggedInUser?._id ? "Bạn: " : ""}${latest.text}` : "Chưa có tin nhắn"}
+                    </Text>
+                    {unread > 0 && (
+                      <View style={styles.badge}>
+                        <Text style={styles.badgeText}>{unread > 99 ? "99+" : unread}</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </Pressable>
+            );
+          }}
+          ListEmptyComponent={
+            <EmptyState text={unreadOnly ? "Không có tin nhắn chưa đọc" : "Chưa có cuộc trò chuyện"} />
+          }
+        />
+      )}
     </View>
   );
 
-  if (sidebarOpen) {
-    return (
-      <Modal
-        visible={sidebarOpen}
-        animationType="slide"
-        transparent
-        onRequestClose={() => setSidebarOpen(false)}
-      >
-        <View style={styles.modalWrapper}>
-          <Pressable
-            style={styles.overlay}
-            onPress={() => setSidebarOpen(false)}
-          />
-          <View style={styles.modalContent}>
-            <View style={styles.modalHandle} />
-            {content}
-          </View>
-        </View>
-      </Modal>
-    );
-  }
+  if (embedded) return content;
+  if (!sidebarOpen) return null;
+  return (
+    <Modal visible animationType="slide" onRequestClose={() => setSidebarOpen(false)}>
+      {content}
+    </Modal>
+  );
+}
 
-  return null;
+function EmptyState({ text }: { text: string }) {
+  return (
+    <View style={styles.empty}>
+      <Ionicons name="chatbubbles-outline" size={42} color="#9ca3af" />
+      <Text style={styles.emptyText}>{text}</Text>
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
-  modalWrapper: {
-    flex: 1,
-    justifyContent: "flex-end",
-  },
-  overlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.5)",
-  },
-  modalContent: {
-    backgroundColor: "#ffffff",
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    height: "85%",
-  },
-  modalHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: "#e5e5ea",
-    borderRadius: 2,
-    alignSelf: "center",
-    marginTop: 12,
-    marginBottom: 8,
-  },
-  sidebar: {
-    flex: 1,
-    backgroundColor: "#ffffff",
-  },
-  header: {
-    padding: 16,
-    paddingTop: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#e5e5ea",
-  },
-  headerRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  logo: {
-    padding: 8,
-    backgroundColor: "#0084FF",
-    borderRadius: 10,
-  },
-  headerTitle: {
-    flex: 1,
-    fontSize: 18,
-    fontWeight: "700",
-    color: "#000000",
-  },
-  toggleBtn: {
-    padding: 10,
-    backgroundColor: "#22c55e",
-    borderRadius: 10,
-  },
-  toggleBtnActive: {
-    backgroundColor: "#ef4444",
-  },
-  content: {
-    flex: 1,
-    padding: 16,
-  },
-  searchWrap: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-    backgroundColor: "#f5f5f5",
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    marginBottom: 12,
-  },
-  searchInput: {
-    flex: 1,
-    fontSize: 16,
-    color: "#000000",
-    padding: 0,
-  },
-  list: {
-    flex: 1,
-  },
-  userItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e5e5ea",
-    marginBottom: 8,
-  },
-  chatItem: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: "#e5e5ea",
-    marginBottom: 8,
-  },
-  chatItemSelected: {
-    backgroundColor: "#e8f0ff",
-    borderColor: "#0084FF",
-  },
-  avatarWrap: {
-    position: "relative",
-  },
-  avatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: "#f0f0f0",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  onlineDot: {
-    position: "absolute",
-    bottom: 2,
-    right: 2,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: "#22c55e",
-    borderWidth: 2,
-    borderColor: "#ffffff",
-  },
-  userName: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#000000",
-  },
-  chatText: {
-    flex: 1,
-    minWidth: 0,
-  },
-  chatName: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#000000",
-  },
-  chatNameSelected: {
-    color: "#0084FF",
-  },
-  chatPreview: {
-    fontSize: 13,
-    color: "#999999",
-    marginTop: 2,
-  },
-  badge: {
-    backgroundColor: "#ef4444",
-    borderRadius: 12,
-    minWidth: 24,
-    height: 24,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 6,
-  },
-  badgeText: {
-    color: "#fff",
-    fontSize: 12,
-    fontWeight: "700",
-  },
-  empty: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 40,
-  },
-  emptyIcon: {
-    padding: 16,
-    backgroundColor: "#f0f0f0",
-    borderRadius: 40,
-    marginBottom: 16,
-  },
-  emptyText: {
-    fontSize: 16,
-    fontWeight: "600",
-    color: "#999999",
-  },
-  emptySub: {
-    fontSize: 14,
-    color: "#aaaaaa",
-    marginTop: 8,
-  },
+  container: { flex: 1, backgroundColor: "#fff", paddingHorizontal: 16 },
+  titleRow: { flexDirection: "row", alignItems: "center", paddingTop: 14, paddingBottom: 12, gap: 10 },
+  title: { flex: 1, fontSize: 27, fontWeight: "800", color: "#111827" },
+  iconButton: { width: 42, height: 42, alignItems: "center", justifyContent: "center", borderRadius: 21, backgroundColor: "#f3f4f6" },
+  newButton: { width: 42, height: 42, borderRadius: 13, alignItems: "center", justifyContent: "center", backgroundColor: "#2563eb" },
+  closeButton: { backgroundColor: "#ef4444" },
+  searchBox: { flexDirection: "row", alignItems: "center", gap: 9, height: 44, borderRadius: 22, paddingHorizontal: 14, backgroundColor: "#f0f2f5" },
+  searchInput: { flex: 1, paddingVertical: 0, fontSize: 15, color: "#111827" },
+  filters: { flexDirection: "row", gap: 8, paddingVertical: 13 },
+  filter: { borderRadius: 18, paddingHorizontal: 16, paddingVertical: 8 },
+  filterActive: { backgroundColor: "#e7efff" },
+  filterText: { fontSize: 14, fontWeight: "700", color: "#374151" },
+  filterTextActive: { color: "#2563eb" },
+  listContent: { flexGrow: 1, paddingBottom: 20 },
+  row: { flexDirection: "row", alignItems: "center", minHeight: 76, paddingVertical: 8, borderRadius: 14 },
+  rowSelected: { backgroundColor: "#eff6ff" },
+  avatarWrap: { position: "relative", marginRight: 12 },
+  avatar: { width: 58, height: 58, borderRadius: 29, backgroundColor: "#e5e7eb", alignItems: "center", justifyContent: "center" },
+  avatarText: { fontSize: 22, fontWeight: "700", color: "#6b7280" },
+  onlineDot: { position: "absolute", right: 1, bottom: 2, width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: "#fff", backgroundColor: "#22c55e" },
+  rowBody: { flex: 1, minWidth: 0 },
+  nameLine: { flexDirection: "row", alignItems: "center", gap: 8 },
+  name: { flex: 1, fontSize: 16, fontWeight: "600", color: "#111827" },
+  unreadName: { fontWeight: "800" },
+  time: { fontSize: 12, color: "#9ca3af" },
+  previewLine: { flexDirection: "row", alignItems: "center", marginTop: 4, gap: 8 },
+  preview: { flex: 1, fontSize: 13, color: "#6b7280" },
+  unreadPreview: { fontWeight: "700", color: "#374151" },
+  badge: { minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: "#2563eb" },
+  badgeText: { color: "#fff", fontSize: 11, fontWeight: "800" },
+  empty: { flex: 1, minHeight: 260, alignItems: "center", justifyContent: "center", gap: 12 },
+  emptyText: { fontSize: 15, color: "#9ca3af" },
 });

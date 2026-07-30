@@ -12,6 +12,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
+  BackHandler,
   KeyboardAvoidingView,
   Platform,
   StyleSheet,
@@ -31,7 +32,6 @@ export default function ChatScreen() {
 
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [message, setMessage] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [chatUser, setChatUser] = useState<any>(null);
   const [showAllUser, setShowAllUser] = useState(false);
@@ -167,6 +167,19 @@ export default function ChatScreen() {
     };
   }, []);
 
+  useEffect(() => {
+    if (!selectedUser) return;
+    const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
+      setSelectedUser(null);
+      setChatUser(null);
+      setMessages(null);
+      setIsTyping(false);
+      void fetchChats();
+      return true;
+    });
+    return () => subscription.remove();
+  }, [fetchChats, selectedUser]);
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -175,15 +188,12 @@ export default function ChatScreen() {
     );
   }
 
-  return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
-      keyboardVerticalOffset={0}
-    >
+  if (!selectedUser) {
+    return (
       <ChatSideBar
-        sidebarOpen={sidebarOpen}
-        setSidebarOpen={setSidebarOpen}
+        embedded
+        sidebarOpen={false}
+        setSidebarOpen={() => undefined}
         showAllUsers={showAllUser}
         setShowAllUsers={setShowAllUser}
         users={users}
@@ -194,11 +204,25 @@ export default function ChatScreen() {
         createChat={createChat}
         onlineUsers={onlineUsers}
       />
+    );
+  }
 
+  return (
+    <KeyboardAvoidingView
+      style={styles.container}
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      keyboardVerticalOffset={0}
+    >
       <View style={styles.chatArea}>
         <ChatHeader
           user={chatUser}
-          setSidebarOpen={setSidebarOpen}
+          onBack={() => {
+            setSelectedUser(null);
+            setChatUser(null);
+            setMessages(null);
+            setIsTyping(false);
+            void fetchChats();
+          }}
           isTyping={isTyping}
           otherUserId={otherUserId}
           onlineUsers={onlineUsers}
