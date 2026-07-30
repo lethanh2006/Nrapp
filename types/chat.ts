@@ -6,6 +6,6 @@ export interface Message {
   image?: { url: string; publicId: string };
   messageType: 'text' | 'image';
   seen: boolean;
-  seenAt: string;
+  seenAt?: string;
   createdAt: string;
 }

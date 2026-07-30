@@ -4,7 +4,8 @@ import ChatSideBar from "@/components/chat/ChatSideBar";
 import MessageInput from "@/components/chat/MessageInput";
 import { User, useAppData } from "@/context/AppContext";
 import { useSocketData } from "@/context/SocketContext";
-import { API_ENDPOINTS, apiClient, createAuthHeaders } from "@/services/api";
+import { getApiErrorMessage } from "@/services/api";
+import { chatService } from "@/services/chat";
 import type { Message } from "@/types/chat";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
@@ -26,7 +27,6 @@ export default function ChatScreen() {
     users,
     fetchChats,
     setChats,
-    getToken,
   } = useAppData();
   const { socket, onlineUsers } = useSocketData();
 
@@ -47,14 +47,8 @@ export default function ChatScreen() {
 
   async function fetchChat() {
     if (!selectedUser) return;
-    const token = await getToken();
     try {
-      const { data } = await apiClient.get(
-        API_ENDPOINTS.chat.messages(selectedUser),
-        {
-          headers: createAuthHeaders(token),
-        },
-      );
+      const { data } = await chatService.getMessages(selectedUser);
       setMessages(data.messages);
       setChatUser(data.user);
       await fetchChats();
@@ -65,13 +59,8 @@ export default function ChatScreen() {
   }
 
   async function createChat(u: User) {
-    const token = await getToken();
     try {
-      const { data } = await apiClient.post(
-        API_ENDPOINTS.chat.create,
-        { userId: loggedInUser?._id, otherUserId: u._id },
-        { headers: createAuthHeaders(token) },
-      );
+      const { data } = await chatService.create(u._id);
       setSelectedUser(data.chatId);
       setShowAllUser(false);
       await fetchChats();
@@ -81,42 +70,11 @@ export default function ChatScreen() {
     }
   }
 
-  const handleMessageSend = async (e: any, imageUri?: string | null) => {
-    e?.preventDefault?.();
-    if (!message.trim() && !imageUri) return;
-
-    const token = await getToken();
+  const handleMessageSend = async () => {
+    const text = message.trim();
+    if (!text || !selectedUser) return;
     try {
-      const formData = new FormData();
-      formData.append("chatId", selectedUser!);
-      if (message.trim()) formData.append("text", message.trim());
-
-      if (imageUri) {
-        if (Platform.OS === "web") {
-          const response = await fetch(imageUri);
-          const blob = await response.blob();
-          const fileType = blob.type || "image/jpeg";
-          const extension = fileType.split("/")[1] || "jpg";
-          formData.append("image", blob, `photo.${extension}`);
-        } else {
-          const uriParts = imageUri.split("/");
-          const fileName = uriParts[uriParts.length - 1] || "photo.jpg";
-          const extParts = fileName.split(".");
-          const fileType = extParts[extParts.length - 1] || "jpg";
-          formData.append("image", {
-            uri: imageUri,
-            name: fileName,
-            type: `image/${fileType === "png" ? "png" : fileType === "gif" ? "gif" : "jpeg"}`,
-          } as any);
-        }
-      }
-
-      const { data } = await apiClient.post(API_ENDPOINTS.chat.message, formData, {
-        headers: {
-          ...createAuthHeaders(token),
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      const { data } = await chatService.sendText(selectedUser, text);
 
       setMessages((prev) => {
         const current = prev ? [...prev] : [];
@@ -124,13 +82,8 @@ export default function ChatScreen() {
         return [...current, data.message];
       });
       setMessage("");
-    } catch (err: any) {
-      console.error(err);
-
-      Alert.alert(
-        "Lỗi",
-        err?.response?.data?.message || err?.message || "Gửi không thành công",
-      );
+    } catch (err: unknown) {
+      Alert.alert("Lỗi", getApiErrorMessage(err, "Gửi không thành công"));
     }
   };
 
