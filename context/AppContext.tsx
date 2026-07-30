@@ -1,6 +1,5 @@
-import { BASE_URL } from "@/constants/api";
+import { API_ENDPOINTS, apiClient, createAuthHeaders } from "@/services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 const TOKEN_KEY = "token";
@@ -99,8 +98,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         setLoading(false);
         return;
       }
-      const { data } = await axios.get(`${BASE_URL}/user/me`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const { data } = await apiClient.get(API_ENDPOINTS.auth.me, {
+        headers: createAuthHeaders(token),
       });
       const userData = data.user || data;
       setUser(normalizeUser(userData));
@@ -130,8 +129,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     const token = await getToken();
     if (!token) return;
     try {
-      const { data } = await axios.get(`${BASE_URL}/chat/chat/all`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const { data } = await apiClient.get(API_ENDPOINTS.chat.all, {
+        headers: createAuthHeaders(token),
       });
       const rawChats = Array.isArray(data?.chats) ? data.chats : [];
       setChats(rawChats.map(normalizeChatItem));
@@ -144,8 +143,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     const token = await getToken();
     if (!token) return;
     try {
-      const { data } = await axios.get(`${BASE_URL}/user/user/all`, {
-        headers: { Authorization: `Bearer ${token}` },
+      const { data } = await apiClient.get(API_ENDPOINTS.user.all, {
+        headers: createAuthHeaders(token),
       });
       if (Array.isArray(data)) setUsers(data.map(normalizeUser));
       else if (data?.users) setUsers(data.users.map(normalizeUser));

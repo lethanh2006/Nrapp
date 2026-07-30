@@ -1,5 +1,4 @@
-import { BASE_URL } from "@/constants/api";
-import axios from "axios";
+import { API_ENDPOINTS, apiClient } from "@/services/api";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -34,11 +33,14 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      const { data } = await axios.post(`${BASE_URL}/user/register`, {
-        username: username.trim(),
-        email: email.trim(),
-        password: password.trim(),
-      });
+      const { data } = await apiClient.post(
+        API_ENDPOINTS.auth.register,
+        {
+          username: username.trim(),
+          email: email.trim(),
+          password: password.trim(),
+        },
+      );
 
       Alert.alert("Thành công", "Đăng ký tài khoản thành công!");
 
@@ -47,7 +49,8 @@ export default function RegisterScreen() {
         params: { email: email.trim() },
       });
     } catch (err: any) {
-      Alert.alert("Lỗi", err.response?.data?.message || "Không thể đăng ký");
+      console.log("REGISTER API ERROR:", err?.response?.data || err?.message || err);
+      Alert.alert("Lỗi", err.response?.data?.message || err?.message || "Không thể đăng ký");
     } finally {
       setLoading(false);
     }

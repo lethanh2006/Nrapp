@@ -1,7 +1,6 @@
-import { BASE_URL } from "@/constants/api";
 import { useAppData } from "@/context/AppContext";
-import axios from "axios";
-import { useCallback, useMemo, useState } from "react";
+import { API_ENDPOINTS, createAuthHeaders, workscheduleClient } from "@/services/api";
+import { useCallback, useState } from "react";
 import { Alert } from "react-native";
 import { IScheduleRequest, IWorkPolicy } from "../components/workschedule/types";
 
@@ -9,16 +8,10 @@ export function useWorkscheduleUser() {
   const { getToken, isAuth } = useAppData();
   const [loading, setLoading] = useState(false);
 
-  const api = useMemo(() => {
-    return axios.create({
-      baseURL: `${BASE_URL}/workschedule`,
-    });
-  }, []);
-
   const getHeaders = useCallback(async (): Promise<Record<string, string> | undefined> => {
     const token = await getToken();
     if (!token) return undefined;
-    return { Authorization: `Bearer ${token}` };
+    return createAuthHeaders(token);
   }, [getToken]);
 
   const handleError = useCallback((error: any, fallback: string) => {
@@ -29,12 +22,12 @@ export function useWorkscheduleUser() {
   const getPolicy = useCallback(async (): Promise<IWorkPolicy | null> => {
     try {
       const headers = await getHeaders();
-      const res = await api.get("/policy", { headers });
+      const res = await workscheduleClient.get(API_ENDPOINTS.workschedule.policy, { headers });
       return res.data.data;
     } catch (err) {
       return null;
     }
-  }, [api, getHeaders]);
+  }, [getHeaders]);
 
   const getMySchedules = useCallback(
     async (week?: string): Promise<IScheduleRequest[]> => {
@@ -42,7 +35,7 @@ export function useWorkscheduleUser() {
         setLoading(true);
         const headers = await getHeaders();
         const params = week ? { week } : {};
-        const res = await api.get("/schedule/my", { headers, params });
+        const res = await workscheduleClient.get(API_ENDPOINTS.workschedule.mySchedules, { headers, params });
         return res.data.data || [];
       } catch (err: any) {
         handleError(err, "Không thể tải danh sách lịch");
@@ -51,7 +44,7 @@ export function useWorkscheduleUser() {
         setLoading(false);
       }
     },
-    [api, getHeaders, handleError]
+    [getHeaders, handleError]
   );
 
   const createRequest = useCallback(
@@ -59,7 +52,7 @@ export function useWorkscheduleUser() {
       try {
         setLoading(true);
         const headers = await getHeaders();
-        const res = await api.post("/schedule/requests", { week_start, entries }, { headers });
+        const res = await workscheduleClient.post(API_ENDPOINTS.workschedule.requests, { week_start, entries }, { headers });
         if (showAlert) {
           Alert.alert("Thành công", "Đã tạo lịch nháp");
         }
@@ -71,7 +64,7 @@ export function useWorkscheduleUser() {
         setLoading(false);
       }
     },
-    [api, getHeaders, handleError]
+    [getHeaders, handleError]
   );
 
   const getRequestInfo = useCallback(
@@ -79,7 +72,7 @@ export function useWorkscheduleUser() {
       try {
         setLoading(true);
         const headers = await getHeaders();
-        const res = await api.get(`/schedule/requests/${id}`, { headers });
+        const res = await workscheduleClient.get(API_ENDPOINTS.workschedule.request(id), { headers });
         return res.data.data;
       } catch (err: any) {
         handleError(err, "Không thể tải thông tin lịch");
@@ -88,7 +81,7 @@ export function useWorkscheduleUser() {
         setLoading(false);
       }
     },
-    [api, getHeaders, handleError]
+    [getHeaders, handleError]
   );
 
   const updateEntries = useCallback(
@@ -96,7 +89,7 @@ export function useWorkscheduleUser() {
       try {
         setLoading(true);
         const headers = await getHeaders();
-        await api.patch(`/schedule/requests/${id}`, { entries }, { headers });
+        await workscheduleClient.patch(API_ENDPOINTS.workschedule.request(id), { entries }, { headers });
         if (showAlert) {
           Alert.alert("Thành công", "Đã cập nhật lịch");
         }
@@ -108,7 +101,7 @@ export function useWorkscheduleUser() {
         setLoading(false);
       }
     },
-    [api, getHeaders, handleError]
+    [getHeaders, handleError]
   );
 
   const submitRequest = useCallback(
@@ -116,7 +109,7 @@ export function useWorkscheduleUser() {
       try {
         setLoading(true);
         const headers = await getHeaders();
-        await api.post(`/schedule/requests/${id}/submit`, {}, { headers });
+        await workscheduleClient.post(API_ENDPOINTS.workschedule.submitRequest(id), {}, { headers });
         Alert.alert("Thành công", "Đã nộp lịch để chờ duyệt");
         return true;
       } catch (err: any) {
@@ -126,7 +119,7 @@ export function useWorkscheduleUser() {
         setLoading(false);
       }
     },
-    [api, getHeaders, handleError]
+    [getHeaders, handleError]
   );
 
   const deleteRequest = useCallback(
@@ -134,7 +127,7 @@ export function useWorkscheduleUser() {
       try {
         setLoading(true);
         const headers = await getHeaders();
-        await api.delete(`/schedule/requests/${id}`, { headers });
+        await workscheduleClient.delete(API_ENDPOINTS.workschedule.request(id), { headers });
         Alert.alert("Thành công", "Đã xoá lịch nháp");
         return true;
       } catch (err: any) {
@@ -144,7 +137,7 @@ export function useWorkscheduleUser() {
         setLoading(false);
       }
     },
-    [api, getHeaders, handleError]
+    [getHeaders, handleError]
   );
 
   return {

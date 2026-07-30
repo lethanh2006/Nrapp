@@ -2,11 +2,10 @@ import ChatHeader from "@/components/chat/ChatHeader";
 import ChatMessages from "@/components/chat/ChatMessages";
 import ChatSideBar from "@/components/chat/ChatSideBar";
 import MessageInput from "@/components/chat/MessageInput";
-import { BASE_URL } from "@/constants/api";
 import { User, useAppData } from "@/context/AppContext";
 import { useSocketData } from "@/context/SocketContext";
+import { API_ENDPOINTS, apiClient, createAuthHeaders } from "@/services/api";
 import type { Message } from "@/types/chat";
-import axios from "axios";
 import { router } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -50,10 +49,10 @@ export default function ChatScreen() {
     if (!selectedUser) return;
     const token = await getToken();
     try {
-      const { data } = await axios.get(
-        `${BASE_URL}/chat/message/${selectedUser}`,
+      const { data } = await apiClient.get(
+        API_ENDPOINTS.chat.messages(selectedUser),
         {
-          headers: { Authorization: `Bearer ${token}` },
+          headers: createAuthHeaders(token),
         },
       );
       setMessages(data.messages);
@@ -68,10 +67,10 @@ export default function ChatScreen() {
   async function createChat(u: User) {
     const token = await getToken();
     try {
-      const { data } = await axios.post(
-        `${BASE_URL}/chat/chat/new`,
+      const { data } = await apiClient.post(
+        API_ENDPOINTS.chat.create,
         { userId: loggedInUser?._id, otherUserId: u._id },
-        { headers: { Authorization: `Bearer ${token}` } },
+        { headers: createAuthHeaders(token) },
       );
       setSelectedUser(data.chatId);
       setShowAllUser(false);
@@ -112,9 +111,9 @@ export default function ChatScreen() {
         }
       }
 
-      const { data } = await axios.post(`${BASE_URL}/chat/message`, formData, {
+      const { data } = await apiClient.post(API_ENDPOINTS.chat.message, formData, {
         headers: {
-          Authorization: `Bearer ${token}`,
+          ...createAuthHeaders(token),
           "Content-Type": "multipart/form-data",
         },
       });

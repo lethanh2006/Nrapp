@@ -1,28 +1,39 @@
+import Constants from "expo-constants";
 import { Platform } from "react-native";
 
-const getBaseUrl = () => {
-  if (__DEV__) {
-    if (Platform.OS === "web") {
-      return "http://localhost";
-    }
+const API_PORT = process.env.EXPO_PUBLIC_API_PORT || "3000";
+const API_PATH = process.env.EXPO_PUBLIC_API_PATH || "/api";
 
-    if (Platform.OS === "android") {
-      const isEmulator = /google_sdk|emulator|android_x86/i.test(
-        Platform.constants?.Model || "",
-      );
+const trimTrailingSlash = (value: string) => value.replace(/\/+$/, "");
 
-      if (isEmulator) {
-        return "http://10.0.2.2";
-      }
-      return "http://172.16.8.139"; // ← IP WiFi
-    }
+const getExpoHost = () => {
+  const hostUri =
+    Constants.expoConfig?.hostUri ||
+    Constants.expoGoConfig?.debuggerHost ||
+    Constants.manifest2?.extra?.expoClient?.hostUri;
 
-    return "http://192.168.30.178"; // ← iOS máy thật
-  }
-
-  return "https://your-backend.com";
+  return typeof hostUri === "string" ? hostUri.split(":")[0] : undefined;
 };
 
-const base = getBaseUrl();
+const getDevelopmentOrigin = () => {
+  const expoHost = getExpoHost();
+  if (expoHost) return `http://${expoHost}:${API_PORT}`;
+  if (Platform.OS === "android") return `http://10.0.2.2:${API_PORT}`;
+  return `http://localhost:${API_PORT}`;
+};
 
-export const BASE_URL = `${base}:3000/api`;
+const configuredUrl = process.env.EXPO_PUBLIC_API_URL?.trim();
+
+if (!configuredUrl && !__DEV__) {
+  throw new Error("EXPO_PUBLIC_API_URL must be configured for production builds");
+}
+
+export const API_URL = trimTrailingSlash(
+  configuredUrl || `${getDevelopmentOrigin()}${API_PATH}`,
+);
+
+export const SOCKET_URL =
+  process.env.EXPO_PUBLIC_SOCKET_URL?.trim().replace(/\/+$/, "") ||
+  API_URL.replace(/\/api\/?$/, "");
+
+export const SOCKET_PATH = process.env.EXPO_PUBLIC_SOCKET_PATH || "/socket.io";

@@ -1,7 +1,6 @@
-import { BASE_URL } from "@/constants/api";
 import { useAppData } from "@/context/AppContext";
+import { API_ENDPOINTS, apiClient, createAuthHeaders } from "@/services/api";
 import { Ionicons } from "@expo/vector-icons";
-import axios from "axios";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { Stack, router, usePathname } from "expo-router";
 import { useEffect, useState } from "react";
@@ -63,10 +62,10 @@ export default function MainLayout() {
 
     try {
       const token = await getToken();
-      const response = await axios.post(
-        `${BASE_URL}/workschedule/attendance/scan`,
+      const response = await apiClient.post(
+        API_ENDPOINTS.workschedule.attendanceScan,
         { token: data },
-        { headers: { Authorization: `Bearer ${token}` } }
+        { headers: createAuthHeaders(token) }
       );
 
       if (response.data?.success) {

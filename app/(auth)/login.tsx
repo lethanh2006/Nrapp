@@ -1,6 +1,5 @@
-import { BASE_URL } from "@/constants/api";
 import { useAppData } from "@/context/AppContext";
-import axios from "axios";
+import { API_ENDPOINTS, apiClient } from "@/services/api";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -33,7 +32,7 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const { data } = await axios.post(`${BASE_URL}/user/login`, {
+      const { data } = await apiClient.post(API_ENDPOINTS.auth.login, {
         username: username.trim(),
         email: email.trim(),
         password: password.trim(),

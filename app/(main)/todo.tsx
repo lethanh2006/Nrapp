@@ -2,9 +2,8 @@ import TodoCreateTaskCard from "@/components/todo/TodoCreateTaskCard";
 import TodoIntroCard from "@/components/todo/TodoIntroCard";
 import TodoTaskListCard from "@/components/todo/TodoTaskListCard";
 import { TaskItem, TaskPriority, TaskStatus } from "@/components/todo/types";
-import { BASE_URL } from "@/constants/api";
 import { useAppData } from "@/context/AppContext";
-import axios from "axios";
+import { API_ENDPOINTS, createAuthHeaders, todoClient } from "@/services/api";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -39,16 +38,10 @@ export default function TodoScreen() {
     return (users || []).filter((candidate) => candidate._id !== currentUserId);
   }, [users, user?._id]);
 
-  const api = useMemo(() => {
-    return axios.create({
-      baseURL: `${BASE_URL}/todo`,
-    });
-  }, []);
-
   const authHeader = useCallback(async () => {
     const token = await getToken();
     if (!token) return null;
-    return { Authorization: `Bearer ${token}` };
+    return createAuthHeaders(token);
   }, [getToken]);
 
   const loadTasks = useCallback(async () => {
@@ -57,8 +50,8 @@ export default function TodoScreen() {
     if (!headers) return;
 
     try {
-      const endpoint = isAdmin ? "/" : "/my-tasks";
-      const { data } = await api.get(endpoint, { headers });
+      const endpoint = isAdmin ? API_ENDPOINTS.todo.all : API_ENDPOINTS.todo.mine;
+      const { data } = await todoClient.get(endpoint, { headers });
       setTasks(Array.isArray(data?.tasks) ? data.tasks : []);
     } catch (error: any) {
       Alert.alert(
@@ -66,7 +59,7 @@ export default function TodoScreen() {
         error?.response?.data?.message || "Khong tai duoc cong viec",
       );
     }
-  }, [api, authHeader, isAdmin, isAuth]);
+  }, [authHeader, isAdmin, isAuth]);
 
   useEffect(() => {
     let mounted = true;
@@ -111,7 +104,7 @@ export default function TodoScreen() {
       if (deadline) payload.deadline = deadline.toISOString();
       if (createAssignee) payload.assignedTo = createAssignee;
 
-      await api.post("/", payload, { headers });
+      await todoClient.post(API_ENDPOINTS.todo.all, payload, { headers });
       setTitle("");
       setDescription("");
       setPriority("medium");
@@ -146,7 +139,7 @@ export default function TodoScreen() {
 
     try {
       setAssigningTaskId(taskId);
-      await api.post(`/${taskId}/assign`, { assignedTo }, { headers });
+      await todoClient.post(API_ENDPOINTS.todo.assign(taskId), { assignedTo }, { headers });
       await loadTasks();
       Alert.alert("Thanh cong", "Da giao cong viec");
     } catch (error: any) {
@@ -165,7 +158,7 @@ export default function TodoScreen() {
 
     try {
       setUpdatingTaskId(taskId);
-      await api.patch(`/${taskId}/status`, { status }, { headers });
+      await todoClient.patch(API_ENDPOINTS.todo.status(taskId), { status }, { headers });
       await loadTasks();
     } catch (error: any) {
       Alert.alert(
@@ -183,7 +176,7 @@ export default function TodoScreen() {
 
     try {
       setDeletingTaskId(taskId);
-      await api.delete(`/${taskId}`, { headers });
+      await todoClient.delete(API_ENDPOINTS.todo.detail(taskId), { headers });
       await loadTasks();
       Alert.alert("Thanh cong", "Da xoa cong viec");
     } catch (error: any) {

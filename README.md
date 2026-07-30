@@ -16,6 +16,19 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npx expo start
    ```
 
+## API configuration
+
+Copy `.env.example` to `.env.local`, then set `EXPO_PUBLIC_API_URL` to the
+backend API URL. Restart Expo after changing environment variables.
+
+API hosts, clients, timeouts, socket settings, and endpoint paths are kept in:
+
+- `constants/api.ts`: environment-based API and socket configuration
+- `services/api.ts`: shared Axios clients and endpoint definitions
+
+In development, the app can infer the Expo host when `EXPO_PUBLIC_API_URL` is
+not set. Production builds require `EXPO_PUBLIC_API_URL`.
+
 In the output, you'll find options to open the app in a
 
 - [development build](https://docs.expo.dev/develop/development-builds/introduction/)

@@ -1,7 +1,6 @@
-import { BASE_URL } from "@/constants/api";
 import { User, useAppData } from "@/context/AppContext";
+import { API_ENDPOINTS, apiClient } from "@/services/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios from "axios";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -64,7 +63,7 @@ export default function VerifyScreen() {
     }
     setLoading(true);
     try {
-      const { data } = await axios.post(`${BASE_URL}/user/verify`, {
+      const { data } = await apiClient.post(API_ENDPOINTS.auth.verify, {
         email: email || "",
         otp: code,
       });

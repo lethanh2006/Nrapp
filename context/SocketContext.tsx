@@ -1,4 +1,4 @@
-import { BASE_URL } from "@/constants/api";
+import { SOCKET_PATH, SOCKET_URL } from "@/constants/api";
 import { useAppData } from "@/context/AppContext";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
@@ -19,15 +19,11 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   const { user } = useAppData();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
-  const socketUrl = BASE_URL.replace(/\/api\/?$/, "");
-
-  console.log("[Socket] Connecting to:", socketUrl);
-
   useEffect(() => {
     if (!user?._id) return;
 
-    const newSocket = io(socketUrl, {
-      path: "/socket.io",
+    const newSocket = io(SOCKET_URL, {
+      path: SOCKET_PATH,
       query: { userId: user._id },
       transports: ["websocket", "polling"],
     });
@@ -44,7 +40,7 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
     return () => {
       newSocket.disconnect();
     };
-  }, [user?._id, socketUrl]);
+  }, [user?._id]);
 
   return (
     <SocketContext.Provider value={{ socket, onlineUsers }}>
