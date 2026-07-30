@@ -46,10 +46,11 @@ export const chatService = {
         imageType: image?.mimeType,
       });
     }
-    const form = new FormData();
-    form.append("chatId", chatId);
-    if (text) form.append("text", text);
+    let payload: FormData | { chatId: string; text: string };
     if (image) {
+      const form = new FormData();
+      form.append("chatId", chatId);
+      if (text) form.append("text", text);
       if (typeof document !== "undefined") {
         const blob = await (await fetch(image.uri)).blob();
         form.append("image", blob, image.fileName || "chat-image.jpg");
@@ -60,10 +61,13 @@ export const chatService = {
           type: image.mimeType || "image/jpeg",
         } as unknown as Blob);
       }
+      payload = form;
+    } else {
+      payload = { chatId, text };
     }
     const response = await apiClient.post<{ message: Message; sender: string }>(
       API_ENDPOINTS.chat.message,
-      form,
+      payload,
     );
     if (__DEV__) {
       console.log("[CHAT][SEND_SUCCESS]", {
