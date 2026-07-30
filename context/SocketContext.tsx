@@ -16,31 +16,43 @@ const SocketContext = createContext<SocketContextType>({
 export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const { user } = useAppData();
+  const { getToken, user } = useAppData();
   const [socket, setSocket] = useState<Socket | null>(null);
   const [onlineUsers, setOnlineUsers] = useState<string[]>([]);
   useEffect(() => {
     if (!user?._id) return;
 
-    const newSocket = io(SOCKET_URL, {
-      path: SOCKET_PATH,
-      query: { userId: user._id },
-      transports: ["websocket", "polling"],
-    });
+    let newSocket: Socket | null = null;
+    let cancelled = false;
 
-    newSocket.on("connect_error", (err) => {
-      console.error("Socket error:", err.message);
-    });
+    const connect = async () => {
+      const token = await getToken();
+      if (!token || cancelled) return;
+      newSocket = io(SOCKET_URL, {
+        path: SOCKET_PATH,
+        auth: { token },
+        transports: ["websocket", "polling"],
+      });
 
-    newSocket.on("getOnlineUsers", (users: string[]) => {
-      setOnlineUsers(users);
-    });
+      newSocket.on("connect_error", (err) => {
+        console.error("Socket error:", err.message);
+      });
 
-    setSocket(newSocket);
-    return () => {
-      newSocket.disconnect();
+      newSocket.on("getOnlineUsers", (users: string[]) => {
+        setOnlineUsers(users);
+      });
+
+      setSocket(newSocket);
     };
-  }, [user?._id]);
+    connect();
+
+    return () => {
+      cancelled = true;
+      newSocket?.disconnect();
+      setSocket(null);
+      setOnlineUsers([]);
+    };
+  }, [getToken, user?._id]);
 
   return (
     <SocketContext.Provider value={{ socket, onlineUsers }}>

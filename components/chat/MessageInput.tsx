@@ -1,5 +1,9 @@
-import React from 'react';
+import type { ChatImageUpload } from '@/services/chat';
+import * as ImagePicker from 'expo-image-picker';
+import React, { useState } from 'react';
 import {
+  Alert,
+  Image,
   Pressable,
   StyleSheet,
   TextInput,
@@ -11,7 +15,7 @@ interface MessageInputProps {
   selectedUser: string | null;
   message: string;
   setMessage: (v: string) => void;
-  handleMessageSend: () => void;
+  handleMessageSend: (image?: ChatImageUpload) => Promise<boolean>;
 }
 
 export default function MessageInput({
@@ -20,16 +24,50 @@ export default function MessageInput({
   setMessage,
   handleMessageSend,
 }: MessageInputProps) {
-  const handleSubmit = () => {
-    if (!message.trim()) return;
-    handleMessageSend();
+  const [image, setImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
+  const [sending, setSending] = useState(false);
+
+  const pickImage = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      Alert.alert('Cần quyền truy cập', 'Vui lòng cho phép ứng dụng truy cập thư viện ảnh.');
+      return;
+    }
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ['images'],
+      quality: 0.85,
+    });
+    if (!result.canceled) setImage(result.assets[0]);
+  };
+
+  const handleSubmit = async () => {
+    if ((!message.trim() && !image) || sending) return;
+    setSending(true);
+    const sent = await handleMessageSend(
+      image
+        ? { uri: image.uri, fileName: image.fileName, mimeType: image.mimeType }
+        : undefined,
+    );
+    if (sent) setImage(null);
+    setSending(false);
   };
 
   if (!selectedUser) return null;
 
   return (
     <View style={styles.container}>
+      {image && (
+        <View style={styles.previewWrap}>
+          <Image source={{ uri: image.uri }} style={styles.previewImage} />
+          <Pressable style={styles.removeImage} onPress={() => setImage(null)}>
+            <Ionicons name="close" size={18} color="#fff" />
+          </Pressable>
+        </View>
+      )}
       <View style={styles.row}>
+        <Pressable style={styles.attachButton} onPress={pickImage} disabled={sending}>
+          <Ionicons name="image-outline" size={22} color="#0084FF" />
+        </Pressable>
         <TextInput
           style={styles.input}
           placeholder="Nhập tin nhắn..."
@@ -43,10 +81,10 @@ export default function MessageInput({
         <Pressable
           style={[
             styles.sendBtn,
-            !message.trim() && styles.sendDisabled,
+            (!message.trim() && !image) && styles.sendDisabled,
           ]}
           onPress={handleSubmit}
-          disabled={!message.trim()}
+          disabled={(!message.trim() && !image) || sending}
         >
           <Ionicons name="send" size={20} color="#fff" />
         </Pressable>
@@ -65,6 +103,28 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: 8,
+  },
+  previewWrap: {
+    alignSelf: 'flex-start',
+    marginBottom: 10,
+  },
+  previewImage: {
+    width: 88,
+    height: 88,
+    borderRadius: 10,
+  },
+  removeImage: {
+    position: 'absolute',
+    right: -7,
+    top: -7,
+    borderRadius: 14,
+    padding: 3,
+    backgroundColor: '#ef4444',
+  },
+  attachButton: {
+    padding: 10,
+    borderRadius: 10,
+    backgroundColor: '#eff6ff',
   },
   input: {
     flex: 1,

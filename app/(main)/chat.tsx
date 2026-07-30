@@ -5,7 +5,7 @@ import MessageInput from "@/components/chat/MessageInput";
 import { User, useAppData } from "@/context/AppContext";
 import { useSocketData } from "@/context/SocketContext";
 import { getApiErrorMessage } from "@/services/api";
-import { chatService } from "@/services/chat";
+import { chatService, type ChatImageUpload } from "@/services/chat";
 import type { Message } from "@/types/chat";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
@@ -69,11 +69,11 @@ export default function ChatScreen() {
     }
   }
 
-  const handleMessageSend = async () => {
+  const handleMessageSend = async (image?: ChatImageUpload) => {
     const text = message.trim();
-    if (!text || !selectedUser) return;
+    if ((!text && !image) || !selectedUser) return false;
     try {
-      const { data } = await chatService.sendText(selectedUser, text);
+      const { data } = await chatService.sendMessage(selectedUser, text, image);
 
       setMessages((prev) => {
         const current = prev ? [...prev] : [];
@@ -81,8 +81,11 @@ export default function ChatScreen() {
         return [...current, data.message];
       });
       setMessage("");
+      await fetchChats();
+      return true;
     } catch (err: unknown) {
       Alert.alert("Lỗi", getApiErrorMessage(err, "Gửi không thành công"));
+      return false;
     }
   };
 
@@ -109,6 +112,7 @@ export default function ChatScreen() {
           if (current.some((m) => m._id === data.message._id)) return prev;
           return [...current, data.message];
         });
+        void fetchChat();
       }
       fetchChats();
     };
@@ -119,15 +123,27 @@ export default function ChatScreen() {
     const handleUserTypingStop = (data: { chatId: string }) => {
       if (data.chatId === selectedUser) setIsTyping(false);
     };
+    const handleMessagesSeen = (data: { chatId: string }) => {
+      if (data.chatId !== selectedUser) return;
+      setMessages((current) =>
+        current?.map((item) =>
+          item.sender === loggedInUser?._id
+            ? { ...item, seen: true, seenAt: new Date().toISOString() }
+            : item,
+        ) ?? null,
+      );
+    };
     socket.on("newMessage", handleNewMessage);
     socket.on("userTyping", handleUserTyping);
     socket.on("userTypingStop", handleUserTypingStop);
+    socket.on("messagesSeen", handleMessagesSeen);
     return () => {
       socket.off("newMessage", handleNewMessage);
       socket.off("userTyping", handleUserTyping);
       socket.off("userTypingStop", handleUserTypingStop);
+      socket.off("messagesSeen", handleMessagesSeen);
     };
-  }, [fetchChats, socket, selectedUser, otherUserId]);
+  }, [fetchChat, fetchChats, loggedInUser?._id, socket, selectedUser, otherUserId]);
 
   useEffect(() => {
     if (selectedUser) fetchChat();
