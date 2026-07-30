@@ -1,5 +1,6 @@
 import { authService } from "@/services/auth";
-import { API_ENDPOINTS, apiClient } from "@/services/api";
+import { chatService } from "@/services/chat";
+import { userService } from "@/services/user";
 import React, { createContext, useContext, useEffect, useState } from "react";
 
 export interface User {
@@ -97,7 +98,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         setLoading(false);
         return;
       }
-      const { data } = await apiClient.get(API_ENDPOINTS.user.me);
+      const { data } = await userService.getMe();
       const userData = data.user || data;
       setUser(normalizeUser(userData));
       setIsAuth(true);
@@ -126,7 +127,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     const token = await getToken();
     if (!token) return;
     try {
-      const { data } = await apiClient.get(API_ENDPOINTS.chat.all);
+      const { data } = await chatService.getAll();
       const rawChats = Array.isArray(data?.chats) ? data.chats : [];
       setChats(rawChats.map(normalizeChatItem));
     } catch (e) {
@@ -138,7 +139,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     const token = await getToken();
     if (!token) return;
     try {
-      const { data } = await apiClient.get(API_ENDPOINTS.user.all);
+      const { data } = await userService.getAll();
       if (Array.isArray(data)) setUsers(data.map(normalizeUser));
       else if (data?.users) setUsers(data.users.map(normalizeUser));
       else setUsers([]);
