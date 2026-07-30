@@ -1,6 +1,6 @@
 import { User, useAppData } from "@/context/AppContext";
-import { API_ENDPOINTS, apiClient } from "@/services/api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { getApiErrorMessage } from "@/services/api";
+import { authService } from "@/services/auth";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -11,8 +11,6 @@ import {
   TextInput,
   View,
 } from "react-native";
-
-const TOKEN_KEY = "token";
 
 export default function VerifyScreen() {
   const { email } = useLocalSearchParams<{ email: string }>();
@@ -27,7 +25,8 @@ export default function VerifyScreen() {
     name: String(raw?.name ?? raw?.username ?? raw?.email ?? "Unknown"),
     username: raw?.username ? String(raw.username) : undefined,
     email: String(raw?.email ?? ""),
-    role: raw?.role === "admin" ? "admin" : "user",
+    role:
+      raw?.role === "admin" || raw?.role === "manager" ? raw.role : "user",
   });
 
   useEffect(() => {
@@ -63,16 +62,16 @@ export default function VerifyScreen() {
     }
     setLoading(true);
     try {
-      const { data } = await apiClient.post(API_ENDPOINTS.auth.verify, {
+      const { data } = await authService.verify({
         email: email || "",
         otp: code,
       });
       const normalizedUser = normalizeUser(data.user);
-      await AsyncStorage.setItem(TOKEN_KEY, data.token);
+      await authService.saveSession(data);
       setUser(normalizedUser);
       setIsAuth(true);
-    } catch {
-      Alert.alert("Lỗi", "OTP sai hoặc hết hạn");
+    } catch (error: unknown) {
+      Alert.alert("Lỗi", getApiErrorMessage(error, "OTP sai hoặc hết hạn"));
     } finally {
       setLoading(false);
     }

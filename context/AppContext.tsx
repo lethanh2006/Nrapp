@@ -1,15 +1,13 @@
-import { API_ENDPOINTS, apiClient, createAuthHeaders } from "@/services/api";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { authService } from "@/services/auth";
+import { API_ENDPOINTS, apiClient } from "@/services/api";
 import React, { createContext, useContext, useEffect, useState } from "react";
-
-const TOKEN_KEY = "token";
 
 export interface User {
   _id: string;
   name: string;
   username?: string;
   email: string;
-  role?: "admin" | "user";
+  role?: "admin" | "manager" | "user";
 }
 
 export interface Chat {
@@ -52,7 +50,8 @@ const normalizeUser = (raw: any): User => ({
   name: String(raw?.name ?? raw?.username ?? raw?.email ?? "Unknown"),
   username: raw?.username ? String(raw.username) : undefined,
   email: String(raw?.email ?? ""),
-  role: raw?.role === "admin" ? "admin" : "user",
+  role:
+    raw?.role === "admin" || raw?.role === "manager" ? raw.role : "user",
 });
 
 const normalizeChatItem = (raw: any): Chats => {
@@ -88,7 +87,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [users, setUsers] = useState<User[] | null>(null);
 
   const getToken = async () => {
-    return AsyncStorage.getItem(TOKEN_KEY);
+    return authService.getToken();
   };
 
   async function fetchUser() {
@@ -98,9 +97,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         setLoading(false);
         return;
       }
-      const { data } = await apiClient.get(API_ENDPOINTS.auth.me, {
-        headers: createAuthHeaders(token),
-      });
+      const { data } = await apiClient.get(API_ENDPOINTS.user.me);
       const userData = data.user || data;
       setUser(normalizeUser(userData));
       setIsAuth(true);
@@ -113,7 +110,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 
   async function logoutUser() {
     try {
-      await AsyncStorage.removeItem(TOKEN_KEY);
+      await authService.clearSession();
     } catch {
       // keep UI consistent even if storage operation fails
     } finally {
@@ -129,9 +126,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     const token = await getToken();
     if (!token) return;
     try {
-      const { data } = await apiClient.get(API_ENDPOINTS.chat.all, {
-        headers: createAuthHeaders(token),
-      });
+      const { data } = await apiClient.get(API_ENDPOINTS.chat.all);
       const rawChats = Array.isArray(data?.chats) ? data.chats : [];
       setChats(rawChats.map(normalizeChatItem));
     } catch (e) {
@@ -143,9 +138,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     const token = await getToken();
     if (!token) return;
     try {
-      const { data } = await apiClient.get(API_ENDPOINTS.user.all, {
-        headers: createAuthHeaders(token),
-      });
+      const { data } = await apiClient.get(API_ENDPOINTS.user.all);
       if (Array.isArray(data)) setUsers(data.map(normalizeUser));
       else if (data?.users) setUsers(data.users.map(normalizeUser));
       else setUsers([]);

@@ -1,4 +1,5 @@
-import { API_ENDPOINTS, apiClient } from "@/services/api";
+import { getApiErrorMessage } from "@/services/api";
+import { authService } from "@/services/auth";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -33,24 +34,20 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      const { data } = await apiClient.post(
-        API_ENDPOINTS.auth.register,
-        {
+      const { data } = await authService.register({
           username: username.trim(),
-          email: email.trim(),
-          password: password.trim(),
-        },
-      );
+          email: email.trim().toLowerCase(),
+          password,
+      });
 
-      Alert.alert("Thành công", "Đăng ký tài khoản thành công!");
+      Alert.alert("Thành công", data.message);
 
       router.replace({
         pathname: "/(auth)/login",
         params: { email: email.trim() },
       });
-    } catch (err: any) {
-      console.log("REGISTER API ERROR:", err?.response?.data || err?.message || err);
-      Alert.alert("Lỗi", err.response?.data?.message || err?.message || "Không thể đăng ký");
+    } catch (err: unknown) {
+      Alert.alert("Lỗi", getApiErrorMessage(err, "Không thể đăng ký"));
     } finally {
       setLoading(false);
     }

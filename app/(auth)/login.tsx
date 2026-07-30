@@ -1,5 +1,6 @@
 import { useAppData } from "@/context/AppContext";
-import { API_ENDPOINTS, apiClient } from "@/services/api";
+import { getApiErrorMessage } from "@/services/api";
+import { authService } from "@/services/auth";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -15,7 +16,6 @@ import {
 
 export default function LoginScreen() {
   const { isAuth, loading: userLoading } = useAppData();
-  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
@@ -25,17 +25,16 @@ export default function LoginScreen() {
   }, [isAuth, userLoading]);
 
   const handleSubmit = async () => {
-    if (!username.trim() || !email.trim() || !password.trim()) {
+    if (!email.trim() || !password) {
       Alert.alert("Thông báo", "Vui lòng nhập đầy đủ thông tin");
       return;
     }
 
     setLoading(true);
     try {
-      const { data } = await apiClient.post(API_ENDPOINTS.auth.login, {
-        username: username.trim(),
-        email: email.trim(),
-        password: password.trim(),
+      const { data } = await authService.login({
+        email: email.trim().toLowerCase(),
+        password,
       });
 
       Alert.alert("Thành công", data.message || "Đăng nhập thành công");
@@ -44,8 +43,8 @@ export default function LoginScreen() {
         pathname: "/(auth)/verify",
         params: { email: email.trim() },
       });
-    } catch (err: any) {
-      Alert.alert("Lỗi", err.response?.data?.message || "Có lỗi xảy ra");
+    } catch (err: unknown) {
+      Alert.alert("Lỗi", getApiErrorMessage(err, "Không thể đăng nhập"));
     } finally {
       setLoading(false);
     }
@@ -71,16 +70,6 @@ export default function LoginScreen() {
         <Text className="mb-6 text-center text-sm text-[#999999]">
           Đăng nhập hệ thống
         </Text>
-
-        <TextInput
-          className="mb-3 rounded-lg border border-[#e5e5ea] bg-[#f5f5f5] p-[14px] text-base text-black"
-          placeholder="Tên đăng nhập"
-          placeholderTextColor="#aaaaaa"
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-          editable={!loading}
-        />
 
         <TextInput
           className="mb-3 rounded-lg border border-[#e5e5ea] bg-[#f5f5f5] p-[14px] text-base text-black"
