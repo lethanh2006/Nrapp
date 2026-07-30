@@ -52,8 +52,11 @@ export default function ChatScreen() {
       setChatUser(data.user);
       await fetchChats();
     } catch (e) {
-      console.error(e);
-      Alert.alert("Lỗi", "Không tải được tin nhắn");
+      console.error("[CHAT][LOAD_MESSAGES_FAILED]", {
+        chatId: selectedUser,
+        message: getApiErrorMessage(e, "Không tải được tin nhắn"),
+      });
+      Alert.alert("Lỗi", getApiErrorMessage(e, "Không tải được tin nhắn"));
     }
   }, [fetchChats, selectedUser]);
 
@@ -64,8 +67,11 @@ export default function ChatScreen() {
       setShowAllUser(false);
       await fetchChats();
     } catch (e) {
-      console.error(e);
-      Alert.alert("Lỗi", "Không tạo được chat");
+      console.error("[CHAT][CREATE_FAILED]", {
+        otherUserId: u._id,
+        message: getApiErrorMessage(e, "Không tạo được chat"),
+      });
+      Alert.alert("Lỗi", getApiErrorMessage(e, "Không tạo được chat"));
     }
   }
 
@@ -84,6 +90,12 @@ export default function ChatScreen() {
       await fetchChats();
       return true;
     } catch (err: unknown) {
+      console.error("[CHAT][SEND_FAILED]", {
+        chatId: selectedUser,
+        hasText: Boolean(text),
+        hasImage: Boolean(image),
+        message: getApiErrorMessage(err, "Gửi không thành công"),
+      });
       Alert.alert("Lỗi", getApiErrorMessage(err, "Gửi không thành công"));
       return false;
     }

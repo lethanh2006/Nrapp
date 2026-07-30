@@ -35,10 +35,19 @@ export const SocketProvider: React.FC<{ children: React.ReactNode }> = ({
       });
 
       newSocket.on("connect_error", (err) => {
-        console.error("Socket error:", err.message);
+        console.error("[CHAT][SOCKET_ERROR]", { message: err.message });
+      });
+
+      newSocket.on("connect", () => {
+        console.log("[CHAT][SOCKET_CONNECTED]", { socketId: newSocket?.id });
+      });
+
+      newSocket.on("disconnect", (reason) => {
+        console.log("[CHAT][SOCKET_DISCONNECTED]", { reason });
       });
 
       newSocket.on("getOnlineUsers", (users: string[]) => {
+        console.log("[CHAT][ONLINE_USERS]", { count: users.length, users });
         setOnlineUsers(users);
       });
 

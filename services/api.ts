@@ -16,8 +16,41 @@ apiClient.interceptors.request.use(async (config) => {
     (await AsyncStorage.getItem(TOKEN_KEY)) ||
     (await AsyncStorage.getItem(LEGACY_TOKEN_KEY));
   if (token) config.headers.Authorization = `Bearer ${token}`;
+  if (__DEV__) {
+    console.log("[API][REQUEST]", {
+      method: config.method?.toUpperCase(),
+      url: `${config.baseURL || ""}${config.url || ""}`,
+      hasToken: Boolean(token),
+      contentType: config.headers["Content-Type"],
+    });
+  }
   return config;
 });
+
+apiClient.interceptors.response.use(
+  (response) => {
+    if (__DEV__) {
+      console.log("[API][RESPONSE]", {
+        method: response.config.method?.toUpperCase(),
+        url: response.config.url,
+        status: response.status,
+      });
+    }
+    return response;
+  },
+  (error: unknown) => {
+    if (__DEV__ && axios.isAxiosError(error)) {
+      console.error("[API][ERROR]", {
+        method: error.config?.method?.toUpperCase(),
+        url: error.config?.url,
+        status: error.response?.status,
+        response: error.response?.data,
+        message: error.message,
+      });
+    }
+    return Promise.reject(error);
+  },
+);
 
 export const workscheduleClient = axios.create({
   baseURL: `${API_URL}/workschedule`,

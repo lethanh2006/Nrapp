@@ -38,6 +38,14 @@ export const chatService = {
   getAll: () =>
     apiClient.get<{ chats: ChatListItem[] }>(API_ENDPOINTS.chat.all),
   sendMessage: async (chatId: string, text: string, image?: ChatImageUpload) => {
+    if (__DEV__) {
+      console.log("[CHAT][SEND_START]", {
+        chatId,
+        hasText: Boolean(text),
+        hasImage: Boolean(image),
+        imageType: image?.mimeType,
+      });
+    }
     const form = new FormData();
     form.append("chatId", chatId);
     if (text) form.append("text", text);
@@ -53,10 +61,18 @@ export const chatService = {
         } as unknown as Blob);
       }
     }
-    return apiClient.post<{ message: Message; sender: string }>(
+    const response = await apiClient.post<{ message: Message; sender: string }>(
       API_ENDPOINTS.chat.message,
       form,
     );
+    if (__DEV__) {
+      console.log("[CHAT][SEND_SUCCESS]", {
+        chatId,
+        messageId: response.data.message._id,
+        messageType: response.data.message.messageType,
+      });
+    }
+    return response;
   },
   getMessages: (chatId: string) =>
     apiClient.get<{ messages: Message[]; user: { user?: ChatUser } | ChatUser }>(
