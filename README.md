@@ -33,10 +33,11 @@ Authenticated gateway requests receive the stored Bearer token through the
 shared Axios interceptor. Screens should call these service modules instead of
 building paths, headers, or payloads locally.
 
-The current gateway chat endpoint accepts JSON text messages only. Image upload
-should only be enabled after the gateway forwards multipart bodies to the chat
-service. Configure `EXPO_PUBLIC_SOCKET_URL` separately when Socket.IO is exposed
-by the chat service instead of the gateway.
+Chat messages are sent as multipart data so the same endpoint supports text,
+an image, or both. The gateway forwards images to the chat service for
+Cloudinary upload. Socket.IO authenticates with the stored JWT and is available
+through the gateway proxy by default; set `EXPO_PUBLIC_SOCKET_URL` separately
+only when the chat socket service is exposed on another origin.
 
 In development, the app can infer the Expo host when `EXPO_PUBLIC_API_URL` is
 not set. Production builds require `EXPO_PUBLIC_API_URL`.
