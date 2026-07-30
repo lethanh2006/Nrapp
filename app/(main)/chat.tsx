@@ -7,6 +7,7 @@ import { useSocketData } from "@/context/SocketContext";
 import { getApiErrorMessage } from "@/services/api";
 import { chatService, type ChatImageUpload } from "@/services/chat";
 import type { Message } from "@/types/chat";
+import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
@@ -27,6 +28,7 @@ export default function ChatScreen() {
     user: loggedInUser,
     users,
     fetchChats,
+    fetchUsers,
   } = useAppData();
   const { socket, onlineUsers } = useSocketData();
 
@@ -34,7 +36,6 @@ export default function ChatScreen() {
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [chatUser, setChatUser] = useState<any>(null);
-  const [showAllUser, setShowAllUser] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -43,6 +44,13 @@ export default function ChatScreen() {
   useEffect(() => {
     if (!loading && !isAuth) router.replace("/(auth)/login");
   }, [isAuth, loading]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (!isAuth) return;
+      void Promise.all([fetchUsers(), fetchChats()]);
+    }, [fetchChats, fetchUsers, isAuth]),
+  );
 
   const fetchChat = useCallback(async () => {
     if (!selectedUser) return;
@@ -64,7 +72,6 @@ export default function ChatScreen() {
     try {
       const { data } = await chatService.create(u._id);
       setSelectedUser(data.chatId);
-      setShowAllUser(false);
       await fetchChats();
     } catch (e) {
       console.error("[CHAT][CREATE_FAILED]", {
@@ -191,17 +198,14 @@ export default function ChatScreen() {
   if (!selectedUser) {
     return (
       <ChatSideBar
-        embedded
-        sidebarOpen={false}
-        setSidebarOpen={() => undefined}
-        showAllUsers={showAllUser}
-        setShowAllUsers={setShowAllUser}
         users={users}
         loggedInUser={loggedInUser}
         chats={chats}
-        selectedUser={selectedUser}
         setSelectedUser={setSelectedUser}
         createChat={createChat}
+        refreshUsers={async () => {
+          await Promise.all([fetchUsers(), fetchChats()]);
+        }}
         onlineUsers={onlineUsers}
       />
     );
