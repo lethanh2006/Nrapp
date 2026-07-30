@@ -8,7 +8,7 @@ import { getApiErrorMessage } from "@/services/api";
 import { chatService } from "@/services/chat";
 import type { Message } from "@/types/chat";
 import { router } from "expo-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
@@ -26,7 +26,6 @@ export default function ChatScreen() {
     user: loggedInUser,
     users,
     fetchChats,
-    setChats,
   } = useAppData();
   const { socket, onlineUsers } = useSocketData();
 
@@ -45,7 +44,7 @@ export default function ChatScreen() {
     if (!loading && !isAuth) router.replace("/(auth)/login");
   }, [isAuth, loading]);
 
-  async function fetchChat() {
+  const fetchChat = useCallback(async () => {
     if (!selectedUser) return;
     try {
       const { data } = await chatService.getMessages(selectedUser);
@@ -56,7 +55,7 @@ export default function ChatScreen() {
       console.error(e);
       Alert.alert("Lỗi", "Không tải được tin nhắn");
     }
-  }
+  }, [fetchChats, selectedUser]);
 
   async function createChat(u: User) {
     try {
@@ -128,11 +127,11 @@ export default function ChatScreen() {
       socket.off("userTyping", handleUserTyping);
       socket.off("userTypingStop", handleUserTypingStop);
     };
-  }, [socket, selectedUser, otherUserId]);
+  }, [fetchChats, socket, selectedUser, otherUserId]);
 
   useEffect(() => {
     if (selectedUser) fetchChat();
-  }, [selectedUser]);
+  }, [fetchChat, selectedUser]);
 
   useEffect(() => {
     return () => {

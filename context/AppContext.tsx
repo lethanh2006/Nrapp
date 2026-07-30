@@ -1,7 +1,13 @@
 import { authService } from "@/services/auth";
 import { chatService } from "@/services/chat";
 import { userService } from "@/services/user";
-import React, { createContext, useContext, useEffect, useState } from "react";
+import React, {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 
 export interface User {
   _id: string;
@@ -87,9 +93,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [chats, setChats] = useState<Chats[] | null>(null);
   const [users, setUsers] = useState<User[] | null>(null);
 
-  const getToken = async () => {
+  const getToken = useCallback(async () => {
     return authService.getToken();
-  };
+  }, []);
 
   async function fetchUser() {
     try {
@@ -109,7 +115,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     }
   }
 
-  async function logoutUser() {
+  const logoutUser = useCallback(async () => {
     try {
       await authService.clearSession();
     } catch {
@@ -121,9 +127,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       setUsers(null);
       setLoading(false);
     }
-  }
+  }, []);
 
-  async function fetchChats() {
+  const fetchChats = useCallback(async () => {
     const token = await getToken();
     if (!token) return;
     try {
@@ -133,9 +139,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (e) {
       console.error(e);
     }
-  }
+  }, [getToken]);
 
-  async function fetchUsers() {
+  const fetchUsers = useCallback(async () => {
     const token = await getToken();
     if (!token) return;
     try {
@@ -146,7 +152,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     } catch (e) {
       console.error(e);
     }
-  }
+  }, [getToken]);
 
   useEffect(() => {
     fetchUser();
@@ -157,7 +163,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
       fetchChats();
       fetchUsers();
     }
-  }, [isAuth]);
+  }, [fetchChats, fetchUsers, isAuth]);
 
   return (
     <AppContext.Provider

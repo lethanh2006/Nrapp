@@ -25,6 +25,18 @@ API hosts, clients, timeouts, socket settings, and endpoint paths are kept in:
 
 - `constants/api.ts`: environment-based API and socket configuration
 - `services/api.ts`: shared Axios clients and endpoint definitions
+- `services/auth.ts`: typed auth requests and session persistence
+- `services/user.ts`: typed user and admin requests
+- `services/chat.ts`: typed chat and message requests
+
+Authenticated gateway requests receive the stored Bearer token through the
+shared Axios interceptor. Screens should call these service modules instead of
+building paths, headers, or payloads locally.
+
+The current gateway chat endpoint accepts JSON text messages only. Image upload
+should only be enabled after the gateway forwards multipart bodies to the chat
+service. Configure `EXPO_PUBLIC_SOCKET_URL` separately when Socket.IO is exposed
+by the chat service instead of the gateway.
 
 In development, the app can infer the Expo host when `EXPO_PUBLIC_API_URL` is
 not set. Production builds require `EXPO_PUBLIC_API_URL`.
