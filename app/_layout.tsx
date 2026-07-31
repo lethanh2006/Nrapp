@@ -1,5 +1,6 @@
 import { AppProvider } from "@/context/AppContext";
 import { SocketProvider } from "@/context/SocketContext";
+import { useColorScheme } from "@/hooks/use-color-scheme";
 import {
   DarkTheme,
   DefaultTheme,
@@ -8,15 +9,13 @@ import {
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import { configureReanimatedLogger, ReanimatedLogLevel } from "react-native-reanimated";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../global.css";
 
 configureReanimatedLogger({
   level: ReanimatedLogLevel.warn,
   strict: false,
 });
-
-import { useColorScheme } from "@/hooks/use-color-scheme";
-import { SafeAreaProvider } from "react-native-safe-area-context";
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();

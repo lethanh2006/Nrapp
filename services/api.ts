@@ -77,24 +77,14 @@ export const API_ENDPOINTS = {
     login: "/auth/login",
     register: "/auth/register",
     verify: "/auth/verify",
-    refresh: "/auth/refresh",
-    googleLogin: "/auth/login-google",
-    me: "/auth/me",
-    email: "/auth/me/email",
-    user: (userId: string) => `/auth/users/${encodeURIComponent(userId)}`,
-    role: (userId: string) =>
-      `/auth/users/${encodeURIComponent(userId)}/role`,
   },
   profile: {
     me: "/user/me",
     all: "/user/user/all",
-    detail: (userId: string) => `/user/${encodeURIComponent(userId)}`,
-    update: "/user/update/user",
   },
   admin: {
     users: {
       all: "/user/user/all",
-      detail: (userId: string) => `/user/admin/${encodeURIComponent(userId)}`,
     },
     chat: {
       all: "/chat/chat/all",

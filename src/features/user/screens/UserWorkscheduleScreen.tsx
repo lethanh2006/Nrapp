@@ -42,29 +42,11 @@ const getWeekStartMonday = (d: Date) => {
   return monday;
 };
 
-// Helper to get day name in Vietnamese
-const getDayName = (dayNum: number) => {
-  const days = ["", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
-  return days[dayNum] || `Thứ ${dayNum}`;
-};
-
 export default function WorkscheduleUserDashboard() {
-  const { getMySchedules, createRequest, updateEntries, submitRequest, getPolicy, loading } = useWorkscheduleUser();
+  const { getMySchedules, createRequest, updateEntries, getPolicy, loading } = useWorkscheduleUser();
   const [schedules, setSchedules] = useState<IScheduleRequest[]>([]);
   const [policy, setPolicy] = useState<IWorkPolicy | null>(null);
   const [initialLoad, setInitialLoad] = useState(true);
-
-  const formatDisplayDate = (dateVal: string | Date | undefined) => {
-    if (!dateVal) return "";
-    const d = new Date(dateVal);
-    if (isNaN(d.getTime())) return "";
-    const dd = String(d.getDate()).padStart(2, "0");
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const yyyy = d.getFullYear();
-    const hh = String(d.getHours()).padStart(2, "0");
-    const min = String(d.getMinutes()).padStart(2, "0");
-    return `${hh}:${min} ngày ${dd}/${mm}/${yyyy}`;
-  };
 
   const formatDateVi = (dateVal: string | Date | undefined) => {
     if (!dateVal) return "";
@@ -124,7 +106,7 @@ export default function WorkscheduleUserDashboard() {
   const [saving, setSaving] = useState(false);
 
   // Load user schedules
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     const [data, policyData] = await Promise.all([
       getMySchedules(),
       getPolicy()
@@ -132,7 +114,7 @@ export default function WorkscheduleUserDashboard() {
     setSchedules(data);
     setPolicy(policyData);
     setInitialLoad(false);
-  };
+  }, [getMySchedules, getPolicy]);
 
   useFocusEffect(
     useCallback(() => {
@@ -143,7 +125,7 @@ export default function WorkscheduleUserDashboard() {
       return () => {
         isActive = false;
       };
-    }, [])
+    }, [loadData])
   );
 
   // Map schedules for fast date lookup
@@ -391,72 +373,9 @@ export default function WorkscheduleUserDashboard() {
         await loadData();
         return false;
       }
-    } catch (error) {
+    } catch {
       Alert.alert("Lỗi", "Không thể lưu lịch làm việc");
       return false;
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // Submit all draft schedules of the selected month
-  const handleSubmitMonth = async () => {
-    if (isOutsideRegistrationWindow) {
-      Alert.alert("Lỗi", "Ngoài khoảng thời gian đăng ký lịch làm việc");
-      return;
-    }
-    // If there are unsaved changes, save them first
-    if (Object.keys(modifiedEntries).length > 0) {
-      Alert.alert("Thông báo", "Bạn cần lưu nháp các thay đổi hiện tại trước khi nộp lịch.", [
-        { text: "Hủy", style: "cancel" },
-        {
-          text: "Lưu & Nộp", onPress: async () => {
-            const success = await handleSaveDraft();
-            if (success) {
-              submitAllDrafts();
-            }
-          }
-        }
-      ]);
-    } else {
-      submitAllDrafts();
-    }
-  };
-
-  const submitAllDrafts = async () => {
-    try {
-      setSaving(true);
-      // Collect unique week Monday start dates represented in the selected month
-      const monthWeeks = new Set<string>();
-      for (let day = 1; day <= 31; day++) {
-        const d = new Date(selectedYear, selectedMonth, day);
-        if (d.getMonth() !== selectedMonth) break;
-        const mon = getWeekStartMonday(d);
-        monthWeeks.add(toLocalISOString(mon));
-      }
-
-      // Filter schedules that match these mondays and are in "draft" status
-      const draftRequests = schedules.filter((s) => {
-        const mon = getWeekStartMonday(new Date(s.week_start));
-        const monStr = toLocalISOString(mon);
-        return monthWeeks.has(monStr) && s.status === "draft";
-      });
-
-      if (draftRequests.length === 0) {
-        Alert.alert("Thông báo", "Không có bản nháp lịch nào cần nộp trong tháng này.");
-        return;
-      }
-
-      let submittedCount = 0;
-      for (const req of draftRequests) {
-        const success = await submitRequest(req._id);
-        if (success) submittedCount++;
-      }
-
-      await loadData();
-      Alert.alert("Thành công", `Đã nộp thành công ${submittedCount} tuần đăng ký lịch của tháng ${selectedMonth + 1}!`);
-    } catch (error) {
-      Alert.alert("Lỗi", "Gặp sự cố khi nộp lịch làm việc");
     } finally {
       setSaving(false);
     }

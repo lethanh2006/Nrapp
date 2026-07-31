@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   ActivityIndicator,
   RefreshControl,
@@ -14,7 +14,6 @@ import { PolicySection } from "@/components/workschedule/admin/PolicySection";
 import { AttendanceQR } from "@/components/workschedule/admin/AttendanceQR";
 import { RequestManager } from "@/components/workschedule/admin/RequestManager";
 import { ReportSummary } from "@/components/workschedule/admin/ReportSummary";
-import { WorkHeatmap } from "@/components/workschedule/admin/WorkHeatmap";
 import { StatCard } from "@/components/workschedule/admin/StatCard";
 
 type TabType = "system" | "requests" | "reports";
@@ -155,7 +154,6 @@ function AdminDashboardContent() {
         {activeTab === "reports" && (
           <View style={{ gap: 16 }}>
             <ReportSummary />
-            {/* <WorkHeatmap /> */}
           </View>
         )}
       </ScrollView>

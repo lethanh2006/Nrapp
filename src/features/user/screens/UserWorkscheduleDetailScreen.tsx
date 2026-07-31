@@ -1,11 +1,10 @@
 import ScheduleForm from "@/components/workschedule/user/ScheduleForm";
 import { IScheduleEntry, IScheduleRequest, IWorkPolicy } from "@/components/workschedule/types";
 import { Ionicons } from "@expo/vector-icons";
-
-const getDayName = (dayNum: number) => {
-  const days = ["", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy", "Chủ Nhật"];
-  return days[dayNum] || `Thứ ${dayNum}`;
-};
+import { useWorkscheduleUser } from "@/hooks/useWorkscheduleUser";
+import { router, useLocalSearchParams } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
 
 const getWeekStartMonday = (d: Date) => {
   const date = new Date(d);
@@ -15,10 +14,6 @@ const getWeekStartMonday = (d: Date) => {
   monday.setHours(0, 0, 0, 0);
   return monday;
 };
-import { useWorkscheduleUser } from "@/hooks/useWorkscheduleUser";
-import { router, useLocalSearchParams } from "expo-router";
-import React, { useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
 
 export default function ScheduleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -28,18 +23,6 @@ export default function ScheduleDetailScreen() {
   const [schedule, setSchedule] = useState<IScheduleRequest | null>(null);
   const [policy, setPolicy] = useState<IWorkPolicy | null>(null);
   const [entries, setEntries] = useState<IScheduleEntry[]>([]);
-
-  const formatDisplayDate = (dateVal: string | Date | undefined) => {
-    if (!dateVal) return "";
-    const d = new Date(dateVal);
-    if (isNaN(d.getTime())) return "";
-    const dd = String(d.getDate()).padStart(2, "0");
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const yyyy = d.getFullYear();
-    const hh = String(d.getHours()).padStart(2, "0");
-    const min = String(d.getMinutes()).padStart(2, "0");
-    return `${hh}:${min} ngày ${dd}/${mm}/${yyyy}`;
-  };
 
   const formatDateVi = (dateVal: string | Date | undefined) => {
     if (!dateVal) return "";
@@ -83,13 +66,7 @@ export default function ScheduleDetailScreen() {
     return now < start || now > end;
   }, [policy]);
 
-  useEffect(() => {
-    if (id) {
-      loadData();
-    }
-  }, [id]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     const [data, policyData] = await Promise.all([
       getRequestInfo(id),
       getPolicy()
@@ -99,7 +76,11 @@ export default function ScheduleDetailScreen() {
       setEntries(data.entries || []);
     }
     setPolicy(policyData);
-  };
+  }, [getPolicy, getRequestInfo, id]);
+
+  useEffect(() => {
+    if (id) void loadData();
+  }, [id, loadData]);
 
   const handleChangeEntry = (date: string, field: "type" | "note", value: string) => {
     setEntries((prev) => {
