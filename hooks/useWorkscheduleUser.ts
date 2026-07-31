@@ -2,10 +2,10 @@ import { useAppData } from "@/context/AppContext";
 import { API_ENDPOINTS, createAuthHeaders, workscheduleClient } from "@/services/api";
 import { useCallback, useState } from "react";
 import { Alert } from "react-native";
-import { IScheduleRequest, IWorkPolicy } from "../components/workschedule/types";
+import { IScheduleRequest, IWorkPolicy } from "@/src/features/shared/workschedule/workschedule-model";
 
 export function useWorkscheduleUser() {
-  const { getToken, isAuth } = useAppData();
+  const { getToken } = useAppData();
   const [loading, setLoading] = useState(false);
 
   const getHeaders = useCallback(async (): Promise<Record<string, string> | undefined> => {
@@ -24,7 +24,7 @@ export function useWorkscheduleUser() {
       const headers = await getHeaders();
       const res = await workscheduleClient.get(API_ENDPOINTS.workschedule.policy, { headers });
       return res.data.data;
-    } catch (err) {
+    } catch {
       return null;
     }
   }, [getHeaders]);

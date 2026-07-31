@@ -23,4 +23,3 @@ export default function TodoIntroCard({ isAdmin }: Props) {
     </View>
   );
 }
-

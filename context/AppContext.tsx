@@ -34,7 +34,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     return authService.getToken();
   }, []);
 
-  async function fetchUser() {
+  const fetchUser = useCallback(async () => {
     try {
       const token = await getToken();
       if (!token) {
@@ -50,7 +50,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     } finally {
       setLoading(false);
     }
-  }
+  }, [getToken]);
 
   const logoutUser = useCallback(async () => {
     try {
@@ -66,7 +66,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
 
   useEffect(() => {
     fetchUser();
-  }, []);
+  }, [fetchUser]);
 
   return (
     <AppContext.Provider

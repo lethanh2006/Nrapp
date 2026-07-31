@@ -1,6 +1,6 @@
-import ScheduleList from "@/components/workschedule/user/ScheduleList";
+import ScheduleList from "@/src/features/user/workschedule/components/ScheduleList";
 import { useWorkscheduleUser } from "@/hooks/useWorkscheduleUser";
-import { IScheduleRequest, IScheduleEntry, EntryType, IWorkPolicy } from "@/components/workschedule/types";
+import { IScheduleRequest, IScheduleEntry, EntryType, IWorkPolicy } from "@/src/features/shared/workschedule/workschedule-model";
 import { router, useFocusEffect, type Href } from "expo-router";
 import React, { useCallback, useState, useMemo } from "react";
 import {

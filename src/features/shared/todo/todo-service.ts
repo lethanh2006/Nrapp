@@ -1,4 +1,4 @@
-import type { TaskItem, TaskPriority, TaskStatus } from "@/components/todo/types";
+import type { TaskItem, TaskPriority, TaskStatus } from "@/src/features/shared/todo/todo-model";
 
 export interface CreateTaskInput {
   title: string;
@@ -16,4 +16,3 @@ export interface TodoService {
   updateStatus(taskId: string, status: TaskStatus): Promise<void>;
   deleteTask?(taskId: string): Promise<void>;
 }
-

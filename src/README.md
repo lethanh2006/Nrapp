@@ -7,6 +7,9 @@
 - `features/shared`: UI/model dùng chung, chỉ nhận dependency qua interface và không tự chọn API theo role.
 - `core`: chính sách role, điều hướng và hàm chuẩn hoá dữ liệu.
 
+Mỗi feature tự chứa `screens`, `components`, `services` và model liên quan. Dự án
+không duy trì thêm một thư mục `components` ở root để tránh chia đôi mã nguồn.
+
 Danh sách role quản trị được cấu hình tập trung tại `core/auth/roles.ts`. Khi BE bổ sung
 role hoặc tách endpoint chat, todo, workschedule, chỉ cập nhật policy hoặc service của
 khu vực tương ứng; không thêm kiểm tra role rải rác trong component.

@@ -1,7 +1,7 @@
-import TodoCreateTaskCard from "@/components/todo/TodoCreateTaskCard";
-import TodoIntroCard from "@/components/todo/TodoIntroCard";
-import TodoTaskListCard from "@/components/todo/TodoTaskListCard";
-import { TaskItem, TaskPriority, TaskStatus } from "@/components/todo/types";
+import TodoCreateTaskCard from "@/src/features/shared/todo/components/TodoCreateTaskCard";
+import TodoIntroCard from "@/src/features/shared/todo/components/TodoIntroCard";
+import TodoTaskListCard from "@/src/features/shared/todo/components/TodoTaskListCard";
+import { TaskItem, TaskPriority, TaskStatus } from "@/src/features/shared/todo/todo-model";
 import { useAppData } from "@/context/AppContext";
 import { normalizeUser } from "@/src/core/user/normalize-user";
 import type { TodoService } from "@/src/features/shared/todo/todo-service";

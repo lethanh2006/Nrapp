@@ -3,7 +3,7 @@ import { View, Text, Pressable, TextInput, ActivityIndicator } from "react-nativ
 import { useAdminData } from "@/context/AdminContext";
 import { Ionicons } from "@expo/vector-icons";
 import { useWorkscheduleAdmin } from "@/hooks/useWorkscheduleAdmin";
-import ScheduleForm from "../user/ScheduleForm";
+import ScheduleForm from "@/src/features/shared/workschedule/components/ScheduleForm";
 
 type RequestStatus = "all" | "draft" | "pending" | "approved" | "rejected";
 

@@ -1,6 +1,6 @@
 import React from "react";
 import { Pressable, Text, TextInput, View } from "react-native";
-import { EntryType, IScheduleEntry } from "../types";
+import { EntryType, IScheduleEntry } from "../workschedule-model";
 
 interface Props {
   startDate: Date;

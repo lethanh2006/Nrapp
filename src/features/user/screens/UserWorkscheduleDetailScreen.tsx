@@ -1,5 +1,5 @@
-import ScheduleForm from "@/components/workschedule/user/ScheduleForm";
-import { IScheduleEntry, IScheduleRequest, IWorkPolicy } from "@/components/workschedule/types";
+import ScheduleForm from "@/src/features/shared/workschedule/components/ScheduleForm";
+import { IScheduleEntry, IScheduleRequest, IWorkPolicy } from "@/src/features/shared/workschedule/workschedule-model";
 import { Ionicons } from "@expo/vector-icons";
 import { useWorkscheduleUser } from "@/hooks/useWorkscheduleUser";
 import { router, useLocalSearchParams } from "expo-router";

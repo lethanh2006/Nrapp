@@ -9,7 +9,7 @@ import {
   STATUS_OPTIONS,
   TaskItem,
   TaskStatus,
-} from "./types";
+} from "../todo-model";
 
 type Props = {
   isAdmin: boolean;

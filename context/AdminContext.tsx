@@ -8,7 +8,7 @@ import {
   AdminScheduleRequest,
   useWorkscheduleAdmin,
 } from "@/hooks/useWorkscheduleAdmin";
-import { IWorkPolicy } from "@/components/workschedule/types";
+import { IWorkPolicy } from "@/src/features/shared/workschedule/workschedule-model";
 import { isAdminRole } from "@/src/core/auth/roles";
 
 type RequestStatus = "all" | "draft" | "pending" | "approved" | "rejected";
@@ -143,7 +143,7 @@ export interface AdminContextValue {
 
   // Actions
   loadAdminData: (showRefreshing?: boolean) => Promise<void>;
-  handleAdminUpdateEntries: (id: string, entries: Array<{ date: string; type: string; note?: string }>) => Promise<boolean>;
+  handleAdminUpdateEntries: (id: string, entries: { date: string; type: string; note?: string }[]) => Promise<boolean>;
 }
 
 const AdminContext = createContext<AdminContextValue | null>(null);
@@ -400,7 +400,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const handleAdminUpdateEntries = async (id: string, entries: Array<{ date: string; type: string; note?: string }>) => {
+  const handleAdminUpdateEntries = async (id: string, entries: { date: string; type: string; note?: string }[]) => {
     setBusyRequestId(id);
     const success = await adminUpdateEntries(id, entries);
     setBusyRequestId(null);

@@ -1,5 +1,5 @@
 import { useAppData } from "@/context/AppContext";
-import { IWorkPolicy } from "@/components/workschedule/types";
+import { IWorkPolicy } from "@/src/features/shared/workschedule/workschedule-model";
 import { API_ENDPOINTS, createAuthHeaders, workscheduleClient } from "@/services/api";
 import { useCallback, useState } from "react";
 import { Alert } from "react-native";
@@ -23,12 +23,12 @@ export type AdminScheduleRequest = {
   reviewed_at?: string;
   reject_reason?: string;
   employee?: AdminEmployeeProfile | null;
-  entries?: Array<{
+  entries?: {
     _id?: string;
     date: string;
     type: "office" | "remote" | "day_off" | "leave";
     note?: string;
-  }>;
+  }[];
 };
 
 export type AdminAttendanceRecord = {
@@ -44,10 +44,10 @@ export type AdminAttendanceRecord = {
 
 export type AdminHeatmapRow = {
   _id: string;
-  stats: Array<{
+  stats: {
     type: "office" | "remote" | "day_off" | "leave";
     count: number;
-  }>;
+  }[];
 };
 
 type QueryParams = {
@@ -290,7 +290,7 @@ export function useWorkscheduleAdmin() {
   );
 
   const adminUpdateEntries = useCallback(
-    async (id: string, entries: Array<{ date: string; type: string; note?: string }>, silent = false): Promise<boolean> => {
+    async (id: string, entries: { date: string; type: string; note?: string }[], silent = false): Promise<boolean> => {
       try {
         setLoading(true);
         const headers = await getHeaders();

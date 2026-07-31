@@ -10,7 +10,7 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { PRIORITY_MAP, PRIORITY_OPTIONS, TaskPriority } from "./types";
+import { PRIORITY_MAP, PRIORITY_OPTIONS, TaskPriority } from "../todo-model";
 
 type Props = {
   title: string;

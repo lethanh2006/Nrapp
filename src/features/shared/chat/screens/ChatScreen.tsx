@@ -1,7 +1,7 @@
-import ChatHeader from "@/components/chat/ChatHeader";
-import ChatMessages from "@/components/chat/ChatMessages";
-import ChatSideBar from "@/components/chat/ChatSideBar";
-import MessageInput from "@/components/chat/MessageInput";
+import ChatHeader from "@/src/features/shared/chat/components/ChatHeader";
+import ChatMessages from "@/src/features/shared/chat/components/ChatMessages";
+import ChatSideBar from "@/src/features/shared/chat/components/ChatSideBar";
+import MessageInput from "@/src/features/shared/chat/components/MessageInput";
 import { useAppData } from "@/context/AppContext";
 import { useSocketData } from "@/context/SocketContext";
 import { getApiErrorMessage } from "@/services/api";

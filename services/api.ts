@@ -1,6 +1,6 @@
 import { API_URL } from "@/constants/api";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import axios, { AxiosError } from "axios";
+import axios, { AxiosError, isAxiosError } from "axios";
 
 export const TOKEN_KEY = "auth.accessToken";
 const LEGACY_TOKEN_KEY = "token";
@@ -39,7 +39,7 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error: unknown) => {
-    if (__DEV__ && axios.isAxiosError(error)) {
+    if (__DEV__ && isAxiosError(error)) {
       console.error("[API][ERROR]", {
         method: error.config?.method?.toUpperCase(),
         url: error.config?.url,
@@ -66,7 +66,7 @@ export const createAuthHeaders = (token: string | null | undefined) =>
   token ? { Authorization: `Bearer ${token}` } : undefined;
 
 export const getApiErrorMessage = (error: unknown, fallback: string) => {
-  if (!axios.isAxiosError(error)) return fallback;
+  if (!isAxiosError(error)) return fallback;
   const data = (error as AxiosError<{ message?: string | string[] }>).response?.data;
   const message = data?.message;
   return Array.isArray(message) ? message.join("\n") : message || fallback;

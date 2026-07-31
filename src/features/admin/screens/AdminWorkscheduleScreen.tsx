@@ -10,11 +10,11 @@ import {
 import { useFocusEffect } from "expo-router";
 import { AdminProvider, useAdminData } from "@/context/AdminContext";
 
-import { PolicySection } from "@/components/workschedule/admin/PolicySection";
-import { AttendanceQR } from "@/components/workschedule/admin/AttendanceQR";
-import { RequestManager } from "@/components/workschedule/admin/RequestManager";
-import { ReportSummary } from "@/components/workschedule/admin/ReportSummary";
-import { StatCard } from "@/components/workschedule/admin/StatCard";
+import { PolicySection } from "@/src/features/admin/workschedule/components/PolicySection";
+import { AttendanceQR } from "@/src/features/admin/workschedule/components/AttendanceQR";
+import { RequestManager } from "@/src/features/admin/workschedule/components/RequestManager";
+import { ReportSummary } from "@/src/features/admin/workschedule/components/ReportSummary";
+import { StatCard } from "@/src/features/admin/workschedule/components/StatCard";
 
 type TabType = "system" | "requests" | "reports";
 

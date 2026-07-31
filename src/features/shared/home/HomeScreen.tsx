@@ -14,7 +14,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useWorkscheduleUser } from "@/hooks/useWorkscheduleUser";
-import { IScheduleRequest, IScheduleEntry } from "@/components/workschedule/types";
+import { IScheduleRequest, IScheduleEntry } from "@/src/features/shared/workschedule/workschedule-model";
 import type { AppArea } from "@/src/core/auth/roles";
 import { getAreaRoutes } from "@/src/core/navigation/routes";
 
