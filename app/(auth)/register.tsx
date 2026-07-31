@@ -1,5 +1,5 @@
 import { getApiErrorMessage } from "@/src/utils/apiHelper";
-import { registerUser } from "@/src/services/auth.service";
+import { registerUser } from "@/src/services/auth/auth.service";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {

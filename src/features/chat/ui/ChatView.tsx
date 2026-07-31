@@ -8,17 +8,17 @@ import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import { normalizeUser } from "@/src/features/user/model/normalize-user";
 import type {
   ChatImageUpload,
-} from "@/src/services/chat.service";
+  ChatSummary,
+  Message,
+} from "@/src/services/chat/constant";
 import {
   createChat as createChatRequest,
   getChatMessages,
   getChats,
   sendChatMessage,
-} from "@/src/services/chat.service";
-import { getAllUsers } from "@/src/services/user.service";
-import type { ChatSummary } from "@/src/features/chat/model/chat.types";
-import type { User } from "@/src/features/user/model/user.types";
-import type { Message } from "@/src/features/chat/model/message.types";
+} from "@/src/services/chat/chat.service";
+import { getAllUsers } from "@/src/services/user/user.service";
+import type { User } from "@/src/services/user/constant";
 import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";

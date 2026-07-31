@@ -1,6 +1,10 @@
 import ScheduleForm from "@/src/features/workschedule/ui/common/ScheduleForm";
 import { RegistrationPolicyCard } from "@/src/features/workschedule/ui/user/RegistrationPolicyCard";
-import { IScheduleEntry, IScheduleRequest, IWorkPolicy } from "@/src/features/workschedule/model/workschedule.types";
+import type {
+  IScheduleEntry,
+  IScheduleRequest,
+  IWorkPolicy,
+} from "@/src/services/workschedule/constant";
 import {
   getAllowedWeekRange,
   isRegistrationClosed,

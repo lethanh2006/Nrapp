@@ -1,4 +1,4 @@
-import type { User } from "@/src/features/user/model/user.types";
+import type { User } from "@/src/services/user/constant";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -9,7 +9,7 @@ import {
   STATUS_OPTIONS,
   TaskItem,
   TaskStatus,
-} from "../model/todo.types";
+} from "@/src/services/todo/constant";
 
 type Props = {
   isAdmin: boolean;

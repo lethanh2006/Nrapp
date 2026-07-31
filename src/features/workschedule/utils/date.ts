@@ -1,4 +1,4 @@
-import type { IWorkPolicy } from "@/src/features/workschedule/model/workschedule.types";
+import type { IWorkPolicy } from "@/src/services/workschedule/constant";
 
 export const toLocalDateKey = (value: Date) => {
   const year = value.getFullYear();

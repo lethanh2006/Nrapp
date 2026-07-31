@@ -6,7 +6,7 @@ import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import {
   saveAuthSession,
   verifyOtp,
-} from "@/src/services/auth.service";
+} from "@/src/services/auth/auth.service";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {

@@ -7,13 +7,13 @@ import {
   getWorkPolicy,
   submitScheduleRequest,
   updateScheduleRequest,
-} from "@/src/services/workschedule.service";
+} from "@/src/services/workschedule/workschedule.service";
 import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import type {
   IScheduleEntry,
   IScheduleRequest,
   IWorkPolicy,
-} from "@/src/features/workschedule/model/workschedule.types";
+} from "@/src/services/workschedule/constant";
 import { useCallback, useState } from "react";
 import { Alert } from "react-native";
 

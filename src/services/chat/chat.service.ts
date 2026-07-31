@@ -1,35 +1,12 @@
 import axios from "@/src/utils/axios";
 import { getAuthHeader } from "@/src/utils/apiHelper";
 import { ipNR } from "@/src/utils/ip";
-import type { Message } from "@/src/features/chat/model/message.types";
-
-export interface ChatUser {
-  _id: string;
-  username?: string;
-  email?: string;
-  role?: string;
-  name?: string;
-}
-
-export interface ChatImageUpload {
-  uri: string;
-  fileName?: string | null;
-  mimeType?: string | null;
-}
-
-type ChatRecord = {
-  _id: string;
-  users: string[];
-  latestMessage: { text: string; sender: string } | null;
-  createdAt: string;
-  updatedAt: string;
-  unseenCount: number;
-};
-
-type ChatListItem = {
-  user: { user?: ChatUser } | ChatUser;
-  chat: ChatRecord;
-};
+import type {
+  ChatImageUpload,
+  ChatListItem,
+  ChatUser,
+  Message,
+} from "@/src/services/chat/constant";
 
 async function createMessagePayload(
   chatId: string,

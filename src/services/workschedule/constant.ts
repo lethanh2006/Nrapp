@@ -1,0 +1,131 @@
+export type EntryType = "office" | "remote" | "day_off" | "leave";
+export type RequestStatus = "draft" | "pending" | "approved" | "rejected";
+
+export interface IScheduleEntry {
+  _id?: string;
+  date: string;
+  type: EntryType;
+  note?: string;
+}
+
+export interface IScheduleRequest {
+  _id: string;
+  employee_id: unknown;
+  week_start: string;
+  status: RequestStatus;
+  submitted_at?: string;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  reject_reason?: string;
+  entries?: IScheduleEntry[];
+}
+
+export interface IWorkPolicy {
+  registration_start: string;
+  registration_end: string;
+  locked?: boolean;
+}
+
+export interface AdminEmployeeProfile {
+  _id?: string;
+  id?: string;
+  name?: string;
+  username?: string;
+  email?: string;
+  role?: string;
+}
+
+export interface AdminScheduleRequest {
+  _id: string;
+  employee_id: string;
+  week_start: string;
+  status: RequestStatus;
+  submitted_at?: string;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  reject_reason?: string;
+  employee?: AdminEmployeeProfile | null;
+  entries?: IScheduleEntry[];
+}
+
+export interface AdminAttendanceRecord {
+  _id: string;
+  employee_id: string;
+  date: string;
+  schedule_type: "office" | "remote";
+  check_in_at?: string;
+  check_out_at?: string;
+  source: "qr" | "schedule";
+  employee?: AdminEmployeeProfile | null;
+}
+
+export interface AdminHeatmapRow {
+  _id: string;
+  stats: {
+    type: EntryType;
+    count: number;
+  }[];
+}
+
+export interface WorkscheduleQuery {
+  week?: string;
+  status?: string;
+  from?: string;
+  to?: string;
+  employee_id?: string;
+}
+
+export interface AttendanceScanResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    check_in_at?: string;
+    check_out_at?: string;
+    date: string;
+    schedule_type: string;
+  };
+}
+
+export const SCHEDULE_TYPE_OPTIONS: {
+  value: EntryType;
+  label: string;
+  textClassName: string;
+  backgroundClassName: string;
+  borderClassName: string;
+  icon: "business" | "home" | "sunny" | "cafe";
+}[] = [
+  {
+    value: "office",
+    label: "Lên cty",
+    textClassName: "text-blue-700",
+    backgroundClassName: "bg-blue-50/80",
+    borderClassName: "border-blue-200",
+    icon: "business",
+  },
+  {
+    value: "remote",
+    label: "Từ xa",
+    textClassName: "text-purple-700",
+    backgroundClassName: "bg-purple-50/80",
+    borderClassName: "border-purple-200",
+    icon: "home",
+  },
+  {
+    value: "day_off",
+    label: "Nghỉ",
+    textClassName: "text-slate-500",
+    backgroundClassName: "bg-slate-50/80",
+    borderClassName: "border-slate-200",
+    icon: "sunny",
+  },
+  {
+    value: "leave",
+    label: "Phép",
+    textClassName: "text-orange-700",
+    backgroundClassName: "bg-orange-50/80",
+    borderClassName: "border-orange-200",
+    icon: "cafe",
+  },
+];
+
+export const WEEKDAY_NAMES = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];

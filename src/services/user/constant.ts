@@ -1,5 +1,5 @@
-import type { AppRole } from "@/src/features/user/model/role.types";
-
+export type KnownAppRole = "admin" | "manager" | "chef" | "user";
+export type AppRole = KnownAppRole | (string & {});
 export type UserRole = AppRole;
 
 export interface User {

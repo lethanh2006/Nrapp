@@ -1,4 +1,4 @@
-import type { User } from "@/src/features/user/model/user.types";
+import type { User } from "@/src/services/user/constant";
 import { Ionicons } from "@expo/vector-icons";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import React from "react";
@@ -10,7 +10,11 @@ import {
   TextInput,
   View,
 } from "react-native";
-import { PRIORITY_MAP, PRIORITY_OPTIONS, TaskPriority } from "../model/todo.types";
+import {
+  PRIORITY_MAP,
+  PRIORITY_OPTIONS,
+  type TaskPriority,
+} from "@/src/services/todo/constant";
 
 type Props = {
   title: string;

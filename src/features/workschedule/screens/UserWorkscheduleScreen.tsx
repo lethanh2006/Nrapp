@@ -3,7 +3,12 @@ import { ScheduleCalendar } from "@/src/features/workschedule/ui/user/ScheduleCa
 import { ScheduleEntryEditor } from "@/src/features/workschedule/ui/user/ScheduleEntryEditor";
 import { RegistrationPolicyCard } from "@/src/features/workschedule/ui/user/RegistrationPolicyCard";
 import { useWorkscheduleUser } from "@/src/features/workschedule/hooks/useWorkscheduleUser";
-import { IScheduleRequest, IScheduleEntry, EntryType, IWorkPolicy } from "@/src/features/workschedule/model/workschedule.types";
+import type {
+  EntryType,
+  IScheduleEntry,
+  IScheduleRequest,
+  IWorkPolicy,
+} from "@/src/services/workschedule/constant";
 import {
   getAllowedWeekRange,
   getWeekStartMonday,

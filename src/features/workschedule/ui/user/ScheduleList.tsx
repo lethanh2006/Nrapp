@@ -1,7 +1,7 @@
 import { router } from "expo-router";
 import React from "react";
 import { Pressable, Text, View } from "react-native";
-import { IScheduleRequest } from "@/src/features/workschedule/model/workschedule.types";
+import type { IScheduleRequest } from "@/src/services/workschedule/constant";
 
 interface Props {
   schedules: IScheduleRequest[];

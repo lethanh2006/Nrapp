@@ -1,7 +1,7 @@
 import axios from "@/src/utils/axios";
 import { getAuthHeader } from "@/src/utils/apiHelper";
 import { ipNR } from "@/src/utils/ip";
-import type { User } from "@/src/features/user/model/user.types";
+import type { User } from "@/src/services/user/constant";
 
 export async function getUserProfile(token: string) {
   return axios.get<{ user: User }>(

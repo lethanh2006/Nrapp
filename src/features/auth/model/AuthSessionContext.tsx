@@ -1,10 +1,10 @@
 import {
   clearAuthSession,
   getStoredToken,
-} from "@/src/services/auth.service";
-import { getUserProfile } from "@/src/services/user.service";
+} from "@/src/services/auth/auth.service";
+import { getUserProfile } from "@/src/services/user/user.service";
 import { normalizeUser } from "@/src/features/user/model/normalize-user";
-import type { User } from "@/src/features/user/model/user.types";
+import type { User } from "@/src/services/user/constant";
 import React, {
   createContext,
   useCallback,
@@ -13,7 +13,7 @@ import React, {
   useState,
 } from "react";
 
-export type { User } from "@/src/features/user/model/user.types";
+export type { User } from "@/src/services/user/constant";
 interface AuthSessionContextValue {
   user: User | null;
   loading: boolean;

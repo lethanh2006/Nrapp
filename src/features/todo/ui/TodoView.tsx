@@ -1,7 +1,12 @@
 import TodoCreateTaskCard from "@/src/features/todo/ui/TodoCreateTaskCard";
 import TodoIntroCard from "@/src/features/todo/ui/TodoIntroCard";
 import TodoTaskListCard from "@/src/features/todo/ui/TodoTaskListCard";
-import { TaskItem, TaskPriority, TaskStatus } from "@/src/features/todo/model/todo.types";
+import type {
+  CreateTaskInput,
+  TaskItem,
+  TaskPriority,
+  TaskStatus,
+} from "@/src/services/todo/constant";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { normalizeUser } from "@/src/features/user/model/normalize-user";
 import {
@@ -11,10 +16,9 @@ import {
   getAdminTasks,
   getMyTasks,
   updateTodoStatus,
-  type CreateTaskInput,
-} from "@/src/services/todo.service";
-import { getAllUsers } from "@/src/services/user.service";
-import type { User } from "@/src/features/user/model/user.types";
+} from "@/src/services/todo/todo.service";
+import { getAllUsers } from "@/src/services/user/user.service";
+import type { User } from "@/src/services/user/constant";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,

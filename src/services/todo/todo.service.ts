@@ -2,18 +2,10 @@ import axios from "@/src/utils/axios";
 import { getAuthHeader } from "@/src/utils/apiHelper";
 import { ipNR } from "@/src/utils/ip";
 import type {
+  CreateTaskInput,
   TaskItem,
-  TaskPriority,
   TaskStatus,
-} from "@/src/features/todo/model/todo.types";
-
-export interface CreateTaskInput {
-  title: string;
-  description?: string;
-  priority: TaskPriority;
-  deadline?: string;
-  assignedTo?: string;
-}
+} from "@/src/services/todo/constant";
 
 export async function getAdminTasks(token: string) {
   const { data } = await axios.get<{ tasks: TaskItem[] }>(

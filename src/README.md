@@ -12,11 +12,21 @@ app/                    # Route Expo mỏng, không chứa logic nghiệp vụ
     user/               # Route chat, todo, workschedule của user
 src/
   services/
-    auth.service.ts         # Đăng nhập, đăng ký và lưu token
-    user.service.ts         # Endpoint người dùng
-    chat.service.ts         # Endpoint chat
-    todo.service.ts         # Endpoint todo
-    workschedule.service.ts # Endpoint lịch làm việc và chấm công
+    auth/
+      auth.service.ts       # Hàm Axios đăng nhập, đăng ký, xác thực
+      constant.ts           # Payload, response và key token
+    user/
+      user.service.ts       # Hàm Axios người dùng
+      constant.ts           # User và role
+    chat/
+      chat.service.ts       # Hàm Axios chat
+      constant.ts           # Chat, message và kiểu upload
+    todo/
+      todo.service.ts       # Hàm Axios todo
+      constant.ts           # Task, trạng thái và độ ưu tiên
+    workschedule/
+      workschedule.service.ts # Hàm Axios lịch làm việc
+      constant.ts             # Lịch, chấm công và các lựa chọn cố định
   utils/
     axios.ts            # Cấu hình Axios
     ip.ts               # Địa chỉ API và socket
@@ -24,14 +34,14 @@ src/
   application/          # Navigation và kiểm tra role
   components/           # Component dùng ở nhiều màn hình
   features/
-    auth/                # State đăng nhập và kiểu dữ liệu
-    chat/                # Model và giao diện chat
+    auth/                # State đăng nhập
+    chat/                # Socket và giao diện chat
     home/                # Giao diện trang chủ
-    todo/                # Model và giao diện todo
-    user/                # Model người dùng
+    todo/                # Giao diện todo
+    user/                # Chuẩn hóa dữ liệu người dùng
     workschedule/
       hooks/            # Loading, thông báo và gọi workschedule.service
-      model/            # Type, hằng số và state
+      model/            # State dùng chung của màn admin
       screens/          # Screen được route trong app/ trỏ tới
       ui/               # Component nhỏ theo admin/user/common
       utils/            # Hàm xử lý ngày tháng dùng lại
@@ -42,7 +52,9 @@ src/
 ## Quy tắc phụ thuộc
 
 - File trong `app/` chỉ map URL sang screen và giữ layout cấp router.
-- Muốn xem API nào, mở thẳng `src/services/<tên>.service.ts`.
+- Muốn xem API nào, mở `src/services/<tên>/<tên>.service.ts`.
+- Type, interface và giá trị cố định của nghiệp vụ nằm trong
+  `src/services/<tên>/constant.ts`.
 - Mỗi hàm service nhận `token` rõ ràng và gọi `getAuthHeader(token)`.
 - Không gom endpoint vào object, không dùng factory và không dùng interceptor
   tự gắn token.

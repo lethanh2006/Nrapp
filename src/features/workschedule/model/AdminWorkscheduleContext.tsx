@@ -8,7 +8,7 @@ import {
   AdminScheduleRequest,
   useWorkscheduleAdmin,
 } from "@/src/features/workschedule/hooks/useWorkscheduleAdmin";
-import { IWorkPolicy } from "@/src/features/workschedule/model/workschedule.types";
+import type { IWorkPolicy } from "@/src/services/workschedule/constant";
 import { isAdminRole } from "@/src/application/access/roles";
 
 type RequestStatus = "all" | "draft" | "pending" | "approved" | "rejected";

@@ -14,12 +14,14 @@ import {
   rejectSchedule,
   updateAdminSchedule,
   updateWorkPolicy,
-  type AdminAttendanceRecord,
-  type AdminHeatmapRow,
-  type AdminScheduleRequest,
-  type WorkscheduleQuery,
-} from "@/src/services/workschedule.service";
-import type { IWorkPolicy } from "@/src/features/workschedule/model/workschedule.types";
+} from "@/src/services/workschedule/workschedule.service";
+import type {
+  AdminAttendanceRecord,
+  AdminHeatmapRow,
+  AdminScheduleRequest,
+  IWorkPolicy,
+  WorkscheduleQuery,
+} from "@/src/services/workschedule/constant";
 import { useCallback, useState } from "react";
 import { Alert } from "react-native";
 
@@ -28,7 +30,7 @@ export type {
   AdminEmployeeProfile,
   AdminHeatmapRow,
   AdminScheduleRequest,
-} from "@/src/services/workschedule.service";
+} from "@/src/services/workschedule/constant";
 
 export function useWorkscheduleAdmin() {
   const { getToken } = useAuthSession();

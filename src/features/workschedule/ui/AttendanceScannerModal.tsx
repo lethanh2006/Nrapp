@@ -1,8 +1,8 @@
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import {
   scanAttendance,
-  type AttendanceScanResponse,
-} from "@/src/services/workschedule.service";
+} from "@/src/services/workschedule/workschedule.service";
+import type { AttendanceScanResponse } from "@/src/services/workschedule/constant";
 import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";

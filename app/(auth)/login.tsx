@@ -2,7 +2,7 @@ import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { getAreaForRole } from "@/src/application/access/roles";
 import { APP_ROUTES } from "@/src/application/navigation/routes";
 import { getApiErrorMessage } from "@/src/utils/apiHelper";
-import { loginUser } from "@/src/services/auth.service";
+import { loginUser } from "@/src/services/auth/auth.service";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {

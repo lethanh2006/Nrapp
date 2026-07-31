@@ -1,8 +1,8 @@
-import { SCHEDULE_TYPE_OPTIONS } from "@/src/features/workschedule/model/workschedule.constants";
+import { SCHEDULE_TYPE_OPTIONS } from "@/src/services/workschedule/constant";
 import type {
   EntryType,
   IScheduleEntry,
-} from "@/src/features/workschedule/model/workschedule.types";
+} from "@/src/services/workschedule/constant";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, Text, TextInput, View } from "react-native";
 

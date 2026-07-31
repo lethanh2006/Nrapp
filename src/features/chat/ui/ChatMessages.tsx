@@ -1,5 +1,5 @@
-import { Message } from '@/src/features/chat/model/message.types';
-import type { User } from "@/src/features/user/model/user.types";
+import type { Message } from "@/src/services/chat/constant";
+import type { User } from "@/src/services/user/constant";
 import { Image } from 'expo-image';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';

@@ -1,14 +1,14 @@
 export type TaskStatus = "todo" | "in_progress" | "done" | "cancelled";
 export type TaskPriority = "low" | "medium" | "high";
 
-export type RelatedUser = {
+export interface RelatedUser {
   _id: string;
   username?: string;
   name?: string;
   email?: string;
-};
+}
 
-export type TaskItem = {
+export interface TaskItem {
   _id: string;
   title: string;
   description?: string;
@@ -18,7 +18,15 @@ export type TaskItem = {
   assignedTo?: string | RelatedUser;
   deadline?: string;
   createdAt?: string;
-};
+}
+
+export interface CreateTaskInput {
+  title: string;
+  description?: string;
+  priority: TaskPriority;
+  deadline?: string;
+  assignedTo?: string;
+}
 
 export const STATUS_OPTIONS: TaskStatus[] = [
   "todo",
@@ -31,7 +39,13 @@ export const PRIORITY_OPTIONS: TaskPriority[] = ["low", "medium", "high"];
 
 export const STATUS_MAP: Record<
   TaskStatus,
-  { label: string; textClass: string; bgClass: string; borderClass: string; icon: string }
+  {
+    label: string;
+    textClass: string;
+    bgClass: string;
+    borderClass: string;
+    icon: string;
+  }
 > = {
   todo: {
     label: "Chờ thực hiện",
@@ -65,7 +79,13 @@ export const STATUS_MAP: Record<
 
 export const PRIORITY_MAP: Record<
   TaskPriority,
-  { label: string; textClass: string; bgClass: string; borderClass: string; icon: string }
+  {
+    label: string;
+    textClass: string;
+    bgClass: string;
+    borderClass: string;
+    icon: string;
+  }
 > = {
   low: {
     label: "Ưu tiên Thấp",

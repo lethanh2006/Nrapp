@@ -2,7 +2,7 @@ import {
   formatDateTimeVi,
   formatDateVi,
 } from "@/src/features/workschedule/utils/date";
-import type { IWorkPolicy } from "@/src/features/workschedule/model/workschedule.types";
+import type { IWorkPolicy } from "@/src/services/workschedule/constant";
 import { Ionicons } from "@expo/vector-icons";
 import { Text, View } from "react-native";
 

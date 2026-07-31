@@ -1,9 +1,12 @@
 import { toLocalDateKey } from "@/src/features/workschedule/utils/date";
-import { SCHEDULE_TYPE_OPTIONS, WEEKDAY_NAMES } from "@/src/features/workschedule/model/workschedule.constants";
+import {
+  SCHEDULE_TYPE_OPTIONS,
+  WEEKDAY_NAMES,
+} from "@/src/services/workschedule/constant";
 import type {
   EntryType,
   IScheduleEntry,
-} from "@/src/features/workschedule/model/workschedule.types";
+} from "@/src/services/workschedule/constant";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 
