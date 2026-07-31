@@ -22,11 +22,12 @@ Có thể cấu hình thêm `EXPO_PUBLIC_SOCKET_URL`, `EXPO_PUBLIC_SOCKET_PATH` 
 ## Kiến trúc
 
 - `app/`: route Expo Router mỏng và route layout.
-- `src/api/`: HTTP client và endpoint backend.
+- `src/api/`: các file Axios CRUD chia theo `auth`, `user`, `chat`, `todo` và
+  `workschedule`.
 - `src/application/`: navigation và access policy toàn ứng dụng.
 - `src/components/`: component giao diện dùng ở nhiều màn hình.
 - `src/features/`: code theo nghiệp vụ, gồm auth/chat/todo/user/workschedule.
-- `src/shared/`: contract, config và hook kỹ thuật không biết nghiệp vụ.
+- `src/shared/`: config và hook kỹ thuật dùng chung.
 
 Xem quy tắc chi tiết tại [`src/README.md`](src/README.md).
 

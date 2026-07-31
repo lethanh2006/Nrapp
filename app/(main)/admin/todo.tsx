@@ -1,12 +1,12 @@
-import { adminUserDirectory } from "@/src/features/user/api/user-directory.api";
-import { adminTodoApi } from "@/src/features/todo/api/admin-todo.api";
+import { userApi } from "@/src/api/user.api";
+import { adminTodoApi } from "@/src/api/todo.api";
 import TodoView from "@/src/features/todo/ui/TodoView";
 
 export default function AdminTodoRoute() {
   return (
     <TodoView
       todoApi={adminTodoApi}
-      userDirectory={adminUserDirectory}
+      userDirectory={userApi}
     />
   );
 }

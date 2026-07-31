@@ -1,5 +1,5 @@
 import { getApiErrorMessage } from "@/src/api/client";
-import { authService } from "@/src/features/auth/api/auth.api";
+import { authApi } from "@/src/api/auth.api";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
@@ -34,7 +34,7 @@ export default function RegisterScreen() {
 
     setLoading(true);
     try {
-      const { data } = await authService.register({
+      const { data } = await authApi.register({
           username: username.trim(),
           email: email.trim().toLowerCase(),
           password,

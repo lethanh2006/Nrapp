@@ -4,8 +4,8 @@ import TodoTaskListCard from "@/src/features/todo/ui/TodoTaskListCard";
 import { TaskItem, TaskPriority, TaskStatus } from "@/src/features/todo/model/todo.types";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { normalizeUser } from "@/src/features/user/model/normalize-user";
-import type { TodoApi } from "@/src/features/todo/api/todo-api.types";
-import type { UserDirectory } from "@/src/features/user/api/user-directory.types";
+import type { TodoApi } from "@/src/api/todo.api";
+import type { UserDirectory } from "@/src/api/user.api";
 import type { User } from "@/src/features/user/model/user.types";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {

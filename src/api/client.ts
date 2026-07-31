@@ -33,22 +33,6 @@ apiClient.interceptors.response.use(
   (error: unknown) => Promise.reject(error),
 );
 
-const createFeatureClient = (feature: string) => {
-  const client = axios.create({
-    baseURL: `${API_URL}/${feature}`,
-    timeout: REQUEST_TIMEOUT_MS,
-    headers: { Accept: "application/json" },
-  });
-  client.interceptors.request.use(attachAccessToken);
-  return client;
-};
-
-export const workscheduleClient = createFeatureClient("workschedule");
-export const todoClient = createFeatureClient("todo");
-
-export const createAuthHeaders = (token: string | null | undefined) =>
-  token ? { Authorization: `Bearer ${token}` } : undefined;
-
 export const getApiErrorMessage = (error: unknown, fallback: string) => {
   if (!isAxiosError(error)) return fallback;
   const data = (error as AxiosError<{ message?: string | string[] }>).response

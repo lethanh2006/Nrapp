@@ -7,7 +7,7 @@ import {
   AdminHeatmapRow,
   AdminScheduleRequest,
   useWorkscheduleAdmin,
-} from "@/src/features/workschedule/api/useAdminWorkscheduleApi";
+} from "@/src/features/workschedule/hooks/useWorkscheduleAdmin";
 import { IWorkPolicy } from "@/src/features/workschedule/model/workschedule.types";
 import { isAdminRole } from "@/src/application/access/roles";
 

@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, Text, Pressable, TextInput, ActivityIndicator } from "react-native";
 import { useAdminData } from "@/src/features/workschedule/model/AdminWorkscheduleContext";
 import { Ionicons } from "@expo/vector-icons";
-import { useWorkscheduleAdmin } from "@/src/features/workschedule/api/useAdminWorkscheduleApi";
+import { useWorkscheduleAdmin } from "@/src/features/workschedule/hooks/useWorkscheduleAdmin";
 import ScheduleForm from "@/src/features/workschedule/ui/common/ScheduleForm";
 
 type RequestStatus = "all" | "draft" | "pending" | "approved" | "rejected";

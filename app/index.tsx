@@ -1,6 +1,3 @@
-/**
- * Landing - Redirect dựa trên auth
- */
 import { useAuthSession } from '@/src/features/auth/model/AuthSessionContext';
 import { router } from 'expo-router';
 import { useEffect } from 'react';

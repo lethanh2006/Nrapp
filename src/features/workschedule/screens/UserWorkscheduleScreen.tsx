@@ -2,7 +2,7 @@ import ScheduleList from "@/src/features/workschedule/ui/user/ScheduleList";
 import { ScheduleCalendar } from "@/src/features/workschedule/ui/user/ScheduleCalendar";
 import { ScheduleEntryEditor } from "@/src/features/workschedule/ui/user/ScheduleEntryEditor";
 import { RegistrationPolicyCard } from "@/src/features/workschedule/ui/user/RegistrationPolicyCard";
-import { useWorkscheduleUser } from "@/src/features/workschedule/api/useUserWorkscheduleApi";
+import { useWorkscheduleUser } from "@/src/features/workschedule/hooks/useWorkscheduleUser";
 import { IScheduleRequest, IScheduleEntry, EntryType, IWorkPolicy } from "@/src/features/workschedule/model/workschedule.types";
 import {
   getAllowedWeekRange,

@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useWorkscheduleUser } from "@/src/features/workschedule/api/useUserWorkscheduleApi";
+import { useWorkscheduleUser } from "@/src/features/workschedule/hooks/useWorkscheduleUser";
 import { IScheduleRequest, IScheduleEntry } from "@/src/features/workschedule/model/workschedule.types";
 import type { AppArea } from "@/src/application/access/roles";
 import { getAreaRoutes } from "@/src/application/navigation/routes";

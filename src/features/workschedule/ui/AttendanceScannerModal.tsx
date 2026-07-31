@@ -2,7 +2,7 @@ import { getApiErrorMessage } from "@/src/api/client";
 import {
   attendanceApi,
   type AttendanceScanResponse,
-} from "@/src/features/workschedule/api/attendance.api";
+} from "@/src/api/workschedule.api";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useEffect, useState } from "react";

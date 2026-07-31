@@ -1,4 +1,4 @@
-import { userTodoApi } from "@/src/features/todo/api/user-todo.api";
+import { userTodoApi } from "@/src/api/todo.api";
 import TodoView from "@/src/features/todo/ui/TodoView";
 
 export default function UserTodoRoute() {

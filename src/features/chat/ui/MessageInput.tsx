@@ -1,4 +1,4 @@
-import type { ChatImageUpload } from '@/src/features/chat/api/chat-api.types';
+import type { ChatImageUpload } from "@/src/api/chat.api";
 import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import {

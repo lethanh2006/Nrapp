@@ -5,7 +5,7 @@ import {
   getAllowedWeekRange,
   isRegistrationClosed,
 } from "@/src/features/workschedule/utils/date";
-import { useWorkscheduleUser } from "@/src/features/workschedule/api/useUserWorkscheduleApi";
+import { useWorkscheduleUser } from "@/src/features/workschedule/hooks/useWorkscheduleUser";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
