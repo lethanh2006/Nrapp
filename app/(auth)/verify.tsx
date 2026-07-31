@@ -2,8 +2,11 @@ import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { getAreaForRole } from "@/src/application/access/roles";
 import { APP_ROUTES } from "@/src/application/navigation/routes";
 import { normalizeUser } from "@/src/features/user/model/normalize-user";
-import { getApiErrorMessage } from "@/src/api/client";
-import { authApi } from "@/src/api/auth.api";
+import { getApiErrorMessage } from "@/src/utils/apiHelper";
+import {
+  saveAuthSession,
+  verifyOtp,
+} from "@/src/services/auth.service";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -56,12 +59,12 @@ export default function VerifyScreen() {
     }
     setLoading(true);
     try {
-      const { data } = await authApi.verify({
+      const { data } = await verifyOtp({
         email: email || "",
         otp: code,
       });
       const normalizedUser = normalizeUser(data.user);
-      await authApi.saveSession(data);
+      await saveAuthSession(data);
       setUser(normalizedUser);
       setIsAuth(true);
     } catch (error: unknown) {

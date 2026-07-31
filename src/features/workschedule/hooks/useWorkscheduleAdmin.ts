@@ -1,11 +1,24 @@
-import { getApiErrorMessage } from "@/src/api/client";
+import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
+import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import {
-  workscheduleAdminApi,
+  approveManySchedules,
+  approveSchedule,
+  generateAttendanceQr,
+  getAdminSchedule as fetchAdminSchedule,
+  getAllSchedules as fetchAllSchedules,
+  getAttendanceReport as fetchAttendanceReport,
+  getPendingSchedules as fetchPendingSchedules,
+  getScheduleHeatmap,
+  getTodayAttendance as fetchTodayAttendance,
+  getWorkPolicy,
+  rejectSchedule,
+  updateAdminSchedule,
+  updateWorkPolicy,
   type AdminAttendanceRecord,
   type AdminHeatmapRow,
   type AdminScheduleRequest,
   type WorkscheduleQuery,
-} from "@/src/api/workschedule.api";
+} from "@/src/services/workschedule.service";
 import type { IWorkPolicy } from "@/src/features/workschedule/model/workschedule.types";
 import { useCallback, useState } from "react";
 import { Alert } from "react-native";
@@ -15,9 +28,10 @@ export type {
   AdminEmployeeProfile,
   AdminHeatmapRow,
   AdminScheduleRequest,
-} from "@/src/api/workschedule.api";
+} from "@/src/services/workschedule.service";
 
 export function useWorkscheduleAdmin() {
+  const { getToken } = useAuthSession();
   const [loading, setLoading] = useState(false);
 
   const showError = useCallback(
@@ -31,7 +45,9 @@ export function useWorkscheduleAdmin() {
     async (silent = false): Promise<IWorkPolicy | null> => {
       try {
         setLoading(true);
-        const { data } = await workscheduleAdminApi.getPolicy();
+        const token = await getToken();
+        if (!token) return null;
+        const { data } = await getWorkPolicy(token);
         return data.data || null;
       } catch (error) {
         showError(error, "Không thể tải chính sách", silent);
@@ -40,7 +56,7 @@ export function useWorkscheduleAdmin() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   const updatePolicy = useCallback(
@@ -50,7 +66,9 @@ export function useWorkscheduleAdmin() {
     ): Promise<IWorkPolicy | null> => {
       try {
         setLoading(true);
-        const { data } = await workscheduleAdminApi.updatePolicy(payload);
+        const token = await getToken();
+        if (!token) return null;
+        const { data } = await updateWorkPolicy(token, payload);
         return data.data || null;
       } catch (error) {
         showError(error, "Không thể cập nhật chính sách", silent);
@@ -59,14 +77,16 @@ export function useWorkscheduleAdmin() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   const getPendingSchedules = useCallback(
     async (week?: string, silent = false): Promise<AdminScheduleRequest[]> => {
       try {
         setLoading(true);
-        const { data } = await workscheduleAdminApi.getPendingSchedules(week);
+        const token = await getToken();
+        if (!token) return [];
+        const { data } = await fetchPendingSchedules(token, week);
         return Array.isArray(data.data) ? data.data : [];
       } catch (error) {
         showError(error, "Không thể tải danh sách chờ duyệt", silent);
@@ -75,7 +95,7 @@ export function useWorkscheduleAdmin() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   const getAllSchedules = useCallback(
@@ -89,7 +109,9 @@ export function useWorkscheduleAdmin() {
           ...params,
           status: params.status === "all" ? undefined : params.status,
         };
-        const { data } = await workscheduleAdminApi.getAllSchedules(query);
+        const token = await getToken();
+        if (!token) return [];
+        const { data } = await fetchAllSchedules(token, query);
         return Array.isArray(data.data) ? data.data : [];
       } catch (error) {
         showError(error, "Không thể tải danh sách lịch", silent);
@@ -98,14 +120,16 @@ export function useWorkscheduleAdmin() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   const getScheduleDetail = useCallback(
     async (id: string, silent = false): Promise<AdminScheduleRequest | null> => {
       try {
         setLoading(true);
-        const { data } = await workscheduleAdminApi.getSchedule(id);
+        const token = await getToken();
+        if (!token) return null;
+        const { data } = await fetchAdminSchedule(token, id);
         return data.data || null;
       } catch (error) {
         showError(error, "Không thể tải chi tiết lịch", silent);
@@ -114,14 +138,16 @@ export function useWorkscheduleAdmin() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   const approveRequest = useCallback(
     async (id: string, silent = false) => {
       try {
         setLoading(true);
-        await workscheduleAdminApi.approveRequest(id);
+        const token = await getToken();
+        if (!token) return false;
+        await approveSchedule(token, id);
         return true;
       } catch (error) {
         showError(error, "Không thể duyệt lịch", silent);
@@ -130,14 +156,16 @@ export function useWorkscheduleAdmin() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   const rejectRequest = useCallback(
     async (id: string, reason?: string, silent = false) => {
       try {
         setLoading(true);
-        await workscheduleAdminApi.rejectRequest(id, reason);
+        const token = await getToken();
+        if (!token) return false;
+        await rejectSchedule(token, id, reason);
         return true;
       } catch (error) {
         showError(error, "Không thể từ chối lịch", silent);
@@ -146,14 +174,16 @@ export function useWorkscheduleAdmin() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   const bulkApprove = useCallback(
     async (ids: string[], silent = false) => {
       try {
         setLoading(true);
-        await workscheduleAdminApi.bulkApprove(ids);
+        const token = await getToken();
+        if (!token) return false;
+        await approveManySchedules(token, ids);
         return true;
       } catch (error) {
         showError(error, "Không thể duyệt hàng loạt", silent);
@@ -162,14 +192,16 @@ export function useWorkscheduleAdmin() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   const getHeatmap = useCallback(
     async (week?: string, silent = false): Promise<AdminHeatmapRow[]> => {
       try {
         setLoading(true);
-        const { data } = await workscheduleAdminApi.getHeatmap(week);
+        const token = await getToken();
+        if (!token) return [];
+        const { data } = await getScheduleHeatmap(token, week);
         return Array.isArray(data.data) ? data.data : [];
       } catch (error) {
         showError(error, "Không thể tải heatmap", silent);
@@ -178,14 +210,16 @@ export function useWorkscheduleAdmin() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   const generateQrToken = useCallback(
     async (silent = false) => {
       try {
         setLoading(true);
-        const { data } = await workscheduleAdminApi.generateQr();
+        const token = await getToken();
+        if (!token) return null;
+        const { data } = await generateAttendanceQr(token);
         return data.data || null;
       } catch (error) {
         showError(error, "Không thể tạo QR chấm công", silent);
@@ -194,14 +228,16 @@ export function useWorkscheduleAdmin() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   const getTodayAttendance = useCallback(
     async (silent = false): Promise<AdminAttendanceRecord[]> => {
       try {
         setLoading(true);
-        const { data } = await workscheduleAdminApi.getTodayAttendance();
+        const token = await getToken();
+        if (!token) return [];
+        const { data } = await fetchTodayAttendance(token);
         return Array.isArray(data.data) ? data.data : [];
       } catch (error) {
         showError(error, "Không thể tải chấm công hôm nay", silent);
@@ -210,7 +246,7 @@ export function useWorkscheduleAdmin() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   const getReport = useCallback(
@@ -220,7 +256,9 @@ export function useWorkscheduleAdmin() {
     ): Promise<AdminAttendanceRecord[]> => {
       try {
         setLoading(true);
-        const { data } = await workscheduleAdminApi.getAttendanceReport(params);
+        const token = await getToken();
+        if (!token) return [];
+        const { data } = await fetchAttendanceReport(token, params);
         return Array.isArray(data.data) ? data.data : [];
       } catch (error) {
         showError(error, "Không thể tải báo cáo chấm công", silent);
@@ -229,7 +267,7 @@ export function useWorkscheduleAdmin() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   const adminUpdateEntries = useCallback(
@@ -240,7 +278,9 @@ export function useWorkscheduleAdmin() {
     ) => {
       try {
         setLoading(true);
-        await workscheduleAdminApi.updateSchedule(id, entries);
+        const token = await getToken();
+        if (!token) return false;
+        await updateAdminSchedule(token, id, entries);
         return true;
       } catch (error) {
         showError(error, "Không thể cập nhật lịch làm việc", silent);
@@ -249,7 +289,7 @@ export function useWorkscheduleAdmin() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   return {

@@ -1,8 +1,8 @@
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { getAreaForRole } from "@/src/application/access/roles";
 import { APP_ROUTES } from "@/src/application/navigation/routes";
-import { getApiErrorMessage } from "@/src/api/client";
-import { authApi } from "@/src/api/auth.api";
+import { getApiErrorMessage } from "@/src/utils/apiHelper";
+import { loginUser } from "@/src/services/auth.service";
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -36,7 +36,7 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const { data } = await authApi.login({
+      const { data } = await loginUser({
         email: email.trim().toLowerCase(),
         password,
       });

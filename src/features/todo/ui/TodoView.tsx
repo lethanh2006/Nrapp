@@ -4,8 +4,16 @@ import TodoTaskListCard from "@/src/features/todo/ui/TodoTaskListCard";
 import { TaskItem, TaskPriority, TaskStatus } from "@/src/features/todo/model/todo.types";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { normalizeUser } from "@/src/features/user/model/normalize-user";
-import type { TodoApi } from "@/src/api/todo.api";
-import type { UserDirectory } from "@/src/api/user.api";
+import {
+  assignTodoTask,
+  createTodoTask,
+  deleteTodoTask,
+  getAdminTasks,
+  getMyTasks,
+  updateTodoStatus,
+  type CreateTaskInput,
+} from "@/src/services/todo.service";
+import { getAllUsers } from "@/src/services/user.service";
 import type { User } from "@/src/features/user/model/user.types";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -17,12 +25,11 @@ import {
 } from "react-native";
 
 interface TodoViewProps {
-  todoApi: TodoApi;
-  userDirectory?: UserDirectory;
+  isAdmin: boolean;
 }
 
-export default function TodoView({ todoApi, userDirectory }: TodoViewProps) {
-  const { loading: appLoading, isAuth, user } = useAuthSession();
+export default function TodoView({ isAdmin }: TodoViewProps) {
+  const { loading: appLoading, isAuth, user, getToken } = useAuthSession();
   const [users, setUsers] = useState<User[]>([]);
 
   const [tasks, setTasks] = useState<TaskItem[]>([]);
@@ -41,7 +48,6 @@ export default function TodoView({ todoApi, userDirectory }: TodoViewProps) {
 
   const [assignByTask, setAssignByTask] = useState<Record<string, string>>({});
 
-  const isAdmin = todoApi.canManage;
   const selectableUsers = useMemo(() => {
     const currentUserId = user?._id;
     return (users || []).filter((candidate) => candidate._id !== currentUserId);
@@ -51,9 +57,14 @@ export default function TodoView({ todoApi, userDirectory }: TodoViewProps) {
     if (!isAuth) return;
 
     try {
-      setTasks(await todoApi.getTasks());
-      if (userDirectory) {
-        const { data } = await userDirectory.getAll();
+      const token = await getToken();
+      if (!token) return;
+
+      setTasks(
+        isAdmin ? await getAdminTasks(token) : await getMyTasks(token),
+      );
+      if (isAdmin) {
+        const { data } = await getAllUsers(token);
         setUsers((data.users ?? []).map(normalizeUser));
       }
     } catch (error: any) {
@@ -62,7 +73,7 @@ export default function TodoView({ todoApi, userDirectory }: TodoViewProps) {
         error?.response?.data?.message || "Khong tai duoc cong viec",
       );
     }
-  }, [isAuth, todoApi, userDirectory]);
+  }, [getToken, isAdmin, isAuth]);
 
   useEffect(() => {
     let mounted = true;
@@ -95,7 +106,7 @@ export default function TodoView({ todoApi, userDirectory }: TodoViewProps) {
 
     try {
       setCreating(true);
-      const payload: Record<string, unknown> = {
+      const payload: CreateTaskInput = {
         title: title.trim(),
         description: description.trim() || undefined,
         priority,
@@ -104,7 +115,9 @@ export default function TodoView({ todoApi, userDirectory }: TodoViewProps) {
       if (deadline) payload.deadline = deadline.toISOString();
       if (createAssignee) payload.assignedTo = createAssignee;
 
-      await todoApi.createTask?.(payload as any);
+      const token = await getToken();
+      if (!token) return;
+      await createTodoTask(token, payload);
       setTitle("");
       setDescription("");
       setPriority("medium");
@@ -136,7 +149,9 @@ export default function TodoView({ todoApi, userDirectory }: TodoViewProps) {
 
     try {
       setAssigningTaskId(taskId);
-      await todoApi.assignTask?.(taskId, assignedTo);
+      const token = await getToken();
+      if (!token) return;
+      await assignTodoTask(token, taskId, assignedTo);
       await loadTasks();
       Alert.alert("Thanh cong", "Da giao cong viec");
     } catch (error: any) {
@@ -152,7 +167,9 @@ export default function TodoView({ todoApi, userDirectory }: TodoViewProps) {
   const updateStatus = async (taskId: string, status: TaskStatus) => {
     try {
       setUpdatingTaskId(taskId);
-      await todoApi.updateStatus(taskId, status);
+      const token = await getToken();
+      if (!token) return;
+      await updateTodoStatus(token, taskId, status);
       await loadTasks();
     } catch (error: any) {
       Alert.alert(
@@ -167,7 +184,9 @@ export default function TodoView({ todoApi, userDirectory }: TodoViewProps) {
   const removeTask = async (taskId: string) => {
     try {
       setDeletingTaskId(taskId);
-      await todoApi.deleteTask?.(taskId);
+      const token = await getToken();
+      if (!token) return;
+      await deleteTodoTask(token, taskId);
       await loadTasks();
       Alert.alert("Thanh cong", "Da xoa cong viec");
     } catch (error: any) {

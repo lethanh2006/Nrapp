@@ -1,4 +1,4 @@
-import { SOCKET_PATH, SOCKET_URL } from "@/src/shared/config/environment";
+import { socketPath, socketUrl } from "@/src/utils/ip";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
@@ -28,8 +28,8 @@ export const ChatSocketProvider: React.FC<{ children: React.ReactNode }> = ({
     const connect = async () => {
       const token = await getToken();
       if (!token || cancelled) return;
-      newSocket = io(SOCKET_URL, {
-        path: SOCKET_PATH,
+      newSocket = io(socketUrl, {
+        path: socketPath,
         auth: { token },
         transports: ["websocket", "polling"],
       });

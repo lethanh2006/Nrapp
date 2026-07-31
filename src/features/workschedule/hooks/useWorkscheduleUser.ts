@@ -1,5 +1,14 @@
-import { getApiErrorMessage } from "@/src/api/client";
-import { workscheduleUserApi } from "@/src/api/workschedule.api";
+import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
+import {
+  createScheduleRequest,
+  deleteScheduleRequest,
+  getMySchedules as fetchMySchedules,
+  getScheduleRequest,
+  getWorkPolicy,
+  submitScheduleRequest,
+  updateScheduleRequest,
+} from "@/src/services/workschedule.service";
+import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import type {
   IScheduleEntry,
   IScheduleRequest,
@@ -9,6 +18,7 @@ import { useCallback, useState } from "react";
 import { Alert } from "react-native";
 
 export function useWorkscheduleUser() {
+  const { getToken } = useAuthSession();
   const [loading, setLoading] = useState(false);
 
   const showError = useCallback((error: unknown, fallback: string) => {
@@ -17,18 +27,22 @@ export function useWorkscheduleUser() {
 
   const getPolicy = useCallback(async (): Promise<IWorkPolicy | null> => {
     try {
-      const { data } = await workscheduleUserApi.getPolicy();
+      const token = await getToken();
+      if (!token) return null;
+      const { data } = await getWorkPolicy(token);
       return data.data || null;
     } catch {
       return null;
     }
-  }, []);
+  }, [getToken]);
 
   const getMySchedules = useCallback(
     async (week?: string): Promise<IScheduleRequest[]> => {
       try {
         setLoading(true);
-        const { data } = await workscheduleUserApi.getSchedules(week);
+        const token = await getToken();
+        if (!token) return [];
+        const { data } = await fetchMySchedules(token, week);
         return Array.isArray(data.data) ? data.data : [];
       } catch (error) {
         showError(error, "Không thể tải danh sách lịch");
@@ -37,7 +51,7 @@ export function useWorkscheduleUser() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   const createRequest = useCallback(
@@ -48,7 +62,10 @@ export function useWorkscheduleUser() {
     ): Promise<IScheduleRequest | null> => {
       try {
         setLoading(true);
-        const { data } = await workscheduleUserApi.createRequest(
+        const token = await getToken();
+        if (!token) return null;
+        const { data } = await createScheduleRequest(
+          token,
           weekStart,
           entries,
         );
@@ -61,14 +78,16 @@ export function useWorkscheduleUser() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   const getRequestInfo = useCallback(
     async (id: string): Promise<IScheduleRequest | null> => {
       try {
         setLoading(true);
-        const { data } = await workscheduleUserApi.getRequest(id);
+        const token = await getToken();
+        if (!token) return null;
+        const { data } = await getScheduleRequest(token, id);
         return data.data || null;
       } catch (error) {
         showError(error, "Không thể tải thông tin lịch");
@@ -77,14 +96,16 @@ export function useWorkscheduleUser() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   const updateEntries = useCallback(
     async (id: string, entries: IScheduleEntry[], showSuccess = true) => {
       try {
         setLoading(true);
-        await workscheduleUserApi.updateRequest(id, entries);
+        const token = await getToken();
+        if (!token) return false;
+        await updateScheduleRequest(token, id, entries);
         if (showSuccess) Alert.alert("Thành công", "Đã cập nhật lịch");
         return true;
       } catch (error) {
@@ -94,14 +115,16 @@ export function useWorkscheduleUser() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   const submitRequest = useCallback(
     async (id: string) => {
       try {
         setLoading(true);
-        await workscheduleUserApi.submitRequest(id);
+        const token = await getToken();
+        if (!token) return false;
+        await submitScheduleRequest(token, id);
         Alert.alert("Thành công", "Đã nộp lịch để chờ duyệt");
         return true;
       } catch (error) {
@@ -111,14 +134,16 @@ export function useWorkscheduleUser() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   const deleteRequest = useCallback(
     async (id: string) => {
       try {
         setLoading(true);
-        await workscheduleUserApi.deleteRequest(id);
+        const token = await getToken();
+        if (!token) return false;
+        await deleteScheduleRequest(token, id);
         Alert.alert("Thành công", "Đã xoá lịch nháp");
         return true;
       } catch (error) {
@@ -128,7 +153,7 @@ export function useWorkscheduleUser() {
         setLoading(false);
       }
     },
-    [showError],
+    [getToken, showError],
   );
 
   return {

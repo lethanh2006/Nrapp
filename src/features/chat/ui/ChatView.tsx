@@ -4,14 +4,19 @@ import ChatSideBar from "@/src/features/chat/ui/ChatSideBar";
 import MessageInput from "@/src/features/chat/ui/MessageInput";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { useChatSocket } from "@/src/features/chat/model/ChatSocketContext";
-import { getApiErrorMessage } from "@/src/api/client";
+import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import { normalizeUser } from "@/src/features/user/model/normalize-user";
 import type {
   ChatImageUpload,
-  ChatApi,
-} from "@/src/api/chat.api";
+} from "@/src/services/chat.service";
+import {
+  createChat as createChatRequest,
+  getChatMessages,
+  getChats,
+  sendChatMessage,
+} from "@/src/services/chat.service";
+import { getAllUsers } from "@/src/services/user.service";
 import type { ChatSummary } from "@/src/features/chat/model/chat.types";
-import type { UserDirectory } from "@/src/api/user.api";
 import type { User } from "@/src/features/user/model/user.types";
 import type { Message } from "@/src/features/chat/model/message.types";
 import { useFocusEffect } from "@react-navigation/native";
@@ -26,11 +31,6 @@ import {
   StyleSheet,
   View,
 } from "react-native";
-
-interface ChatViewProps {
-  chatApi: ChatApi;
-  userDirectory: UserDirectory;
-}
 
 const normalizeChatItem = (raw: any): ChatSummary => {
   const rawUser = raw?.user?.user ?? raw?.user ?? raw?.users?.user ?? {};
@@ -55,11 +55,8 @@ const normalizeChatItem = (raw: any): ChatSummary => {
   };
 };
 
-export default function ChatView({
-  chatApi,
-  userDirectory,
-}: ChatViewProps) {
-  const { loading, isAuth, user: loggedInUser } = useAuthSession();
+export default function ChatView() {
+  const { loading, isAuth, user: loggedInUser, getToken } = useAuthSession();
   const { socket, onlineUsers } = useChatSocket();
 
   const [chats, setChats] = useState<ChatSummary[] | null>(null);
@@ -74,14 +71,18 @@ export default function ChatView({
   const otherUserId = chatUser?.user?._id || chatUser?._id;
 
   const fetchChats = useCallback(async () => {
-    const { data } = await chatApi.getAll();
+    const token = await getToken();
+    if (!token) return;
+    const { data } = await getChats(token);
     setChats((data.chats ?? []).map(normalizeChatItem));
-  }, [chatApi]);
+  }, [getToken]);
 
   const fetchUsers = useCallback(async () => {
-    const { data } = await userDirectory.getAll();
+    const token = await getToken();
+    if (!token) return;
+    const { data } = await getAllUsers(token);
     setUsers((data.users ?? []).map(normalizeUser));
-  }, [userDirectory]);
+  }, [getToken]);
 
   useEffect(() => {
     if (!loading && !isAuth) router.replace("/(auth)/login");
@@ -97,7 +98,9 @@ export default function ChatView({
   const fetchChat = useCallback(async () => {
     if (!selectedUser) return;
     try {
-      const { data } = await chatApi.getMessages(selectedUser);
+      const token = await getToken();
+      if (!token) return;
+      const { data } = await getChatMessages(token, selectedUser);
       setMessages(data.messages);
       setChatUser(data.user);
       await fetchChats();
@@ -108,11 +111,13 @@ export default function ChatView({
       });
       Alert.alert("Lỗi", getApiErrorMessage(e, "Không tải được tin nhắn"));
     }
-  }, [chatApi, fetchChats, selectedUser]);
+  }, [fetchChats, getToken, selectedUser]);
 
   async function createChat(u: User) {
     try {
-      const { data } = await chatApi.create(u._id);
+      const token = await getToken();
+      if (!token) return;
+      const { data } = await createChatRequest(token, u._id);
       setSelectedUser(data.chatId);
       await fetchChats();
     } catch (e) {
@@ -128,7 +133,14 @@ export default function ChatView({
     const text = message.trim();
     if ((!text && !image) || !selectedUser) return false;
     try {
-      const { data } = await chatApi.sendMessage(selectedUser, text, image);
+      const token = await getToken();
+      if (!token) return false;
+      const { data } = await sendChatMessage(
+        token,
+        selectedUser,
+        text,
+        image,
+      );
 
       setMessages((prev) => {
         const current = prev ? [...prev] : [];

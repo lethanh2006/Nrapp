@@ -1,8 +1,9 @@
-import { getApiErrorMessage } from "@/src/api/client";
+import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import {
-  attendanceApi,
+  scanAttendance,
   type AttendanceScanResponse,
-} from "@/src/api/workschedule.api";
+} from "@/src/services/workschedule.service";
+import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import { Ionicons } from "@expo/vector-icons";
 import { CameraView, useCameraPermissions } from "expo-camera";
 import { useEffect, useState } from "react";
@@ -31,6 +32,7 @@ export function AttendanceScannerModal({
   visible,
   onClose,
 }: AttendanceScannerModalProps) {
+  const { getToken } = useAuthSession();
   const insets = useSafeAreaInsets();
   const [permission, requestPermission] = useCameraPermissions();
   const [scanned, setScanned] = useState(false);
@@ -50,7 +52,9 @@ export function AttendanceScannerModal({
     setLoading(true);
 
     try {
-      const response = await attendanceApi.scan(data);
+      const token = await getToken();
+      if (!token) throw new Error("Không tìm thấy phiên đăng nhập");
+      const response = await scanAttendance(token, data);
       setResult(response.data);
     } catch (error: unknown) {
       setResult({

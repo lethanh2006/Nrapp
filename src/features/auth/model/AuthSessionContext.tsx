@@ -1,5 +1,8 @@
-import { authApi } from "@/src/api/auth.api";
-import { userApi } from "@/src/api/user.api";
+import {
+  clearAuthSession,
+  getStoredToken,
+} from "@/src/services/auth.service";
+import { getUserProfile } from "@/src/services/user.service";
 import { normalizeUser } from "@/src/features/user/model/normalize-user";
 import type { User } from "@/src/features/user/model/user.types";
 import React, {
@@ -31,7 +34,7 @@ export const AuthSessionProvider: React.FC<{ children: React.ReactNode }> = ({
   const [loading, setLoading] = useState(true);
 
   const getToken = useCallback(async () => {
-    return authApi.getToken();
+    return getStoredToken();
   }, []);
 
   const fetchUser = useCallback(async () => {
@@ -41,7 +44,7 @@ export const AuthSessionProvider: React.FC<{ children: React.ReactNode }> = ({
         setLoading(false);
         return;
       }
-      const { data } = await userApi.getProfile();
+      const { data } = await getUserProfile(token);
       const userData = data.user || data;
       setUser(normalizeUser(userData));
       setIsAuth(true);
@@ -54,7 +57,7 @@ export const AuthSessionProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const logoutUser = useCallback(async () => {
     try {
-      await authApi.clearSession();
+      await clearAuthSession();
     } catch {
       // keep UI consistent even if storage operation fails
     } finally {
