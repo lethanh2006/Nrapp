@@ -1,4 +1,4 @@
-import type { User } from "@/src/entities/user/model/user.types";
+import type { User } from "@/src/features/user/model/user.types";
 
 export const normalizeUser = (raw: unknown): User => {
   const value = (raw ?? {}) as Record<string, unknown>;

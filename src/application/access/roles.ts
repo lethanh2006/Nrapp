@@ -1,4 +1,4 @@
-import type { AppRole } from "@/src/entities/user/model/role.types";
+import type { AppRole } from "@/src/features/user/model/role.types";
 
 export const USER_ROLE = "user" as const;
 

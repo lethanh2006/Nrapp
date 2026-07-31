@@ -1,4 +1,4 @@
-import type { User } from "@/src/entities/user/model/user.types";
+import type { User } from "@/src/features/user/model/user.types";
 import type { AxiosResponse } from "axios";
 
 export interface UserDirectory {

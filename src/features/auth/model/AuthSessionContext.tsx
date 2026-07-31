@@ -1,7 +1,7 @@
 import { authService } from "@/src/features/auth/api/auth.api";
-import { userService } from "@/src/entities/user/api/profile.api";
-import { normalizeUser } from "@/src/entities/user/model/normalize-user";
-import type { User } from "@/src/entities/user/model/user.types";
+import { userService } from "@/src/features/user/api/profile.api";
+import { normalizeUser } from "@/src/features/user/model/normalize-user";
+import type { User } from "@/src/features/user/model/user.types";
 import React, {
   createContext,
   useCallback,
@@ -10,7 +10,7 @@ import React, {
   useState,
 } from "react";
 
-export type { User } from "@/src/entities/user/model/user.types";
+export type { User } from "@/src/features/user/model/user.types";
 interface AuthSessionContextValue {
   user: User | null;
   loading: boolean;

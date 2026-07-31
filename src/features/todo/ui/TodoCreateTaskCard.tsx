@@ -1,4 +1,4 @@
-import type { User } from "@/src/entities/user/model/user.types";
+import type { User } from "@/src/features/user/model/user.types";
 import { Ionicons } from "@expo/vector-icons";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import React from "react";

@@ -1,7 +1,7 @@
 import { apiClient } from "@/src/api/client";
 import { API_ENDPOINTS } from "@/src/api/endpoints";
-import type { UserDirectory } from "@/src/entities/user/api/user-directory.types";
-import type { User } from "@/src/entities/user/model/user.types";
+import type { UserDirectory } from "@/src/features/user/api/user-directory.types";
+import type { User } from "@/src/features/user/model/user.types";
 
 export const userDirectory: UserDirectory = {
   getAll: () =>

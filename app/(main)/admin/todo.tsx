@@ -1,4 +1,4 @@
-import { adminUserDirectory } from "@/src/entities/user/api/user-directory.api";
+import { adminUserDirectory } from "@/src/features/user/api/user-directory.api";
 import { adminTodoApi } from "@/src/features/todo/api/admin-todo.api";
 import TodoView from "@/src/features/todo/ui/TodoView";
 

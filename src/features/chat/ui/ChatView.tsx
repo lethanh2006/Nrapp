@@ -5,14 +5,14 @@ import MessageInput from "@/src/features/chat/ui/MessageInput";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { useChatSocket } from "@/src/features/chat/model/ChatSocketContext";
 import { getApiErrorMessage } from "@/src/api/client";
-import { normalizeUser } from "@/src/entities/user/model/normalize-user";
+import { normalizeUser } from "@/src/features/user/model/normalize-user";
 import type {
   ChatImageUpload,
   ChatApi,
 } from "@/src/features/chat/api/chat-api.types";
 import type { ChatSummary } from "@/src/features/chat/model/chat.types";
-import type { UserDirectory } from "@/src/entities/user/api/user-directory.types";
-import type { User } from "@/src/entities/user/model/user.types";
+import type { UserDirectory } from "@/src/features/user/api/user-directory.types";
+import type { User } from "@/src/features/user/model/user.types";
 import type { Message } from "@/src/features/chat/model/message.types";
 import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";

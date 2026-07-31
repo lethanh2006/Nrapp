@@ -25,8 +25,7 @@ Có thể cấu hình thêm `EXPO_PUBLIC_SOCKET_URL`, `EXPO_PUBLIC_SOCKET_PATH` 
 - `src/api/`: HTTP client và endpoint backend.
 - `src/application/`: navigation và access policy toàn ứng dụng.
 - `src/components/`: component giao diện dùng ở nhiều màn hình.
-- `src/entities/`: model/API của thực thể dùng bởi nhiều feature.
-- `src/features/`: vertical slice theo nghiệp vụ, gồm API/model/screen/UI.
+- `src/features/`: code theo nghiệp vụ, gồm auth/chat/todo/user/workschedule.
 - `src/shared/`: contract, config và hook kỹ thuật không biết nghiệp vụ.
 
 Xem quy tắc chi tiết tại [`src/README.md`](src/README.md).

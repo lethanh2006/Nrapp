@@ -10,13 +10,12 @@ src/
   api/                  # HTTP client và toàn bộ endpoint backend
   application/          # Navigation và kiểm tra role
   components/           # Component dùng ở nhiều màn hình
-  entities/
-    user/               # Kiểu dữ liệu và API của thực thể user
   features/
     auth/
     chat/
     home/
     todo/
+    user/               # API và kiểu dữ liệu người dùng
     workschedule/
       api/              # Adapter gọi backend và request runner
       model/            # Type, hằng số và state
@@ -35,7 +34,6 @@ src/
 - Một thay đổi nghiệp vụ phải tìm được trong đúng một thư mục `features/<tên>`.
 - URL backend chỉ khai báo tại `src/api/endpoints.ts`.
 - HTTP client chỉ được khởi tạo tại `src/api/client.ts`.
-- `entities` không chứa route/UI và không phụ thuộc vào feature.
 - API admin/user của cùng một nghiệp vụ nằm cạnh nhau trong `features/<tên>/api`.
 - Chỉ đưa UI vào `shared` khi nó hoàn toàn không biết Chat, Todo hay Workschedule.
 - Danh sách role frontend nằm tại `application/access/roles.ts`; backend vẫn là

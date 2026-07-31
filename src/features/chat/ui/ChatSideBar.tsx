@@ -1,6 +1,6 @@
 import { Ionicons } from "@expo/vector-icons";
 import type { ChatSummary } from "@/src/features/chat/model/chat.types";
-import type { User } from "@/src/entities/user/model/user.types";
+import type { User } from "@/src/features/user/model/user.types";
 import React, { useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
