@@ -1,4 +1,4 @@
-import { User } from "@/context/AppContext";
+import type { User } from "@/types/api";
 import { Ionicons } from "@expo/vector-icons";
 import { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 import React from "react";
@@ -289,4 +289,3 @@ export default function TodoCreateTaskCard({
     </View>
   );
 }
-

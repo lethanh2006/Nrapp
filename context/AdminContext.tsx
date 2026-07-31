@@ -9,6 +9,7 @@ import {
   useWorkscheduleAdmin,
 } from "@/hooks/useWorkscheduleAdmin";
 import { IWorkPolicy } from "@/components/workschedule/types";
+import { isAdminRole } from "@/src/core/auth/roles";
 
 type RequestStatus = "all" | "draft" | "pending" | "approved" | "rejected";
 type ReportRange = "7d" | "30d";
@@ -205,7 +206,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const [qrRemaining, setQrRemaining] = useState(0);
 
   const loadAdminData = useCallback(async (showRefreshing = false) => {
-    if (!user || user.role !== "admin") return;
+    if (!user || !isAdminRole(user.role)) return;
 
     if (showRefreshing) setRefreshing(true);
 

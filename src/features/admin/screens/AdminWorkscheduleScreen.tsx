@@ -8,7 +8,7 @@ import {
   Pressable,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
-import { AdminProvider, useAdminData } from "../../../../context/AdminContext";
+import { AdminProvider, useAdminData } from "@/context/AdminContext";
 
 import { PolicySection } from "@/components/workschedule/admin/PolicySection";
 import { AttendanceQR } from "@/components/workschedule/admin/AttendanceQR";

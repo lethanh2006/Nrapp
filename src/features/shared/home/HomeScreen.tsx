@@ -1,10 +1,10 @@
 import { useAppData } from "@/context/AppContext";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
+import type { Href } from "expo-router";
 import React, { useEffect, useState, useCallback } from "react";
 import {
   Alert,
-  Dimensions,
   ImageBackground,
   Pressable,
   ScrollView,
@@ -15,11 +15,14 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useWorkscheduleUser } from "@/hooks/useWorkscheduleUser";
 import { IScheduleRequest, IScheduleEntry } from "@/components/workschedule/types";
+import type { AppArea } from "@/src/core/auth/roles";
+import { getAreaRoutes } from "@/src/core/navigation/routes";
 
-export default function HomeScreen() {
+export default function HomeScreen({ area }: { area: AppArea }) {
   const insets = useSafeAreaInsets();
   const { user } = useAppData();
-  const isAdmin = user?.role === "admin";
+  const isAdmin = area === "admin";
+  const areaRoutes = getAreaRoutes(area);
   const [todayDate, setTodayDate] = useState(new Date());
 
   const { getMySchedules, loading } = useWorkscheduleUser();
@@ -238,9 +241,7 @@ export default function HomeScreen() {
             <Pressable
               onPress={() =>
                 router.push(
-                  isAdmin
-                    ? "/(main)/workschedule/admin"
-                    : "/(main)/workschedule/user"
+                  areaRoutes.workschedule
                 )
               }
               className="w-10 h-10 rounded-full bg-white/15 items-center justify-center active:scale-95"
@@ -263,7 +264,9 @@ export default function HomeScreen() {
             Bạn không có lịch trong tuần này
           </Text>
           <Pressable
-            onPress={() => router.push("/(main)/workschedule/user/create")}
+            onPress={() =>
+              router.push("/(main)/user/workschedule/create" as Href)
+            }
             className="mt-2 bg-blue-50 px-4 py-1.5 rounded-full active:scale-95 flex-row items-center space-x-1"
           >
             <Ionicons name="add-circle" size={14} color="#2563eb" />
@@ -276,9 +279,7 @@ export default function HomeScreen() {
         <Pressable
           onPress={() =>
             router.push(
-              isAdmin
-                ? "/(main)/workschedule/admin"
-                : "/(main)/workschedule/user"
+              areaRoutes.workschedule
             )
           }
           className="mx-4 bg-white rounded-3xl p-5 -mt-8 shadow-md border border-slate-100 flex-row justify-between min-h-[110px] active:opacity-90"
@@ -350,7 +351,7 @@ export default function HomeScreen() {
 
           <View className="flex-row justify-between items-center bg-white p-4 rounded-3xl border border-slate-100/80 shadow-xs">
             <Pressable
-              onPress={() => router.push("/(main)/chat")}
+              onPress={() => router.push(areaRoutes.chat)}
               className="items-center justify-center flex-1 active:scale-95 active:opacity-80 transition-all"
             >
               <View className="w-14 h-14 bg-blue-50 rounded-2xl items-center justify-center shadow-xs">
@@ -362,7 +363,7 @@ export default function HomeScreen() {
             </Pressable>
 
             <Pressable
-              onPress={() => router.push("/(main)/todo")}
+              onPress={() => router.push(areaRoutes.todo)}
               className="items-center justify-center flex-1 active:scale-95 active:opacity-80 transition-all"
             >
               <View className="w-14 h-14 bg-emerald-50 rounded-2xl items-center justify-center shadow-xs">
@@ -376,9 +377,7 @@ export default function HomeScreen() {
             <Pressable
               onPress={() =>
                 router.push(
-                  isAdmin
-                    ? "/(main)/workschedule/admin"
-                    : "/(main)/workschedule/user"
+                  areaRoutes.workschedule
                 )
               }
               className="items-center justify-center flex-1 active:scale-95 active:opacity-80 transition-all"

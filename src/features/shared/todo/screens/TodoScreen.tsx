@@ -3,7 +3,10 @@ import TodoIntroCard from "@/components/todo/TodoIntroCard";
 import TodoTaskListCard from "@/components/todo/TodoTaskListCard";
 import { TaskItem, TaskPriority, TaskStatus } from "@/components/todo/types";
 import { useAppData } from "@/context/AppContext";
-import { API_ENDPOINTS, createAuthHeaders, todoClient } from "@/services/api";
+import { normalizeUser } from "@/src/core/user/normalize-user";
+import type { TodoService } from "@/src/features/shared/todo/todo-service";
+import type { UserDirectory } from "@/src/features/shared/users/user-directory";
+import type { User } from "@/types/api";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
@@ -13,8 +16,14 @@ import {
   View,
 } from "react-native";
 
-export default function TodoScreen() {
-  const { loading: appLoading, isAuth, getToken, users, user } = useAppData();
+interface TodoScreenProps {
+  todoService: TodoService;
+  userDirectory?: UserDirectory;
+}
+
+export default function TodoScreen({ todoService, userDirectory }: TodoScreenProps) {
+  const { loading: appLoading, isAuth, user } = useAppData();
+  const [users, setUsers] = useState<User[]>([]);
 
   const [tasks, setTasks] = useState<TaskItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,34 +41,28 @@ export default function TodoScreen() {
 
   const [assignByTask, setAssignByTask] = useState<Record<string, string>>({});
 
-  const isAdmin = user?.role === "admin";
+  const isAdmin = todoService.canManage;
   const selectableUsers = useMemo(() => {
     const currentUserId = user?._id;
     return (users || []).filter((candidate) => candidate._id !== currentUserId);
   }, [users, user?._id]);
 
-  const authHeader = useCallback(async () => {
-    const token = await getToken();
-    if (!token) return null;
-    return createAuthHeaders(token);
-  }, [getToken]);
-
   const loadTasks = useCallback(async () => {
     if (!isAuth) return;
-    const headers = await authHeader();
-    if (!headers) return;
 
     try {
-      const endpoint = isAdmin ? API_ENDPOINTS.todo.all : API_ENDPOINTS.todo.mine;
-      const { data } = await todoClient.get(endpoint, { headers });
-      setTasks(Array.isArray(data?.tasks) ? data.tasks : []);
+      setTasks(await todoService.getTasks());
+      if (userDirectory) {
+        const { data } = await userDirectory.getAll();
+        setUsers((data.users ?? []).map(normalizeUser));
+      }
     } catch (error: any) {
       Alert.alert(
         "Loi",
         error?.response?.data?.message || "Khong tai duoc cong viec",
       );
     }
-  }, [authHeader, isAdmin, isAuth]);
+  }, [isAuth, todoService, userDirectory]);
 
   useEffect(() => {
     let mounted = true;
@@ -85,9 +88,6 @@ export default function TodoScreen() {
       return;
     }
 
-    const headers = await authHeader();
-    if (!headers) return;
-
     if (createAssignee && createAssignee === user?._id) {
       Alert.alert("Thong bao", "Khong the tu giao viec cho chinh minh");
       return;
@@ -104,7 +104,7 @@ export default function TodoScreen() {
       if (deadline) payload.deadline = deadline.toISOString();
       if (createAssignee) payload.assignedTo = createAssignee;
 
-      await todoClient.post(API_ENDPOINTS.todo.all, payload, { headers });
+      await todoService.createTask?.(payload as any);
       setTitle("");
       setDescription("");
       setPriority("medium");
@@ -134,12 +134,9 @@ export default function TodoScreen() {
       return;
     }
 
-    const headers = await authHeader();
-    if (!headers) return;
-
     try {
       setAssigningTaskId(taskId);
-      await todoClient.post(API_ENDPOINTS.todo.assign(taskId), { assignedTo }, { headers });
+      await todoService.assignTask?.(taskId, assignedTo);
       await loadTasks();
       Alert.alert("Thanh cong", "Da giao cong viec");
     } catch (error: any) {
@@ -153,12 +150,9 @@ export default function TodoScreen() {
   };
 
   const updateStatus = async (taskId: string, status: TaskStatus) => {
-    const headers = await authHeader();
-    if (!headers) return;
-
     try {
       setUpdatingTaskId(taskId);
-      await todoClient.patch(API_ENDPOINTS.todo.status(taskId), { status }, { headers });
+      await todoService.updateStatus(taskId, status);
       await loadTasks();
     } catch (error: any) {
       Alert.alert(
@@ -171,12 +165,9 @@ export default function TodoScreen() {
   };
 
   const removeTask = async (taskId: string) => {
-    const headers = await authHeader();
-    if (!headers) return;
-
     try {
       setDeletingTaskId(taskId);
-      await todoClient.delete(API_ENDPOINTS.todo.detail(taskId), { headers });
+      await todoService.deleteTask?.(taskId);
       await loadTasks();
       Alert.alert("Thanh cong", "Da xoa cong viec");
     } catch (error: any) {

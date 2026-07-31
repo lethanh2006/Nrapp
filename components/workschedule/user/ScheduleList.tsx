@@ -47,7 +47,7 @@ export default function ScheduleList({ schedules }: Props) {
             onPress={() =>
               id &&
               router.push({
-                pathname: "/(main)/workschedule/user/[id]",
+                pathname: "/(main)/user/workschedule/[id]",
                 params: { id },
               } as any)
             }

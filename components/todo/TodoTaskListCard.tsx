@@ -1,4 +1,4 @@
-import { User } from "@/context/AppContext";
+import type { User } from "@/types/api";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -388,4 +388,3 @@ export default function TodoTaskListCard({
     </View>
   );
 }
-

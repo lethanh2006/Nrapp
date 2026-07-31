@@ -1,4 +1,6 @@
 import { useAppData } from "@/context/AppContext";
+import { getAreaForRole } from "@/src/core/auth/roles";
+import { APP_ROUTES } from "@/src/core/navigation/routes";
 import { getApiErrorMessage } from "@/services/api";
 import { authService } from "@/services/auth";
 import { router } from "expo-router";
@@ -15,14 +17,16 @@ import {
 } from "react-native";
 
 export default function LoginScreen() {
-  const { isAuth, loading: userLoading } = useAppData();
+  const { isAuth, loading: userLoading, user } = useAppData();
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    if (!userLoading && isAuth) router.replace("/(main)/home");
-  }, [isAuth, userLoading]);
+    if (!userLoading && isAuth) {
+      router.replace(APP_ROUTES[getAreaForRole(user?.role)].home);
+    }
+  }, [isAuth, user?.role, userLoading]);
 
   const handleSubmit = async () => {
     if (!email.trim() || !password) {

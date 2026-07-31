@@ -1,7 +1,7 @@
 import ScheduleList from "@/components/workschedule/user/ScheduleList";
 import { useWorkscheduleUser } from "@/hooks/useWorkscheduleUser";
 import { IScheduleRequest, IScheduleEntry, EntryType, IWorkPolicy } from "@/components/workschedule/types";
-import { router, useFocusEffect } from "expo-router";
+import { router, useFocusEffect, type Href } from "expo-router";
 import React, { useCallback, useState, useMemo } from "react";
 import {
   ActivityIndicator,
@@ -551,7 +551,7 @@ export default function WorkscheduleUserDashboard() {
                   Alert.alert("Thông báo", "Hiện đang ngoài khoảng thời gian đăng ký lịch làm việc");
                   return;
                 }
-                router.push("/(main)/workschedule/user/create");
+                router.push("/(main)/user/workschedule/create" as Href);
               }}
               className={`px-4 py-2 rounded-xl flex-row items-center ${isOutsideRegistrationWindow ? "bg-slate-300" : "bg-blue-600"}`}
             >

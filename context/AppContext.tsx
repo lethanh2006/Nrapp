@@ -1,6 +1,7 @@
 import { authService } from "@/services/auth";
-import { chatService } from "@/services/chat";
 import { userService } from "@/services/user";
+import { normalizeUser } from "@/src/core/user/normalize-user";
+import type { User } from "@/types/api";
 import React, {
   createContext,
   useCallback,
@@ -9,32 +10,7 @@ import React, {
   useState,
 } from "react";
 
-export interface User {
-  _id: string;
-  name: string;
-  username?: string;
-  email: string;
-  role?: "admin" | "manager" | "user";
-}
-
-export interface Chat {
-  _id: string;
-  users: string[];
-  latestMessage: {
-    text: string;
-    sender: string;
-  };
-  createdAt: string;
-  updatedAt: string;
-  unseenCount?: number;
-}
-
-export interface Chats {
-  _id: string;
-  user: User;
-  chat: Chat;
-}
-
+export type { User } from "@/types/api";
 interface AppContextType {
   user: User | null;
   loading: boolean;
@@ -42,47 +18,10 @@ interface AppContextType {
   setUser: React.Dispatch<React.SetStateAction<User | null>>;
   setIsAuth: React.Dispatch<React.SetStateAction<boolean>>;
   logoutUser: () => Promise<void>;
-  fetchUsers: () => Promise<void>;
-  fetchChats: () => Promise<void>;
-  chats: Chats[] | null;
-  users: User[] | null;
-  setChats: React.Dispatch<React.SetStateAction<Chats[] | null>>;
   getToken: () => Promise<string | null>;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-
-const normalizeUser = (raw: any): User => ({
-  _id: String(raw?._id ?? ""),
-  name: String(raw?.name ?? raw?.username ?? raw?.email ?? "Unknown"),
-  username: raw?.username ? String(raw.username) : undefined,
-  email: String(raw?.email ?? ""),
-  role:
-    raw?.role === "admin" || raw?.role === "manager" ? raw.role : "user",
-});
-
-const normalizeChatItem = (raw: any): Chats => {
-  const rawUser = raw?.user?.user ?? raw?.user ?? raw?.users?.user ?? {};
-  const chatData = raw?.chat ?? {};
-  return {
-    _id: String(raw?._id ?? chatData?._id ?? ""),
-    user: normalizeUser(rawUser),
-    chat: {
-      _id: String(chatData?._id ?? ""),
-      users: Array.isArray(chatData?.users)
-        ? chatData.users.map((id: any) => String(id))
-        : [],
-      latestMessage: {
-        text: String(chatData?.latestMessage?.text ?? ""),
-        sender: String(chatData?.latestMessage?.sender ?? ""),
-      },
-      createdAt: String(chatData?.createdAt ?? ""),
-      updatedAt: String(chatData?.updatedAt ?? ""),
-      unseenCount:
-        typeof chatData?.unseenCount === "number" ? chatData.unseenCount : 0,
-    },
-  };
-};
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
@@ -90,8 +29,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [isAuth, setIsAuth] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [chats, setChats] = useState<Chats[] | null>(null);
-  const [users, setUsers] = useState<User[] | null>(null);
 
   const getToken = useCallback(async () => {
     return authService.getToken();
@@ -123,47 +60,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
     } finally {
       setUser(null);
       setIsAuth(false);
-      setChats(null);
-      setUsers(null);
       setLoading(false);
     }
   }, []);
 
-  const fetchChats = useCallback(async () => {
-    const token = await getToken();
-    if (!token) return;
-    try {
-      const { data } = await chatService.getAll();
-      const rawChats = Array.isArray(data?.chats) ? data.chats : [];
-      setChats(rawChats.map(normalizeChatItem));
-    } catch (e) {
-      console.error(e);
-    }
-  }, [getToken]);
-
-  const fetchUsers = useCallback(async () => {
-    const token = await getToken();
-    if (!token) return;
-    try {
-      const { data } = await userService.getAll();
-      if (Array.isArray(data)) setUsers(data.map(normalizeUser));
-      else if (data?.users) setUsers(data.users.map(normalizeUser));
-      else setUsers([]);
-    } catch (e) {
-      console.error(e);
-    }
-  }, [getToken]);
-
   useEffect(() => {
     fetchUser();
   }, []);
-
-  useEffect(() => {
-    if (isAuth) {
-      fetchChats();
-      fetchUsers();
-    }
-  }, [fetchChats, fetchUsers, isAuth]);
 
   return (
     <AppContext.Provider
@@ -174,11 +77,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({
         setIsAuth,
         loading,
         logoutUser,
-        fetchChats,
-        fetchUsers,
-        chats,
-        users,
-        setChats,
         getToken,
       }}
     >

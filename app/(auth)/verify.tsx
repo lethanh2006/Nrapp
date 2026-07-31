@@ -1,4 +1,7 @@
-import { User, useAppData } from "@/context/AppContext";
+import { useAppData } from "@/context/AppContext";
+import { getAreaForRole } from "@/src/core/auth/roles";
+import { APP_ROUTES } from "@/src/core/navigation/routes";
+import { normalizeUser } from "@/src/core/user/normalize-user";
 import { getApiErrorMessage } from "@/services/api";
 import { authService } from "@/services/auth";
 import { router, useLocalSearchParams } from "expo-router";
@@ -14,27 +17,18 @@ import {
 
 export default function VerifyScreen() {
   const { email } = useLocalSearchParams<{ email: string }>();
-  const { isAuth, setUser, setIsAuth, loading: userLoading } = useAppData();
+  const { isAuth, setUser, setIsAuth, loading: userLoading, user } = useAppData();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
   const inputRefs = useRef<(TextInput | null)[]>([]);
   const hasRedirectedRef = useRef(false);
 
-  const normalizeUser = (raw: any): User => ({
-    _id: String(raw?._id ?? ""),
-    name: String(raw?.name ?? raw?.username ?? raw?.email ?? "Unknown"),
-    username: raw?.username ? String(raw.username) : undefined,
-    email: String(raw?.email ?? ""),
-    role:
-      raw?.role === "admin" || raw?.role === "manager" ? raw.role : "user",
-  });
-
   useEffect(() => {
     if (!userLoading && isAuth && !hasRedirectedRef.current) {
       hasRedirectedRef.current = true;
-      router.replace("/(main)/home");
+      router.replace(APP_ROUTES[getAreaForRole(user?.role)].home);
     }
-  }, [isAuth, userLoading]);
+  }, [isAuth, user?.role, userLoading]);
 
   useEffect(() => {
     if (!email) router.replace("/(auth)/login");

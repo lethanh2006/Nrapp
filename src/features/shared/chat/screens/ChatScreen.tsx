@@ -2,10 +2,17 @@ import ChatHeader from "@/components/chat/ChatHeader";
 import ChatMessages from "@/components/chat/ChatMessages";
 import ChatSideBar from "@/components/chat/ChatSideBar";
 import MessageInput from "@/components/chat/MessageInput";
-import { User, useAppData } from "@/context/AppContext";
+import { useAppData } from "@/context/AppContext";
 import { useSocketData } from "@/context/SocketContext";
 import { getApiErrorMessage } from "@/services/api";
-import { chatService, type ChatImageUpload } from "@/services/chat";
+import { normalizeUser } from "@/src/core/user/normalize-user";
+import type {
+  ChatImageUpload,
+  ChatService,
+} from "@/src/features/shared/chat/chat-service";
+import type { ChatSummary } from "@/src/features/shared/chat/chat-model";
+import type { UserDirectory } from "@/src/features/shared/users/user-directory";
+import type { User } from "@/types/api";
 import type { Message } from "@/types/chat";
 import { useFocusEffect } from "@react-navigation/native";
 import { router } from "expo-router";
@@ -20,18 +27,43 @@ import {
   View,
 } from "react-native";
 
-export default function ChatScreen() {
-  const {
-    loading,
-    isAuth,
-    chats,
-    user: loggedInUser,
-    users,
-    fetchChats,
-    fetchUsers,
-  } = useAppData();
+interface ChatScreenProps {
+  chatService: ChatService;
+  userDirectory: UserDirectory;
+}
+
+const normalizeChatItem = (raw: any): ChatSummary => {
+  const rawUser = raw?.user?.user ?? raw?.user ?? raw?.users?.user ?? {};
+  const chatData = raw?.chat ?? {};
+  return {
+    _id: String(raw?._id ?? chatData?._id ?? ""),
+    user: normalizeUser(rawUser),
+    chat: {
+      _id: String(chatData?._id ?? ""),
+      users: Array.isArray(chatData?.users)
+        ? chatData.users.map(String)
+        : [],
+      latestMessage: {
+        text: String(chatData?.latestMessage?.text ?? ""),
+        sender: String(chatData?.latestMessage?.sender ?? ""),
+      },
+      createdAt: String(chatData?.createdAt ?? ""),
+      updatedAt: String(chatData?.updatedAt ?? ""),
+      unseenCount:
+        typeof chatData?.unseenCount === "number" ? chatData.unseenCount : 0,
+    },
+  };
+};
+
+export default function ChatScreen({
+  chatService,
+  userDirectory,
+}: ChatScreenProps) {
+  const { loading, isAuth, user: loggedInUser } = useAppData();
   const { socket, onlineUsers } = useSocketData();
 
+  const [chats, setChats] = useState<ChatSummary[] | null>(null);
+  const [users, setUsers] = useState<User[] | null>(null);
   const [selectedUser, setSelectedUser] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [messages, setMessages] = useState<Message[] | null>(null);
@@ -40,6 +72,16 @@ export default function ChatScreen() {
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const otherUserId = chatUser?.user?._id || chatUser?._id;
+
+  const fetchChats = useCallback(async () => {
+    const { data } = await chatService.getAll();
+    setChats((data.chats ?? []).map(normalizeChatItem));
+  }, [chatService]);
+
+  const fetchUsers = useCallback(async () => {
+    const { data } = await userDirectory.getAll();
+    setUsers((data.users ?? []).map(normalizeUser));
+  }, [userDirectory]);
 
   useEffect(() => {
     if (!loading && !isAuth) router.replace("/(auth)/login");
@@ -66,7 +108,7 @@ export default function ChatScreen() {
       });
       Alert.alert("Lỗi", getApiErrorMessage(e, "Không tải được tin nhắn"));
     }
-  }, [fetchChats, selectedUser]);
+  }, [chatService, fetchChats, selectedUser]);
 
   async function createChat(u: User) {
     try {

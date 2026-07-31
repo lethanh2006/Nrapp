@@ -1,5 +1,5 @@
 import { Message } from '@/types/chat';
-import { User } from '@/context/AppContext';
+import type { User } from '@/types/api';
 import { Image } from 'expo-image';
 import React, { useEffect, useMemo, useRef } from 'react';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';

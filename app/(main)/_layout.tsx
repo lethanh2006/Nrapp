@@ -14,6 +14,8 @@ import {
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { getAreaForRole } from "@/src/core/auth/roles";
+import { getAreaRoutes } from "@/src/core/navigation/routes";
 
 interface ScanResultType {
   success: boolean;
@@ -30,6 +32,8 @@ export default function MainLayout() {
   const insets = useSafeAreaInsets();
   const pathname = usePathname();
   const { loading, isAuth, logoutUser, user, getToken } = useAppData();
+  const area = getAreaForRole(user?.role);
+  const areaRoutes = getAreaRoutes(area);
 
   const [scanVisible, setScanVisible] = useState(false);
   const [profileVisible, setProfileVisible] = useState(false);
@@ -106,7 +110,7 @@ export default function MainLayout() {
     }
   };
 
-  const isHomeActive = pathname === "/home";
+  const isHomeActive = pathname.endsWith("/home");
 
   return (
     <View className="flex-1 bg-white">
@@ -128,9 +132,8 @@ export default function MainLayout() {
 
       <View className="flex-1">
         <Stack screenOptions={{ headerShown: false }}>
-          <Stack.Screen name="home" />
-          <Stack.Screen name="chat" />
-          <Stack.Screen name="todo" />
+          <Stack.Screen name="admin" />
+          <Stack.Screen name="user" />
         </Stack>
       </View>
 
@@ -144,7 +147,7 @@ export default function MainLayout() {
         }}
       >
         <Pressable
-          onPress={() => router.replace("/(main)/home")}
+          onPress={() => router.replace(areaRoutes.home)}
           className="items-center justify-center flex-1"
           style={({ pressed }) => ({ opacity: pressed ? 0.7 : 1 })}
         >
@@ -507,7 +510,7 @@ export default function MainLayout() {
             <Text className="text-xl font-bold text-slate-800">{user?.name || "Người dùng"}</Text>
             <View className="bg-slate-100 px-3 py-1 rounded-full mt-1.5 mb-6">
               <Text className="text-slate-600 text-xs font-semibold capitalize">
-                Vai trò: {user?.role === "admin" ? "Quản trị viên" : "Nhân viên"}
+                Vai trò: {area === "admin" ? "Khối quản trị" : "Nhân viên"}
               </Text>
             </View>
 

@@ -1,27 +1,14 @@
 import { API_ENDPOINTS, apiClient } from "@/services/api";
-import type { MessageResponse, User, UserRole } from "@/types/api";
+import type { MessageResponse, User } from "@/types/api";
 
 type UserResponse = { user: User };
 
 export const userService = {
-  getMe: () => apiClient.get<UserResponse>(API_ENDPOINTS.user.me),
-  getAll: () =>
-    apiClient.get<{ users: User[] }>(API_ENDPOINTS.user.all),
+  getMe: () => apiClient.get<UserResponse>(API_ENDPOINTS.profile.me),
   getPublicProfile: (userId: string) =>
-    apiClient.get<UserResponse>(API_ENDPOINTS.user.detail(userId)),
+    apiClient.get<UserResponse>(API_ENDPOINTS.profile.detail(userId)),
   updateUsername: (username: string) =>
-    apiClient.post<MessageResponse & UserResponse>(API_ENDPOINTS.user.update, {
+    apiClient.post<MessageResponse & UserResponse>(API_ENDPOINTS.profile.update, {
       username,
     }),
-  getAdminProfile: (userId: string) =>
-    apiClient.get<UserResponse>(API_ENDPOINTS.user.adminDetail(userId)),
-  getAuthProfile: (userId: string) =>
-    apiClient.get<User>(API_ENDPOINTS.auth.user(userId)),
-  updateRole: (userId: string, role: UserRole) =>
-    apiClient.patch<MessageResponse & { userId: string; role: UserRole }>(
-      API_ENDPOINTS.auth.role(userId),
-      { role },
-    ),
-  deleteUser: (userId: string) =>
-    apiClient.delete<MessageResponse>(API_ENDPOINTS.auth.user(userId)),
 };

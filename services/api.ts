@@ -85,27 +85,45 @@ export const API_ENDPOINTS = {
     role: (userId: string) =>
       `/auth/users/${encodeURIComponent(userId)}/role`,
   },
-  user: {
+  profile: {
     me: "/user/me",
     all: "/user/user/all",
     detail: (userId: string) => `/user/${encodeURIComponent(userId)}`,
     update: "/user/update/user",
-    adminDetail: (userId: string) =>
-      `/user/admin/${encodeURIComponent(userId)}`,
   },
-  chat: {
-    all: "/chat/chat/all",
-    create: "/chat/chat/new",
-    message: "/chat/message",
-    messages: (chatId: string) =>
-      `/chat/message/${encodeURIComponent(chatId)}`,
+  admin: {
+    users: {
+      all: "/user/user/all",
+      detail: (userId: string) => `/user/admin/${encodeURIComponent(userId)}`,
+    },
+    chat: {
+      all: "/chat/chat/all",
+      create: "/chat/chat/new",
+      message: "/chat/message",
+      messages: (chatId: string) =>
+        `/chat/message/${encodeURIComponent(chatId)}`,
+    },
+  },
+  user: {
+    chat: {
+      all: "/chat/chat/all",
+      create: "/chat/chat/new",
+      message: "/chat/message",
+      messages: (chatId: string) =>
+        `/chat/message/${encodeURIComponent(chatId)}`,
+    },
   },
   todo: {
-    all: "/",
-    mine: "/my-tasks",
-    assign: (taskId: string) => `/${taskId}/assign`,
-    status: (taskId: string) => `/${taskId}/status`,
-    detail: (taskId: string) => `/${taskId}`,
+    admin: {
+      all: "/",
+      assign: (taskId: string) => `/${taskId}/assign`,
+      status: (taskId: string) => `/${taskId}/status`,
+      detail: (taskId: string) => `/${taskId}`,
+    },
+    user: {
+      mine: "/my-tasks",
+      status: (taskId: string) => `/${taskId}/status`,
+    },
   },
   workschedule: {
     policy: "/policy",

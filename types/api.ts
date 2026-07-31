@@ -1,8 +1,11 @@
-export type UserRole = "admin" | "manager" | "user";
+import type { AppRole } from "@/src/core/auth/roles";
+
+export type UserRole = AppRole;
 
 export interface User {
   _id: string;
-  username: string;
+  name: string;
+  username?: string;
   email: string;
   role: UserRole;
 }

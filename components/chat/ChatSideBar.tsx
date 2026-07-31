@@ -1,12 +1,13 @@
 import { Ionicons } from "@expo/vector-icons";
-import { Chats, User } from "@/context/AppContext";
+import type { ChatSummary } from "@/src/features/shared/chat/chat-model";
+import type { User } from "@/types/api";
 import React, { useMemo, useState } from "react";
 import { FlatList, Pressable, StyleSheet, Text, TextInput, View } from "react-native";
 
 interface ChatSideBarProps {
   users: User[] | null;
   loggedInUser: User | null;
-  chats: Chats[] | null;
+  chats: ChatSummary[] | null;
   setSelectedUser: (id: string | null) => void;
   createChat: (user: User) => Promise<void>;
   refreshUsers: () => Promise<void>;
@@ -15,7 +16,7 @@ interface ChatSideBarProps {
 
 const getName = (user: User) => user.name || user.username || user.email || "Nhân viên";
 
-const getChatUserId = (item: Chats) => {
+const getChatUserId = (item: ChatSummary) => {
   const raw = (item.user as any)?.user ?? item.user;
   return String(raw?._id ?? "");
 };
@@ -44,7 +45,7 @@ export default function ChatSideBar({
   const normalizedQuery = query.trim().toLowerCase();
 
   const chatByUserId = useMemo(() => {
-    const map = new Map<string, Chats>();
+    const map = new Map<string, ChatSummary>();
     (chats ?? []).forEach((item) => map.set(getChatUserId(item), item));
     return map;
   }, [chats]);

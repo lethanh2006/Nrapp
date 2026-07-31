@@ -5,18 +5,20 @@ import { useAppData } from '@/context/AppContext';
 import { router } from 'expo-router';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
+import { getAreaForRole } from "@/src/core/auth/roles";
+import { APP_ROUTES } from "@/src/core/navigation/routes";
 
 export default function IndexScreen() {
-  const { isAuth, loading } = useAppData();
+  const { isAuth, loading, user } = useAppData();
 
   useEffect(() => {
     if (loading) return;
     if (isAuth) {
-      router.replace('/(main)/home');
+      router.replace(APP_ROUTES[getAreaForRole(user?.role)].home);
     } else {
       router.replace('/(auth)/login');
     }
-  }, [isAuth, loading]);
+  }, [isAuth, loading, user?.role]);
 
   return (
     <View style={styles.container}>
