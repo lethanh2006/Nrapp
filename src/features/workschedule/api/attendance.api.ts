@@ -1,5 +1,5 @@
-import { apiClient } from "@/src/shared/api/http-client";
-import { WORKSCHEDULE_ENDPOINTS } from "@/src/features/workschedule/api/workschedule.endpoints";
+import { workscheduleClient } from "@/src/api/client";
+import { API_ENDPOINTS } from "@/src/api/endpoints";
 
 export interface AttendanceScanResponse {
   success: boolean;
@@ -14,8 +14,8 @@ export interface AttendanceScanResponse {
 
 export const attendanceApi = {
   scan: (token: string) =>
-    apiClient.post<AttendanceScanResponse>(
-      WORKSCHEDULE_ENDPOINTS.attendanceScan,
+    workscheduleClient.post<AttendanceScanResponse>(
+      API_ENDPOINTS.workschedule.attendanceScan,
       { token },
     ),
 };

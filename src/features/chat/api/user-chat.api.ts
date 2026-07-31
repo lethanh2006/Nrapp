@@ -1,8 +1,4 @@
 import { createChatApi } from "@/src/features/chat/api/create-chat-api";
+import { API_ENDPOINTS } from "@/src/api/endpoints";
 
-export const userChatApi = createChatApi({
-  all: "/chat/chat/all",
-  create: "/chat/chat/new",
-  message: "/chat/message",
-  messages: (chatId) => `/chat/message/${encodeURIComponent(chatId)}`,
-});
+export const userChatApi = createChatApi(API_ENDPOINTS.chat);

@@ -4,7 +4,7 @@ import ChatSideBar from "@/src/features/chat/ui/ChatSideBar";
 import MessageInput from "@/src/features/chat/ui/MessageInput";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { useChatSocket } from "@/src/features/chat/model/ChatSocketContext";
-import { getApiErrorMessage } from "@/src/shared/api/http-client";
+import { getApiErrorMessage } from "@/src/api/client";
 import { normalizeUser } from "@/src/entities/user/model/normalize-user";
 import type {
   ChatImageUpload,

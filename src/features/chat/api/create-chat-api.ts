@@ -1,4 +1,4 @@
-import { apiClient } from "@/src/shared/api/http-client";
+import { apiClient } from "@/src/api/client";
 import type {
   ChatImageUpload,
   ChatListItem,

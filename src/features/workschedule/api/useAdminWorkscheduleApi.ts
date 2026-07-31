@@ -1,9 +1,8 @@
-import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
-import { IWorkPolicy } from "@/src/features/workschedule/model/workschedule.types";
-import { createAuthHeaders, workscheduleClient } from "@/src/shared/api/http-client";
-import { WORKSCHEDULE_ENDPOINTS } from "@/src/features/workschedule/api/workschedule.endpoints";
-import { useCallback, useState } from "react";
-import { Alert } from "react-native";
+import { workscheduleClient } from "@/src/api/client";
+import { API_ENDPOINTS } from "@/src/api/endpoints";
+import { useWorkscheduleRequest } from "@/src/features/workschedule/api/useWorkscheduleRequest";
+import type { IWorkPolicy } from "@/src/features/workschedule/model/workschedule.types";
+import { useCallback } from "react";
 
 export type AdminEmployeeProfile = {
   _id?: string;
@@ -59,252 +58,278 @@ type QueryParams = {
   employee_id?: string;
 };
 
+const dataOrNull = <T,>(response: { data?: { data?: T } }) =>
+  response.data?.data ?? null;
+
+const dataOrList = <T,>(response: { data?: { data?: T[] } }) =>
+  Array.isArray(response.data?.data) ? response.data.data : [];
+
 export function useWorkscheduleAdmin() {
-  const { getToken } = useAuthSession();
-  const [loading, setLoading] = useState(false);
-
-  const getHeaders = useCallback(async (): Promise<Record<string, string> | undefined> => {
-    const token = await getToken();
-    if (!token) return undefined;
-    return createAuthHeaders(token);
-  }, [getToken]);
-
-  const handleError = useCallback((error: any, fallback: string, silent?: boolean) => {
-    if (silent) return;
-    if (error?.response?.status === 401) return;
-    Alert.alert("Lỗi", error?.response?.data?.message || fallback);
-  }, []);
+  const { loading, run } = useWorkscheduleRequest();
 
   const getPolicy = useCallback(
-    async (silent = false): Promise<IWorkPolicy | null> => {
-      try {
-        setLoading(true);
-        const headers = await getHeaders();
-        const res = await workscheduleClient.get(WORKSCHEDULE_ENDPOINTS.policy, { headers });
-        return res.data?.data || null;
-      } catch (error: any) {
-        handleError(error, "Không thể tải chính sách", silent);
-        return null;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getHeaders, handleError],
+    (silent = false) =>
+      run<IWorkPolicy | null>(
+        async (headers) =>
+          dataOrNull(
+            await workscheduleClient.get(API_ENDPOINTS.workschedule.policy, {
+              headers,
+            }),
+          ),
+        {
+          errorMessage: "Không thể tải chính sách",
+          fallbackValue: null,
+          silent,
+        },
+      ),
+    [run],
   );
 
   const updatePolicy = useCallback(
-    async (payload: Partial<IWorkPolicy>, silent = false): Promise<IWorkPolicy | null> => {
-      try {
-        setLoading(true);
-        const headers = await getHeaders();
-        const res = await workscheduleClient.patch(WORKSCHEDULE_ENDPOINTS.admin.policy, payload, { headers });
-        return res.data?.data || null;
-      } catch (error: any) {
-        handleError(error, "Không thể cập nhật chính sách", silent);
-        return null;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getHeaders, handleError],
+    (payload: Partial<IWorkPolicy>, silent = false) =>
+      run<IWorkPolicy | null>(
+        async (headers) =>
+          dataOrNull(
+            await workscheduleClient.patch(
+              API_ENDPOINTS.workschedule.admin.policy,
+              payload,
+              { headers },
+            ),
+          ),
+        {
+          errorMessage: "Không thể cập nhật chính sách",
+          fallbackValue: null,
+          silent,
+        },
+      ),
+    [run],
   );
 
   const getPendingSchedules = useCallback(
-    async (week?: string, silent = false): Promise<AdminScheduleRequest[]> => {
-      try {
-        setLoading(true);
-        const headers = await getHeaders();
-        const params: QueryParams = {};
-        if (week) params.week = week;
-        const res = await workscheduleClient.get(WORKSCHEDULE_ENDPOINTS.admin.pendingSchedules, { headers, params });
-        return Array.isArray(res.data?.data) ? res.data.data : [];
-      } catch (error: any) {
-        handleError(error, "Không thể tải danh sách chờ duyệt", silent);
-        return [];
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getHeaders, handleError],
+    (week?: string, silent = false) =>
+      run<AdminScheduleRequest[]>(
+        async (headers) =>
+          dataOrList(
+            await workscheduleClient.get(
+              API_ENDPOINTS.workschedule.admin.pendingSchedules,
+              { headers, params: week ? { week } : {} },
+            ),
+          ),
+        {
+          errorMessage: "Không thể tải danh sách chờ duyệt",
+          fallbackValue: [],
+          silent,
+        },
+      ),
+    [run],
   );
 
   const getAllSchedules = useCallback(
-    async (paramsInput: QueryParams = {}, silent = false): Promise<AdminScheduleRequest[]> => {
-      try {
-        setLoading(true);
-        const headers = await getHeaders();
-        const params: QueryParams = {};
-        if (paramsInput.week) params.week = paramsInput.week;
-        if (paramsInput.status && paramsInput.status !== "all") params.status = paramsInput.status;
-        const res = await workscheduleClient.get(WORKSCHEDULE_ENDPOINTS.admin.allSchedules, { headers, params });
-        return Array.isArray(res.data?.data) ? res.data.data : [];
-      } catch (error: any) {
-        handleError(error, "Không thể tải danh sách lịch", silent);
-        return [];
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getHeaders, handleError],
+    (params: QueryParams = {}, silent = false) =>
+      run<AdminScheduleRequest[]>(
+        async (headers) => {
+          const query: QueryParams = {};
+          if (params.week) query.week = params.week;
+          if (params.status && params.status !== "all") {
+            query.status = params.status;
+          }
+          return dataOrList(
+            await workscheduleClient.get(
+              API_ENDPOINTS.workschedule.admin.allSchedules,
+              { headers, params: query },
+            ),
+          );
+        },
+        {
+          errorMessage: "Không thể tải danh sách lịch",
+          fallbackValue: [],
+          silent,
+        },
+      ),
+    [run],
   );
 
   const getScheduleDetail = useCallback(
-    async (id: string, silent = false): Promise<AdminScheduleRequest | null> => {
-      try {
-        setLoading(true);
-        const headers = await getHeaders();
-        const res = await workscheduleClient.get(WORKSCHEDULE_ENDPOINTS.request(id), { headers });
-        return res.data?.data || null;
-      } catch (error: any) {
-        handleError(error, "Không thể tải chi tiết lịch", silent);
-        return null;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getHeaders, handleError],
+    (id: string, silent = false) =>
+      run<AdminScheduleRequest | null>(
+        async (headers) =>
+          dataOrNull(
+            await workscheduleClient.get(
+              API_ENDPOINTS.workschedule.request(id),
+              { headers },
+            ),
+          ),
+        {
+          errorMessage: "Không thể tải chi tiết lịch",
+          fallbackValue: null,
+          silent,
+        },
+      ),
+    [run],
+  );
+
+  const mutate = useCallback(
+    (
+      request: (
+        headers: Record<string, string> | undefined,
+      ) => Promise<unknown>,
+      errorMessage: string,
+      silent = false,
+    ) =>
+      run(
+        async (headers) => {
+          await request(headers);
+          return true;
+        },
+        { errorMessage, fallbackValue: false, silent },
+      ),
+    [run],
   );
 
   const approveRequest = useCallback(
-    async (id: string, silent = false): Promise<boolean> => {
-      try {
-        setLoading(true);
-        const headers = await getHeaders();
-        await workscheduleClient.post(WORKSCHEDULE_ENDPOINTS.admin.approve(id), {}, { headers });
-        return true;
-      } catch (error: any) {
-        handleError(error, "Không thể duyệt lịch", silent);
-        return false;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getHeaders, handleError],
+    (id: string, silent = false) =>
+      mutate(
+        (headers) =>
+          workscheduleClient.post(
+            API_ENDPOINTS.workschedule.admin.approve(id),
+            {},
+            { headers },
+          ),
+        "Không thể duyệt lịch",
+        silent,
+      ),
+    [mutate],
   );
 
   const rejectRequest = useCallback(
-    async (id: string, reason?: string, silent = false): Promise<boolean> => {
-      try {
-        setLoading(true);
-        const headers = await getHeaders();
-        await workscheduleClient.post(WORKSCHEDULE_ENDPOINTS.admin.reject(id), { reason }, { headers });
-        return true;
-      } catch (error: any) {
-        handleError(error, "Không thể từ chối lịch", silent);
-        return false;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getHeaders, handleError],
+    (id: string, reason?: string, silent = false) =>
+      mutate(
+        (headers) =>
+          workscheduleClient.post(
+            API_ENDPOINTS.workschedule.admin.reject(id),
+            { reason },
+            { headers },
+          ),
+        "Không thể từ chối lịch",
+        silent,
+      ),
+    [mutate],
   );
 
   const bulkApprove = useCallback(
-    async (ids: string[], silent = false): Promise<boolean> => {
-      try {
-        setLoading(true);
-        const headers = await getHeaders();
-        await workscheduleClient.post(WORKSCHEDULE_ENDPOINTS.admin.bulkApprove, { ids }, { headers });
-        return true;
-      } catch (error: any) {
-        handleError(error, "Không thể duyệt hàng loạt", silent);
-        return false;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getHeaders, handleError],
+    (ids: string[], silent = false) =>
+      mutate(
+        (headers) =>
+          workscheduleClient.post(
+            API_ENDPOINTS.workschedule.admin.bulkApprove,
+            { ids },
+            { headers },
+          ),
+        "Không thể duyệt hàng loạt",
+        silent,
+      ),
+    [mutate],
   );
 
   const getHeatmap = useCallback(
-    async (week?: string, silent = false): Promise<AdminHeatmapRow[]> => {
-      try {
-        setLoading(true);
-        const headers = await getHeaders();
-        const params: QueryParams = {};
-        if (week) params.week = week;
-        const res = await workscheduleClient.get(WORKSCHEDULE_ENDPOINTS.admin.heatmap, { headers, params });
-        return Array.isArray(res.data?.data) ? res.data.data : [];
-      } catch (error: any) {
-        handleError(error, "Không thể tải heatmap", silent);
-        return [];
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getHeaders, handleError],
+    (week?: string, silent = false) =>
+      run<AdminHeatmapRow[]>(
+        async (headers) =>
+          dataOrList(
+            await workscheduleClient.get(
+              API_ENDPOINTS.workschedule.admin.heatmap,
+              { headers, params: week ? { week } : {} },
+            ),
+          ),
+        {
+          errorMessage: "Không thể tải heatmap",
+          fallbackValue: [],
+          silent,
+        },
+      ),
+    [run],
   );
 
   const generateQrToken = useCallback(
-    async (silent = false): Promise<{ token: string; expires_at?: string } | null> => {
-      try {
-        setLoading(true);
-        const headers = await getHeaders();
-        const res = await workscheduleClient.post(WORKSCHEDULE_ENDPOINTS.admin.generateQr, {}, { headers });
-        return res.data?.data || null;
-      } catch (error: any) {
-        handleError(error, "Không thể tạo QR chấm công", silent);
-        return null;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getHeaders, handleError],
+    (silent = false) =>
+      run<{ token: string; expires_at?: string } | null>(
+        async (headers) =>
+          dataOrNull(
+            await workscheduleClient.post(
+              API_ENDPOINTS.workschedule.admin.generateQr,
+              {},
+              { headers },
+            ),
+          ),
+        {
+          errorMessage: "Không thể tạo QR chấm công",
+          fallbackValue: null,
+          silent,
+        },
+      ),
+    [run],
   );
 
   const getTodayAttendance = useCallback(
-    async (silent = false): Promise<AdminAttendanceRecord[]> => {
-      try {
-        setLoading(true);
-        const headers = await getHeaders();
-        const res = await workscheduleClient.get(WORKSCHEDULE_ENDPOINTS.admin.todayAttendance, { headers });
-        return Array.isArray(res.data?.data) ? res.data.data : [];
-      } catch (error: any) {
-        handleError(error, "Không thể tải chấm công hôm nay", silent);
-        return [];
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getHeaders, handleError],
+    (silent = false) =>
+      run<AdminAttendanceRecord[]>(
+        async (headers) =>
+          dataOrList(
+            await workscheduleClient.get(
+              API_ENDPOINTS.workschedule.admin.todayAttendance,
+              { headers },
+            ),
+          ),
+        {
+          errorMessage: "Không thể tải chấm công hôm nay",
+          fallbackValue: [],
+          silent,
+        },
+      ),
+    [run],
   );
 
   const getReport = useCallback(
-    async (paramsInput: QueryParams = {}, silent = false): Promise<AdminAttendanceRecord[]> => {
-      try {
-        setLoading(true);
-        const headers = await getHeaders();
-        const params: QueryParams = {};
-        if (paramsInput.from) params.from = paramsInput.from;
-        if (paramsInput.to) params.to = paramsInput.to;
-        if (paramsInput.employee_id) params.employee_id = paramsInput.employee_id;
-        const res = await workscheduleClient.get(WORKSCHEDULE_ENDPOINTS.admin.attendanceReport, { headers, params });
-        return Array.isArray(res.data?.data) ? res.data.data : [];
-      } catch (error: any) {
-        handleError(error, "Không thể tải báo cáo chấm công", silent);
-        return [];
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getHeaders, handleError],
+    (params: QueryParams = {}, silent = false) =>
+      run<AdminAttendanceRecord[]>(
+        async (headers) => {
+          const query: QueryParams = {};
+          if (params.from) query.from = params.from;
+          if (params.to) query.to = params.to;
+          if (params.employee_id) query.employee_id = params.employee_id;
+          return dataOrList(
+            await workscheduleClient.get(
+              API_ENDPOINTS.workschedule.admin.attendanceReport,
+              { headers, params: query },
+            ),
+          );
+        },
+        {
+          errorMessage: "Không thể tải báo cáo chấm công",
+          fallbackValue: [],
+          silent,
+        },
+      ),
+    [run],
   );
 
   const adminUpdateEntries = useCallback(
-    async (id: string, entries: { date: string; type: string; note?: string }[], silent = false): Promise<boolean> => {
-      try {
-        setLoading(true);
-        const headers = await getHeaders();
-        await workscheduleClient.patch(WORKSCHEDULE_ENDPOINTS.request(id), { entries }, { headers });
-        return true;
-      } catch (error: any) {
-        handleError(error, "Không thể cập nhật lịch làm việc của nhân viên", silent);
-        return false;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getHeaders, handleError],
+    (
+      id: string,
+      entries: { date: string; type: string; note?: string }[],
+      silent = false,
+    ) =>
+      mutate(
+        (headers) =>
+          workscheduleClient.patch(
+            API_ENDPOINTS.workschedule.request(id),
+            { entries },
+            { headers },
+          ),
+        "Không thể cập nhật lịch làm việc của nhân viên",
+        silent,
+      ),
+    [mutate],
   );
 
   return {

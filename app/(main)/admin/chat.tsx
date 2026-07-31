@@ -1,4 +1,4 @@
-import { adminUserDirectory } from "@/src/entities/user/api/admin-user-directory.api";
+import { adminUserDirectory } from "@/src/entities/user/api/user-directory.api";
 import { adminChatApi } from "@/src/features/chat/api/admin-chat.api";
 import ChatView from "@/src/features/chat/ui/ChatView";
 

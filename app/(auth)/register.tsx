@@ -1,4 +1,4 @@
-import { getApiErrorMessage } from "@/src/shared/api/http-client";
+import { getApiErrorMessage } from "@/src/api/client";
 import { authService } from "@/src/features/auth/api/auth.api";
 import { router } from "expo-router";
 import React, { useState } from "react";
