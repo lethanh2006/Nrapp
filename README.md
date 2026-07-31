@@ -21,8 +21,8 @@ Có thể cấu hình thêm `EXPO_PUBLIC_SOCKET_URL`, `EXPO_PUBLIC_SOCKET_PATH` 
 
 ## Kiến trúc
 
-- `app/`: route Expo Router; chỉ chứa wrapper và route layout.
-- `src/application/`: wiring toàn ứng dụng, layout, navigation và access policy.
+- `app/`: route Expo Router, route layout và screen composition.
+- `src/application/`: navigation và access policy toàn ứng dụng.
 - `src/entities/`: model/API của thực thể dùng bởi nhiều feature.
 - `src/features/`: vertical slice theo nghiệp vụ.
 - `src/shared/`: HTTP client, config và hook kỹ thuật không biết nghiệp vụ.

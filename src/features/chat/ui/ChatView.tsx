@@ -27,7 +27,7 @@ import {
   View,
 } from "react-native";
 
-interface ChatScreenProps {
+interface ChatViewProps {
   chatApi: ChatApi;
   userDirectory: UserDirectory;
 }
@@ -55,10 +55,10 @@ const normalizeChatItem = (raw: any): ChatSummary => {
   };
 };
 
-export default function ChatScreen({
+export default function ChatView({
   chatApi,
   userDirectory,
-}: ChatScreenProps) {
+}: ChatViewProps) {
   const { loading, isAuth, user: loggedInUser } = useAuthSession();
   const { socket, onlineUsers } = useChatSocket();
 

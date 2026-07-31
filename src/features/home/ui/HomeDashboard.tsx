@@ -1,7 +1,6 @@
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
-import type { Href } from "expo-router";
 import React, { useEffect, useState, useCallback } from "react";
 import {
   Alert,
@@ -18,7 +17,7 @@ import { IScheduleRequest, IScheduleEntry } from "@/src/features/workschedule/mo
 import type { AppArea } from "@/src/application/access/roles";
 import { getAreaRoutes } from "@/src/application/navigation/routes";
 
-export default function HomeScreen({ area }: { area: AppArea }) {
+export default function HomeDashboard({ area }: { area: AppArea }) {
   const insets = useSafeAreaInsets();
   const { user } = useAuthSession();
   const isAdmin = area === "admin";
@@ -265,7 +264,7 @@ export default function HomeScreen({ area }: { area: AppArea }) {
           </Text>
           <Pressable
             onPress={() =>
-              router.push("/(main)/user/workschedule/create" as Href)
+              router.push("/(main)/user/workschedule")
             }
             className="mt-2 bg-blue-50 px-4 py-1.5 rounded-full active:scale-95 flex-row items-center space-x-1"
           >

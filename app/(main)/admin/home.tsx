@@ -1,1 +1,5 @@
-export { default } from "@/src/features/home/screens/AdminHomeScreen";
+import HomeDashboard from "@/src/features/home/ui/HomeDashboard";
+
+export default function AdminHomeRoute() {
+  return <HomeDashboard area="admin" />;
+}

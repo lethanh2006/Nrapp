@@ -16,12 +16,12 @@ import {
   View,
 } from "react-native";
 
-interface TodoScreenProps {
+interface TodoViewProps {
   todoApi: TodoApi;
   userDirectory?: UserDirectory;
 }
 
-export default function TodoScreen({ todoApi, userDirectory }: TodoScreenProps) {
+export default function TodoView({ todoApi, userDirectory }: TodoViewProps) {
   const { loading: appLoading, isAuth, user } = useAuthSession();
   const [users, setUsers] = useState<User[]>([]);
 

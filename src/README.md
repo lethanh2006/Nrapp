@@ -1,13 +1,13 @@
 # Kiến trúc frontend
 
-Dự án dùng kiến trúc **feature-first (vertical slices)**: mỗi nghiệp vụ tự chứa API,
-model, UI và screen của chính nó. `admin` và `user` chỉ là biến thể bên trong
-nghiệp vụ, không phải hai cây mã nguồn độc lập.
+Dự án dùng kiến trúc **feature-first (vertical slices)**: route screen nằm trực
+tiếp trong `app/`; mỗi nghiệp vụ tự chứa API, model và UI của chính nó. `admin`
+và `user` chỉ là biến thể bên trong nghiệp vụ, không phải hai cây mã nguồn độc lập.
 
 ```text
-app/                    # Chỉ khai báo route Expo Router
+app/                    # Route, route layout và screen composition
 src/
-  application/          # Layout, provider wiring, navigation, access policy
+  application/          # Navigation và access policy toàn ứng dụng
   entities/
     user/               # Kiểu dữ liệu và API của thực thể user
   features/
@@ -24,10 +24,11 @@ src/
 
 ## Quy tắc phụ thuộc
 
-- File trong `app/` chỉ re-export screen hoặc khai báo layout route.
+- File trong `app/` là screen composition thật; không tạo thêm screen wrapper
+  một dòng trong feature.
 - Một thay đổi nghiệp vụ phải tìm được trong đúng một thư mục `features/<tên>`.
 - `shared` không được import ngược từ `features`, `entities` hay `application`.
-- `entities` không chứa screen và không phụ thuộc vào feature.
+- `entities` không chứa route/UI và không phụ thuộc vào feature.
 - API admin/user của cùng một nghiệp vụ nằm cạnh nhau trong `features/<tên>/api`.
 - Chỉ đưa UI vào `shared` khi nó hoàn toàn không biết Chat, Todo hay Workschedule.
 - Role dùng để chọn khu vực; quyền thao tác chi tiết nên lấy từ permission của BE.
