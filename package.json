@@ -8,7 +8,7 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "eslint app constants context hooks services src types"
+    "lint": "eslint app src"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

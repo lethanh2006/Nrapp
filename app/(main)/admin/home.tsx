@@ -1,2 +1,1 @@
-export { default } from "@/src/features/admin/screens/AdminHomeScreen";
-
+export { default } from "@/src/features/home/screens/AdminHomeScreen";

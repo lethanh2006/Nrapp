@@ -1,1 +1,1 @@
-export { default } from "@/src/features/admin/screens/AdminWorkscheduleScreen";
+export { default } from "@/src/features/workschedule/screens/admin/AdminWorkscheduleScreen";

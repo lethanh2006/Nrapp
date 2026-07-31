@@ -1,2 +1,1 @@
-export { default } from "@/src/features/user/screens/UserHomeScreen";
-
+export { default } from "@/src/features/home/screens/UserHomeScreen";
