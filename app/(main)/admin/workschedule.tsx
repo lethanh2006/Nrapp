@@ -1,1 +1,5 @@
-export { default } from "@/src/features/workschedule/screens/AdminWorkscheduleScreen";
+import AdminWorkscheduleScreen from "@/src/features/workschedule/screens/AdminWorkscheduleScreen";
+
+export default function AdminWorkscheduleRoute() {
+  return <AdminWorkscheduleScreen />;
+}
