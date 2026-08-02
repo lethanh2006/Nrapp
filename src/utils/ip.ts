@@ -8,6 +8,19 @@ function removeTrailingSlash(value: string) {
   return value.replace(/\/+$/, "");
 }
 
+function getOrigin(value: string) {
+  try {
+    return new URL(value).origin;
+  } catch {
+    return value.replace(/\/api(?:\/.*)?$/, "");
+  }
+}
+
+function normalizeSocketPath(value: string) {
+  const path = value.trim().replace(/^\/+|\/+$/g, "");
+  return `/${path || "socket.io"}`;
+}
+
 function getExpoHost() {
   const hostUri =
     Constants.expoConfig?.hostUri ||
@@ -34,7 +47,8 @@ export const ipNR = removeTrailingSlash(configuredUrl || getDevelopmentUrl());
 
 export const socketUrl =
   process.env.EXPO_PUBLIC_SOCKET_URL?.trim().replace(/\/+$/, "") ||
-  ipNR.replace(/\/api\/?$/, "");
+  getOrigin(ipNR);
 
-export const socketPath =
-  process.env.EXPO_PUBLIC_SOCKET_PATH || "/socket.io";
+export const socketPath = normalizeSocketPath(
+  process.env.EXPO_PUBLIC_SOCKET_PATH || "/socket.io",
+);

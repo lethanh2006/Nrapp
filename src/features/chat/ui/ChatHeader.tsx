@@ -8,6 +8,8 @@ interface ChatHeaderProps {
   isTyping: boolean;
   otherUserId?: string;
   onlineUsers?: string[];
+  isRealtimeConnected?: boolean;
+  hasRealtimeError?: boolean;
 }
 
 export default function ChatHeader({
@@ -16,6 +18,8 @@ export default function ChatHeader({
   isTyping,
   otherUserId,
   onlineUsers = [],
+  isRealtimeConnected = false,
+  hasRealtimeError = false,
 }: ChatHeaderProps) {
   const isOnline = otherUserId && onlineUsers.includes(otherUserId);
   const normalizedUser = user?.user ?? user;
@@ -44,9 +48,17 @@ export default function ChatHeader({
               <Text style={styles.name} numberOfLines={1}>
                 {displayName}
               </Text>
-              {isTyping && (
-                <Text style={styles.typing}>đang nhập...</Text>
-              )}
+              <Text style={isTyping ? styles.typing : styles.presence}>
+                {isTyping
+                  ? "đang nhập..."
+                  : !isRealtimeConnected
+                    ? hasRealtimeError
+                      ? "mất kết nối realtime"
+                      : "đang kết nối realtime..."
+                    : isOnline
+                      ? "đang hoạt động"
+                      : "ngoại tuyến"}
+              </Text>
             </View>
           </>
         ) : (
@@ -124,6 +136,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#0084FF',
     fontStyle: 'italic',
+    marginTop: 2,
+  },
+  presence: {
+    fontSize: 13,
+    color: '#6b7280',
     marginTop: 2,
   },
   placeholder: {

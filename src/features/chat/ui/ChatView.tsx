@@ -43,10 +43,13 @@ const normalizeChatItem = (raw: any): ChatSummary => {
       users: Array.isArray(chatData?.users)
         ? chatData.users.map(String)
         : [],
-      latestMessage: {
-        text: String(chatData?.latestMessage?.text ?? ""),
-        sender: String(chatData?.latestMessage?.sender ?? ""),
-      },
+      latestMessage:
+        chatData?.latestMessage?.text || chatData?.latestMessage?.sender
+          ? {
+              text: String(chatData.latestMessage.text ?? ""),
+              sender: String(chatData.latestMessage.sender ?? ""),
+            }
+          : null,
       createdAt: String(chatData?.createdAt ?? ""),
       updatedAt: String(chatData?.updatedAt ?? ""),
       unseenCount:
@@ -57,7 +60,12 @@ const normalizeChatItem = (raw: any): ChatSummary => {
 
 export default function ChatView() {
   const { loading, isAuth, user: loggedInUser, getToken } = useAuthSession();
-  const { socket, onlineUsers } = useChatSocket();
+  const {
+    socket,
+    onlineUsers,
+    isConnected: isRealtimeConnected,
+    connectionError: realtimeError,
+  } = useChatSocket();
 
   const [chats, setChats] = useState<ChatSummary[] | null>(null);
   const [users, setUsers] = useState<User[] | null>(null);
@@ -129,10 +137,32 @@ export default function ChatView() {
     }
   }
 
+  const emitTypingStop = useCallback(() => {
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    if (!selectedUser || !socket || !otherUserId) return;
+    socket.emit("typingStop", {
+      chatId: selectedUser,
+      targetUserId: otherUserId,
+    });
+  }, [otherUserId, selectedUser, socket]);
+
+  const closeChat = useCallback(() => {
+    emitTypingStop();
+    setSelectedUser(null);
+    setChatUser(null);
+    setMessages(null);
+    setIsTyping(false);
+    void fetchChats();
+  }, [emitTypingStop, fetchChats]);
+
   const handleMessageSend = async (image?: ChatImageUpload) => {
     const text = message.trim();
     if ((!text && !image) || !selectedUser) return false;
     try {
+      emitTypingStop();
       const token = await getToken();
       if (!token) return false;
       const { data } = await sendChatMessage(
@@ -165,8 +195,12 @@ export default function ChatView() {
   const handleTyping = (value: string) => {
     setMessage(value);
     if (!selectedUser || !socket || !otherUserId) return;
-    socket.emit("typing", { chatId: selectedUser, targetUserId: otherUserId });
     if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+    if (!value.trim()) {
+      emitTypingStop();
+      return;
+    }
+    socket.emit("typing", { chatId: selectedUser, targetUserId: otherUserId });
     typingTimeoutRef.current = setTimeout(() => {
       socket.emit("typingStop", {
         chatId: selectedUser,
@@ -231,15 +265,11 @@ export default function ChatView() {
   useEffect(() => {
     if (!selectedUser) return;
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
-      setSelectedUser(null);
-      setChatUser(null);
-      setMessages(null);
-      setIsTyping(false);
-      void fetchChats();
+      closeChat();
       return true;
     });
     return () => subscription.remove();
-  }, [fetchChats, selectedUser]);
+  }, [closeChat, selectedUser]);
 
   if (loading) {
     return (
@@ -261,6 +291,8 @@ export default function ChatView() {
           await Promise.all([fetchUsers(), fetchChats()]);
         }}
         onlineUsers={onlineUsers}
+        isRealtimeConnected={isRealtimeConnected}
+        hasRealtimeError={Boolean(realtimeError)}
       />
     );
   }
@@ -274,16 +306,12 @@ export default function ChatView() {
       <View style={styles.chatArea}>
         <ChatHeader
           user={chatUser}
-          onBack={() => {
-            setSelectedUser(null);
-            setChatUser(null);
-            setMessages(null);
-            setIsTyping(false);
-            void fetchChats();
-          }}
+          onBack={closeChat}
           isTyping={isTyping}
           otherUserId={otherUserId}
           onlineUsers={onlineUsers}
+          isRealtimeConnected={isRealtimeConnected}
+          hasRealtimeError={Boolean(realtimeError)}
         />
         <ChatMessages
           selectedUser={selectedUser}

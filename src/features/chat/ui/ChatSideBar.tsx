@@ -12,6 +12,8 @@ interface ChatSideBarProps {
   createChat: (user: User) => Promise<void>;
   refreshUsers: () => Promise<void>;
   onlineUsers?: string[];
+  isRealtimeConnected?: boolean;
+  hasRealtimeError?: boolean;
 }
 
 const getName = (user: User) => user.name || user.username || user.email || "Nhân viên";
@@ -38,6 +40,8 @@ export default function ChatSideBar({
   createChat,
   refreshUsers,
   onlineUsers = [],
+  isRealtimeConnected = false,
+  hasRealtimeError = false,
 }: ChatSideBarProps) {
   const [query, setQuery] = useState("");
   const [openingUserId, setOpeningUserId] = useState<string | null>(null);
@@ -91,7 +95,22 @@ export default function ChatSideBar({
       <View style={styles.titleRow}>
         <View>
           <Text style={styles.title}>Tin nhắn</Text>
-          <Text style={styles.subtitle}>{employees.length} nhân viên</Text>
+          <View style={styles.connectionLine}>
+            <View
+              style={[
+                styles.connectionDot,
+                isRealtimeConnected && styles.connectionDotOnline,
+                hasRealtimeError && styles.connectionDotError,
+              ]}
+            />
+            <Text style={styles.subtitle}>
+              {employees.length} nhân viên · {isRealtimeConnected
+                ? "Realtime"
+                : hasRealtimeError
+                  ? "Mất kết nối"
+                  : "Đang kết nối"}
+            </Text>
+          </View>
         </View>
         <View style={styles.companyIcon}>
           <Ionicons name="people" size={22} color="#2563eb" />
@@ -190,7 +209,11 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#fff", paddingHorizontal: 16 },
   titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 14, paddingBottom: 13 },
   title: { fontSize: 27, fontWeight: "800", color: "#111827" },
-  subtitle: { marginTop: 2, fontSize: 13, color: "#6b7280" },
+  subtitle: { fontSize: 13, color: "#6b7280" },
+  connectionLine: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
+  connectionDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#f59e0b" },
+  connectionDotOnline: { backgroundColor: "#22c55e" },
+  connectionDotError: { backgroundColor: "#ef4444" },
   companyIcon: { width: 44, height: 44, borderRadius: 14, alignItems: "center", justifyContent: "center", backgroundColor: "#eff6ff" },
   searchBox: { flexDirection: "row", alignItems: "center", gap: 9, height: 46, borderRadius: 23, paddingHorizontal: 14, marginBottom: 10, backgroundColor: "#f0f2f5" },
   searchInput: { flex: 1, paddingVertical: 0, fontSize: 15, color: "#111827" },

@@ -34,7 +34,7 @@ export interface Chat {
   latestMessage: {
     text: string;
     sender: string;
-  };
+  } | null;
   createdAt: string;
   updatedAt: string;
   unseenCount?: number;
