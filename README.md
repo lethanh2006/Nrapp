@@ -46,10 +46,21 @@ npm start
 Các lệnh chạy theo nền tảng:
 
 ```bash
+# Android Emulator: dùng localhost + ADB reverse, ổn định hơn LAN
 npm run android
+
+# Thiết bị Android thật cùng Wi-Fi
+npm run android:lan
+
+# Thiết bị thật không truy cập được máy qua LAN/firewall
+npm run android:tunnel
+
 npm run ios
 npm run web
 ```
+
+`npm start` cũng mặc định dùng `localhost` cho emulator. Nếu cần quét QR bằng
+thiết bị thật, dùng `npm run start:lan` hoặc `npm run start:tunnel`.
 
 Tạo `.env.local` hoặc cấu hình biến môi trường:
 

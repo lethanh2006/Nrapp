@@ -3,9 +3,13 @@
   "main": "expo-router/entry",
   "version": "1.0.0",
   "scripts": {
-    "start": "expo start",
+    "start": "expo start --localhost",
+    "start:lan": "expo start --lan",
+    "start:tunnel": "expo start --tunnel",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --android",
+    "android": "expo start --localhost --android",
+    "android:lan": "expo start --lan --android",
+    "android:tunnel": "expo start --tunnel --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "eslint app src"
