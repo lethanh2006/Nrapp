@@ -57,7 +57,6 @@ export default function RegisterScreen() {
     <AuthScreen
       eyebrow="Gia nhập HDG"
       title="Tạo tài khoản mới"
-      subtitle="Một tài khoản duy nhất để truy cập không gian làm việc nội bộ HDG."
     >
       <View className="rounded-[28px] border border-white bg-white p-5 shadow-xl shadow-slate-200/80">
         <AuthInput

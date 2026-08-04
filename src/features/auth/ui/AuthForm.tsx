@@ -16,7 +16,7 @@ type AuthScreenProps = {
   children: ReactNode;
   eyebrow: string;
   title: string;
-  subtitle: string;
+  subtitle?: string;
 };
 
 type AuthInputProps = TextInputProps & {
@@ -72,9 +72,11 @@ export function AuthScreen({
             <Text className="text-center text-[30px] font-black tracking-tight text-slate-900">
               {title}
             </Text>
-            <Text className="mt-2 max-w-[310px] text-center text-sm leading-5 text-slate-500">
-              {subtitle}
-            </Text>
+            {subtitle ? (
+              <Text className="mt-2 max-w-[310px] text-center text-sm leading-5 text-slate-500">
+                {subtitle}
+              </Text>
+            ) : null}
           </View>
 
           {children}
