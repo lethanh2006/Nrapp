@@ -1,25 +1,30 @@
-import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { getAreaForRole } from "@/src/application/access/roles";
 import { APP_ROUTES } from "@/src/application/navigation/routes";
-import { getApiErrorMessage } from "@/src/utils/apiHelper";
+import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
+import {
+  AuthInput,
+  AuthScreen,
+} from "@/src/features/auth/ui/AuthForm";
 import { loginUser } from "@/src/services/auth/auth.service";
-import { router } from "expo-router";
+import { getApiErrorMessage } from "@/src/utils/apiHelper";
+import { Ionicons } from "@expo/vector-icons";
+import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
   Text,
-  TextInput,
   View,
 } from "react-native";
 
 export default function LoginScreen() {
+  const params = useLocalSearchParams<{ email?: string }>();
   const { isAuth, loading: userLoading, user } = useAuthSession();
   const [password, setPassword] = useState("");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(
+    typeof params.email === "string" ? params.email : "",
+  );
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -42,7 +47,6 @@ export default function LoginScreen() {
       });
 
       Alert.alert("Thành công", data.message || "Đăng nhập thành công");
-
       router.push({
         pathname: "/(auth)/verify",
         params: { email: email.trim() },
@@ -56,68 +60,82 @@ export default function LoginScreen() {
 
   if (userLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-white">
-        <ActivityIndicator size="large" color="#3b82f6" />
+      <View className="flex-1 items-center justify-center bg-[#f4f7fb]">
+        <ActivityIndicator size="large" color="#2563eb" />
       </View>
     );
   }
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1 justify-center bg-white p-4"
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    <AuthScreen
+      eyebrow="HDG Workspace"
+      title="Chào mừng trở lại"
+      subtitle="Đăng nhập để tiếp tục công việc và kết nối cùng đội ngũ của bạn."
     >
-      <View className="rounded-2xl border border-[#e5e5ea] bg-white p-6">
-        <Text className="mb-2 text-center text-[22px] font-semibold text-black">
-          Công ty TNHH HDG
-        </Text>
-        <Text className="mb-6 text-center text-sm text-[#999999]">
-          Đăng nhập hệ thống
-        </Text>
-
-        <TextInput
-          className="mb-3 rounded-lg border border-[#e5e5ea] bg-[#f5f5f5] p-[14px] text-base text-black"
-          placeholder="nhập email"
-          placeholderTextColor="#aaaaaa"
+      <View className="rounded-[28px] border border-white bg-white p-5 shadow-xl shadow-slate-200/80">
+        <AuthInput
+          label="Email công việc"
+          icon="mail-outline"
+          placeholder="name@hdg.com.vn"
           value={email}
           onChangeText={setEmail}
           keyboardType="email-address"
           autoCapitalize="none"
+          autoComplete="email"
+          returnKeyType="next"
           editable={!loading}
         />
 
-        <TextInput
-          className="mb-5 rounded-lg border border-[#e5e5ea] bg-[#f5f5f5] p-[14px] text-base text-black"
-          placeholder="Mật khẩu"
-          placeholderTextColor="#aaaaaa"
+        <AuthInput
+          label="Mật khẩu"
+          icon="lock-closed-outline"
+          placeholder="Nhập mật khẩu của bạn"
           value={password}
           onChangeText={setPassword}
-          secureTextEntry
+          secure
+          autoComplete="current-password"
+          returnKeyType="done"
+          onSubmitEditing={handleSubmit}
           editable={!loading}
         />
 
         <Pressable
-          className="items-center rounded-lg bg-[#0084FF] p-[14px]"
-          style={loading ? { opacity: 0.6 } : undefined}
+          className="mt-1 min-h-14 flex-row items-center justify-center rounded-2xl bg-[#153b6f] px-5 shadow-md shadow-blue-900/30 active:bg-[#0f2d56]"
+          style={loading ? { opacity: 0.65 } : undefined}
           onPress={handleSubmit}
           disabled={loading}
+          accessibilityRole="button"
         >
           {loading ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text className="text-base font-semibold text-white">
-              Đăng nhập
-            </Text>
+            <>
+              <Text className="text-base font-extrabold text-white">
+                Đăng nhập
+              </Text>
+              <Ionicons
+                name="arrow-forward"
+                size={19}
+                color="#ffffff"
+                style={{ marginLeft: 8 }}
+              />
+            </>
           )}
         </Pressable>
 
-        <View className="mt-4 flex-row justify-center">
-          <Text className="text-[#999999]">Chưa có tài khoản? </Text>
+        <View className="my-5 h-px bg-slate-100" />
+
+        <View className="flex-row flex-wrap items-center justify-center">
+          <Text className="text-sm font-medium text-slate-500">
+            {"Chưa có tài khoản? "}
+          </Text>
           <Pressable onPress={() => router.push("/(auth)/register")}>
-            <Text className="font-semibold text-[#0084FF]">Đăng ký ngay</Text>
+            <Text className="text-sm font-extrabold text-blue-700">
+              Đăng ký ngay
+            </Text>
           </Pressable>
         </View>
       </View>
-    </KeyboardAvoidingView>
+    </AuthScreen>
   );
 }

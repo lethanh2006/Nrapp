@@ -1,16 +1,17 @@
-import { getApiErrorMessage } from "@/src/utils/apiHelper";
+import {
+  AuthInput,
+  AuthScreen,
+} from "@/src/features/auth/ui/AuthForm";
 import { registerUser } from "@/src/services/auth/auth.service";
+import { getApiErrorMessage } from "@/src/utils/apiHelper";
+import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
   Alert,
-  KeyboardAvoidingView,
-  Platform,
   Pressable,
-  ScrollView,
   Text,
-  TextInput,
   View,
 } from "react-native";
 
@@ -35,13 +36,12 @@ export default function RegisterScreen() {
     setLoading(true);
     try {
       const { data } = await registerUser({
-          username: username.trim(),
-          email: email.trim().toLowerCase(),
-          password,
+        username: username.trim(),
+        email: email.trim().toLowerCase(),
+        password,
       });
 
       Alert.alert("Thành công", data.message);
-
       router.replace({
         pathname: "/(auth)/login",
         params: { email: email.trim() },
@@ -54,86 +54,99 @@ export default function RegisterScreen() {
   };
 
   return (
-    <KeyboardAvoidingView
-      className="flex-1 justify-center bg-white p-4"
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+    <AuthScreen
+      eyebrow="Gia nhập HDG"
+      title="Tạo tài khoản mới"
+      subtitle="Một tài khoản duy nhất để truy cập không gian làm việc nội bộ HDG."
     >
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ flexGrow: 1, justifyContent: "center" }}
-      >
-        <View className="rounded-2xl border border-[#e5e5ea] bg-white p-6">
-          <Text className="mb-2 text-center text-[22px] font-semibold text-black">
-            Tạo tài khoản
-          </Text>
-          <Text className="mb-6 text-center text-sm text-[#999999]">
-            Tham gia cùng Công ty TNHH HDG
-          </Text>
+      <View className="rounded-[28px] border border-white bg-white p-5 shadow-xl shadow-slate-200/80">
+        <AuthInput
+          label="Tên hiển thị"
+          icon="person-outline"
+          placeholder="Ví dụ: Nguyễn Minh Anh"
+          value={username}
+          onChangeText={setUsername}
+          autoCapitalize="words"
+          autoComplete="name"
+          returnKeyType="next"
+          editable={!loading}
+        />
 
-          <TextInput
-            className="mb-3 rounded-lg border border-[#e5e5ea] bg-[#f5f5f5] p-[14px] text-base text-black"
-            placeholder="Tên đăng nhập"
-            placeholderTextColor="#aaaaaa"
-            value={username}
-            onChangeText={setUsername}
-            autoCapitalize="none"
-            editable={!loading}
-          />
+        <AuthInput
+          label="Email công việc"
+          icon="mail-outline"
+          placeholder="name@hdg.com.vn"
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+          autoComplete="email"
+          returnKeyType="next"
+          editable={!loading}
+        />
 
-          <TextInput
-            className="mb-3 rounded-lg border border-[#e5e5ea] bg-[#f5f5f5] p-[14px] text-base text-black"
-            placeholder="Email"
-            placeholderTextColor="#aaaaaa"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            editable={!loading}
-          />
+        <AuthInput
+          label="Mật khẩu"
+          icon="lock-closed-outline"
+          placeholder="Tạo mật khẩu"
+          value={password}
+          onChangeText={setPassword}
+          secure
+          autoComplete="new-password"
+          returnKeyType="next"
+          editable={!loading}
+        />
 
-          <TextInput
-            className="mb-3 rounded-lg border border-[#e5e5ea] bg-[#f5f5f5] p-[14px] text-base text-black"
-            placeholder="Mật khẩu"
-            placeholderTextColor="#aaaaaa"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-            editable={!loading}
-          />
+        <AuthInput
+          label="Xác nhận mật khẩu"
+          icon="shield-checkmark-outline"
+          placeholder="Nhập lại mật khẩu"
+          value={confirmPassword}
+          onChangeText={setConfirmPassword}
+          secure
+          autoComplete="new-password"
+          returnKeyType="done"
+          onSubmitEditing={handleRegister}
+          editable={!loading}
+        />
 
-          <TextInput
-            className="mb-5 rounded-lg border border-[#e5e5ea] bg-[#f5f5f5] p-[14px] text-base text-black"
-            placeholder="Xác nhận mật khẩu"
-            placeholderTextColor="#aaaaaa"
-            value={confirmPassword}
-            onChangeText={setConfirmPassword}
-            secureTextEntry
-            editable={!loading}
-          />
-
-          <Pressable
-            className="items-center rounded-lg bg-[#0084FF] p-[14px]"
-            style={loading ? { opacity: 0.6 } : undefined}
-            onPress={handleRegister}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" />
-            ) : (
-              <Text className="text-base font-semibold text-white">
-                Đăng ký ngay
+        <Pressable
+          className="mt-1 min-h-14 flex-row items-center justify-center rounded-2xl bg-[#c9252d] px-5 shadow-md shadow-red-900/20 active:bg-[#a91f26]"
+          style={loading ? { opacity: 0.65 } : undefined}
+          onPress={handleRegister}
+          disabled={loading}
+          accessibilityRole="button"
+        >
+          {loading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <>
+              <Text className="text-base font-extrabold text-white">
+                Tạo tài khoản
               </Text>
-            )}
-          </Pressable>
+              <Ionicons
+                name="arrow-forward"
+                size={19}
+                color="#ffffff"
+                style={{ marginLeft: 8 }}
+              />
+            </>
+          )}
+        </Pressable>
 
-          <View className="mt-4 flex-row justify-center">
-            <Text className="text-[#999999]">Đã có tài khoản? </Text>
-            <Pressable onPress={() => router.back()}>
-              <Text className="font-semibold text-[#0084FF]">Đăng nhập</Text>
-            </Pressable>
-          </View>
+        <View className="my-5 h-px bg-slate-100" />
+
+        <View className="flex-row flex-wrap items-center justify-center">
+          <Text className="text-sm font-medium text-slate-500">
+            {"Đã có tài khoản? "}
+          </Text>
+          <Pressable onPress={() => router.replace("/(auth)/login")}>
+            <Text className="text-sm font-extrabold text-blue-700">
+              Đăng nhập
+            </Text>
+          </Pressable>
         </View>
-      </ScrollView>
-    </KeyboardAvoidingView>
+      </View>
+    </AuthScreen>
   );
 }
