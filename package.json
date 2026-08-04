@@ -7,7 +7,7 @@
     "start:lan": "REACT_NATIVE_PACKAGER_HOSTNAME= expo start --lan",
     "start:tunnel": "expo start --tunnel",
     "reset-project": "node ./scripts/reset-project.js",
-    "android": "expo start --localhost --android",
+    "android": "node ./scripts/start-android.js",
     "android:lan": "REACT_NATIVE_PACKAGER_HOSTNAME= expo start --lan --android",
     "android:tunnel": "expo start --tunnel --android",
     "ios": "expo start --ios",
