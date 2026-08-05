@@ -7,7 +7,9 @@ import {
 } from "@/src/features/auth/ui/AuthForm";
 import { loginUser } from "@/src/services/auth/auth.service";
 import { getApiErrorMessage } from "@/src/utils/apiHelper";
+import { ipNR } from "@/src/utils/ip";
 import { Ionicons } from "@expo/vector-icons";
+import { isAxiosError } from "axios";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
@@ -40,18 +42,43 @@ export default function LoginScreen() {
     }
 
     setLoading(true);
+    const normalizedEmail = email.trim().toLowerCase();
+
+    console.log("[LOGIN] Bắt đầu gọi API", {
+      url: `${ipNR}/auth/login`,
+      email: normalizedEmail,
+    });
+
     try {
-      const { data } = await loginUser({
-        email: email.trim().toLowerCase(),
+      const response = await loginUser({
+        email: normalizedEmail,
         password,
+      });
+      const { data } = response;
+
+      console.log("[LOGIN] Thành công", {
+        status: response.status,
+        data,
       });
 
       Alert.alert("Thành công", data.message || "Đăng nhập thành công");
       router.push({
         pathname: "/(auth)/verify",
-        params: { email: email.trim() },
+        params: { email: normalizedEmail },
       });
     } catch (err: unknown) {
+      if (isAxiosError(err)) {
+        console.error("[LOGIN] Axios error", {
+          url: `${ipNR}/auth/login`,
+          code: err.code,
+          message: err.message,
+          status: err.response?.status,
+          responseData: err.response?.data,
+        });
+      } else {
+        console.error("[LOGIN] Unknown error", err);
+      }
+
       Alert.alert("Lỗi", getApiErrorMessage(err, "Không thể đăng nhập"));
     } finally {
       setLoading(false);

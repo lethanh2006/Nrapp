@@ -5,6 +5,7 @@ const { spawn, spawnSync } = require("node:child_process");
 
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const EXPO_GO_PACKAGE = "host.exp.exponent";
+const API_PORT = process.env.EXPO_PUBLIC_API_PORT || "3000";
 const DEVICE_TIMEOUT_MS = 120_000;
 const READY_TIMEOUT_MS = 120_000;
 const POLL_INTERVAL_MS = 1_000;
@@ -98,6 +99,23 @@ async function resolveDevice() {
 
 function adb(serial, ...args) {
   return run("adb", ["-s", serial, ...args]);
+}
+
+function reverseApiPort(serial) {
+  const result = adb(
+    serial,
+    "reverse",
+    `tcp:${API_PORT}`,
+    `tcp:${API_PORT}`,
+  );
+
+  if (result.status !== 0) {
+    throw new Error(
+      `Không thể ADB reverse cổng API ${API_PORT}: ${result.stderr.trim()}`,
+    );
+  }
+
+  console.log(`› Đã ADB reverse cổng API ${API_PORT}.`);
 }
 
 async function waitForAndroidReady(serial) {
@@ -221,6 +239,7 @@ async function main() {
   requireCommand("adb");
   const serial = await resolveDevice();
   await waitForAndroidReady(serial);
+  reverseApiPort(serial);
   await warmExpoGo(serial);
   console.log("› Android và Expo Go đã sẵn sàng. Đang mở Nrapp...");
   process.exitCode = await startExpo();

@@ -11,6 +11,14 @@ export function getAuthHeader(token: string) {
 export function getApiErrorMessage(error: unknown, fallback: string) {
   if (!isAxiosError(error)) return fallback;
 
+  if (error.code === "ECONNABORTED") {
+    return "Kết nối đến máy chủ quá thời gian. Vui lòng kiểm tra backend.";
+  }
+
+  if (!error.response) {
+    return "Không thể kết nối đến máy chủ. Hãy kiểm tra Gateway và cấu hình địa chỉ API.";
+  }
+
   const data = (error as AxiosError<{ message?: string | string[] }>).response
     ?.data;
   const message = data?.message;

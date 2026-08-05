@@ -32,8 +32,15 @@ function getExpoHost() {
 
 function getDevelopmentUrl() {
   const expoHost = getExpoHost();
+
+  if (
+    Platform.OS === "android" &&
+    (!expoHost || expoHost === "localhost" || expoHost === "127.0.0.1")
+  ) {
+    return `http://10.0.2.2:${apiPort}${apiPath}`;
+  }
+
   if (expoHost) return `http://${expoHost}:${apiPort}${apiPath}`;
-  if (Platform.OS === "android") return `http://10.0.2.2:${apiPort}${apiPath}`;
   return `http://localhost:${apiPort}${apiPath}`;
 }
 
