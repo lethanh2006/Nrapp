@@ -210,8 +210,11 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
         <View className="absolute inset-0 bg-red-950/20" />
 
         <View className="flex-row items-center justify-between px-4 z-10">
-          <View className="flex-row items-center flex-1 mr-3">
-            <View className="w-13 h-13 rounded-full bg-white/20 border-2 border-white items-center justify-center overflow-hidden">
+          <Pressable
+            onPress={() => router.push(areaRoutes.profile)}
+            className="mr-3 flex-1 flex-row items-center active:opacity-80"
+          >
+            <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-red-700/80">
               <Text className="text-white text-xl font-black">
                 {user?.name ? user.name.charAt(0).toUpperCase() : "H"}
               </Text>
@@ -224,8 +227,11 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
               >
                 {user?.name}
               </Text>
+              <Text className="mt-0.5 text-[10px] font-semibold text-white/70">
+                Xem hồ sơ cá nhân
+              </Text>
             </View>
-          </View>
+          </Pressable>
 
           <View className="flex-row items-center space-x-2">
             <Pressable

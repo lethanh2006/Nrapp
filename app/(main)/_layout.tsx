@@ -2,7 +2,6 @@ import { getAreaForRole } from "@/src/application/access/roles";
 import { APP_ROUTES } from "@/src/application/navigation/routes";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { MainBottomBar } from "@/src/components/layout/MainBottomBar";
-import { ProfileSheet } from "@/src/components/layout/ProfileSheet";
 import { AttendanceScannerModal } from "@/src/features/workschedule/ui/AttendanceScannerModal";
 import { Stack, router, usePathname } from "expo-router";
 import { useEffect, useState } from "react";
@@ -14,9 +13,9 @@ export default function MainLayout() {
   const pathname = usePathname();
   const { loading, isAuth, user } = useAuthSession();
   const [scannerVisible, setScannerVisible] = useState(false);
-  const [profileVisible, setProfileVisible] = useState(false);
   const area = getAreaForRole(user?.role);
   const homeActive = pathname.endsWith("/home");
+  const profileActive = pathname.endsWith("/profile");
 
   useEffect(() => {
     if (!loading && !isAuth) router.replace(APP_ROUTES.auth.login);
@@ -24,7 +23,7 @@ export default function MainLayout() {
 
   return (
     <View className="flex-1 bg-white">
-      {!homeActive && (
+      {!homeActive && !profileActive && (
         <View
           className="border-b border-gray-100 bg-white px-4"
           style={{
@@ -49,19 +48,13 @@ export default function MainLayout() {
       <MainBottomBar
         area={area}
         homeActive={homeActive}
-        profileActive={profileVisible}
-        onOpenProfile={() => setProfileVisible(true)}
+        profileActive={profileActive}
         onOpenScanner={() => setScannerVisible(true)}
       />
 
       <AttendanceScannerModal
         visible={scannerVisible}
         onClose={() => setScannerVisible(false)}
-      />
-      <ProfileSheet
-        area={area}
-        visible={profileVisible}
-        onClose={() => setProfileVisible(false)}
       />
     </View>
   );

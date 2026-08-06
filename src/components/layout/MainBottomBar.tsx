@@ -9,7 +9,6 @@ type MainBottomBarProps = {
   area: AppArea;
   homeActive: boolean;
   profileActive: boolean;
-  onOpenProfile: () => void;
   onOpenScanner: () => void;
 };
 
@@ -17,7 +16,6 @@ export function MainBottomBar({
   area,
   homeActive,
   profileActive,
-  onOpenProfile,
   onOpenScanner,
 }: MainBottomBarProps) {
   const insets = useSafeAreaInsets();
@@ -60,7 +58,7 @@ export function MainBottomBar({
       </View>
 
       <Pressable
-        onPress={onOpenProfile}
+        onPress={() => router.replace(routes.profile)}
         className="flex-1 items-center justify-center"
       >
         <Ionicons
@@ -72,7 +70,7 @@ export function MainBottomBar({
           className="mt-1 text-[10px] font-semibold"
           style={{ color: profileActive ? "#b91c1c" : "#64748b" }}
         >
-          Cá nhân
+          Hồ sơ
         </Text>
       </Pressable>
     </View>
