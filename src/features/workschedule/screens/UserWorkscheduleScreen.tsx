@@ -1,23 +1,24 @@
-import ScheduleList from "@/src/features/workschedule/ui/user/ScheduleList";
-import { ScheduleCalendar } from "@/src/features/workschedule/ui/user/ScheduleCalendar";
-import { ScheduleEntryEditor } from "@/src/features/workschedule/ui/user/ScheduleEntryEditor";
-import { RegistrationPolicyCard } from "@/src/features/workschedule/ui/user/RegistrationPolicyCard";
 import { useWorkscheduleUser } from "@/src/features/workschedule/hooks/useWorkscheduleUser";
-import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
-import type {
-  EntryType,
-  IScheduleEntry,
-  IScheduleRequest,
-  IWorkPolicy,
-} from "@/src/services/workschedule/constant";
 import {
   getAllowedWeekRange,
   getWeekStartMonday,
   isRegistrationClosed,
   toLocalDateKey,
 } from "@/src/features/workschedule/utils/date";
+import { DayScheduleEditor } from "@/src/features/workschedule/ui/user/DayScheduleEditor";
+import { RegistrationPolicyCard } from "@/src/features/workschedule/ui/user/RegistrationPolicyCard";
+import ScheduleList from "@/src/features/workschedule/ui/user/ScheduleList";
+import { WeekPicker } from "@/src/features/workschedule/ui/user/WeekPicker";
+import type {
+  EntryType,
+  IScheduleEntry,
+  IScheduleRequest,
+  IWorkPolicy,
+} from "@/src/services/workschedule/constant";
+import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
+import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useState, useMemo } from "react";
+import React, { useCallback, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -25,429 +26,653 @@ import {
   Text,
   View,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+
+type DraftEntry = { type: EntryType | undefined; note: string };
+
+const DAY_NAMES = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
+
+const STATUS_CONFIG: Record<
+  string,
+  { label: string; box: string; text: string; description: string }
+> = {
+  none: {
+    label: "Chưa đăng ký",
+    box: "bg-slate-100",
+    text: "text-slate-600",
+    description: "Tuần này chưa có lịch. Hãy thiết lập từng ngày bên dưới.",
+  },
+  draft: {
+    label: "Bản nháp",
+    box: "bg-blue-50",
+    text: "text-blue-700",
+    description: "Lịch đã được lưu nhưng chưa gửi cho quản lý duyệt.",
+  },
+  pending: {
+    label: "Chờ duyệt",
+    box: "bg-amber-50",
+    text: "text-amber-700",
+    description: "Lịch đã được gửi và đang chờ quản lý duyệt.",
+  },
+  approved: {
+    label: "Đã duyệt",
+    box: "bg-emerald-50",
+    text: "text-emerald-700",
+    description: "Lịch tuần này đã được quản lý phê duyệt.",
+  },
+  rejected: {
+    label: "Cần xem lại",
+    box: "bg-rose-50",
+    text: "text-rose-700",
+    description: "Lịch đã bị từ chối. Mở chi tiết để xem lý do.",
+  },
+};
+
+const TYPE_META: Record<
+  EntryType,
+  { label: string; shortLabel: string; color: string; dot: string }
+> = {
+  office: {
+    label: "Tại công ty",
+    shortLabel: "Công ty",
+    color: "text-blue-700",
+    dot: "bg-blue-500",
+  },
+  remote: {
+    label: "Làm từ xa",
+    shortLabel: "Từ xa",
+    color: "text-purple-700",
+    dot: "bg-purple-500",
+  },
+  day_off: {
+    label: "Ngày nghỉ",
+    shortLabel: "Nghỉ",
+    color: "text-slate-600",
+    dot: "bg-slate-400",
+  },
+  leave: {
+    label: "Nghỉ phép",
+    shortLabel: "Phép",
+    color: "text-orange-700",
+    dot: "bg-orange-500",
+  },
+};
+
+const isSameWeek = (date: string | Date, weekStart: Date) =>
+  toLocalDateKey(getWeekStartMonday(new Date(date))) === toLocalDateKey(weekStart);
 
 export default function UserWorkscheduleScreen() {
-  const { getMySchedules, createRequest, updateEntries, getPolicy, loading } = useWorkscheduleUser();
+  const {
+    getMySchedules,
+    createRequest,
+    updateEntries,
+    submitRequest,
+    getPolicy,
+    loading,
+  } = useWorkscheduleUser();
   const [schedules, setSchedules] = useState<IScheduleRequest[]>([]);
   const [policy, setPolicy] = useState<IWorkPolicy | null>(null);
   const [initialLoad, setInitialLoad] = useState(true);
-
-  const isOutsideRegistrationWindow = useMemo(
-    () => isRegistrationClosed(policy),
-    [policy],
-  );
+  const [selectedWeekIndex, setSelectedWeekIndex] = useState(1);
+  const [selectedDayIndex, setSelectedDayIndex] = useState(0);
+  const [draftEntries, setDraftEntries] = useState<Record<string, DraftEntry>>({});
+  const [saving, setSaving] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
 
   const allowedWeeksRange = useMemo(() => getAllowedWeekRange(), []);
+  const allowedWeeks = useMemo(() => {
+    const result: Date[] = [];
+    const cursor = new Date(allowedWeeksRange.start);
+    while (cursor <= allowedWeeksRange.end) {
+      result.push(new Date(cursor));
+      cursor.setDate(cursor.getDate() + 7);
+    }
+    return result;
+  }, [allowedWeeksRange]);
 
-  // View Mode: "calendar" or "list"
-  const [viewMode, setViewMode] = useState<"calendar" | "list">("calendar");
+  const selectedWeekStart =
+    allowedWeeks[Math.min(selectedWeekIndex, allowedWeeks.length - 1)] ||
+    allowedWeeksRange.start;
 
-  // Selected Month & Year
-  const [currentDate, setCurrentDate] = useState(new Date());
-  const selectedMonth = currentDate.getMonth();
-  const selectedYear = currentDate.getFullYear();
+  const weekDays = useMemo(
+    () =>
+      Array.from({ length: 7 }, (_, index) => {
+        const date = new Date(selectedWeekStart);
+        date.setDate(date.getDate() + index);
+        return date;
+      }),
+    [selectedWeekStart],
+  );
 
-  // Selected Date on Calendar
-  const [selectedDateStr, setSelectedDateStr] = useState<string>(toLocalDateKey(new Date()));
-
-  // Local modifications state
-  const [modifiedEntries, setModifiedEntries] = useState<Record<string, { type: EntryType | undefined; note: string }>>({});
-  const [saving, setSaving] = useState(false);
-
-  // Load user schedules
   const loadData = useCallback(async () => {
-    const [data, policyData] = await Promise.all([
+    const [scheduleData, policyData] = await Promise.all([
       getMySchedules(),
-      getPolicy()
+      getPolicy(),
     ]);
-    setSchedules(data);
+    setSchedules(scheduleData);
     setPolicy(policyData);
     setInitialLoad(false);
   }, [getMySchedules, getPolicy]);
 
   useFocusEffect(
     useCallback(() => {
-      let isActive = true;
-      if (isActive) {
-        loadData();
-      }
-      return () => {
-        isActive = false;
-      };
-    }, [loadData])
+      void loadData();
+    }, [loadData]),
   );
 
-  // Map schedules for fast date lookup
-  const scheduleMap = useMemo(() => {
-    const map: Record<string, { entry: IScheduleEntry; status: string; requestId: string }> = {};
-    schedules.forEach((s) => {
-      const reqId = s._id || "";
-      const reqStatus = s.status || "draft";
-      s.entries?.forEach((e) => {
-        const dStr = toLocalDateKey(new Date(e.date));
-        map[dStr] = { entry: e, status: reqStatus, requestId: reqId };
-      });
+  const selectedRequest = useMemo(
+    () =>
+      schedules.find((schedule) =>
+        isSameWeek(schedule.week_start, selectedWeekStart),
+      ) || null,
+    [schedules, selectedWeekStart],
+  );
+
+  const requestStatus = selectedRequest?.status || "none";
+  const status = STATUS_CONFIG[requestStatus] || STATUS_CONFIG.none;
+  const registrationClosed = useMemo(
+    () => isRegistrationClosed(policy),
+    [policy],
+  );
+
+  const today = useMemo(() => {
+    const value = new Date();
+    value.setHours(0, 0, 0, 0);
+    return value;
+  }, []);
+
+  const backendEntryMap = useMemo(() => {
+    const result: Record<string, IScheduleEntry> = {};
+    (selectedRequest?.entries || []).forEach((entry) => {
+      result[toLocalDateKey(new Date(entry.date))] = entry;
     });
-    return map;
-  }, [schedules]);
+    return result;
+  }, [selectedRequest]);
 
-  // Generate 42 days for the calendar grid
-  const calendarDays = useMemo(() => {
-    const firstDay = new Date(selectedYear, selectedMonth, 1);
-    const firstDayIndex = firstDay.getDay(); // 0 for Sunday, 1 for Monday, etc.
-    const startDayOffset = firstDayIndex === 0 ? 6 : firstDayIndex - 1;
+  const effectiveEntries = useMemo(
+    () =>
+      weekDays.map((date, index) => {
+        const key = toLocalDateKey(date);
+        const stored = draftEntries[key] || backendEntryMap[key];
+        if (stored) {
+          return { date: key, type: stored.type, note: stored.note || "" };
+        }
+        const defaultsToDayOff = date < today || index >= 5;
+        return {
+          date: key,
+          type: defaultsToDayOff ? ("day_off" as const) : undefined,
+          note: "",
+        };
+      }),
+    [backendEntryMap, draftEntries, today, weekDays],
+  );
 
-    const startDate = new Date(selectedYear, selectedMonth, 1);
-    startDate.setDate(startDate.getDate() - startDayOffset);
+  const missingDayIndexes = useMemo(
+    () =>
+      effectiveEntries
+        .map((entry, index) => (entry.type ? -1 : index))
+        .filter((index) => index >= 0),
+    [effectiveEntries],
+  );
+  const completedDays = 7 - missingDayIndexes.length;
+  const selectedDate = weekDays[selectedDayIndex] || weekDays[0];
+  const selectedEntry = effectiveEntries[selectedDayIndex] || effectiveEntries[0];
 
-    const days = [];
-    const tempDate = new Date(startDate);
-    for (let i = 0; i < 42; i++) {
-      days.push(new Date(tempDate));
-      tempDate.setDate(tempDate.getDate() + 1);
+  const weekReadOnlyReason = useMemo(() => {
+    if (registrationClosed) return "Cổng đăng ký hiện đang khóa.";
+    if (requestStatus === "pending") {
+      return "Lịch đã gửi duyệt nên không thể chỉnh sửa.";
     }
-    return days;
-  }, [selectedMonth, selectedYear]);
-
-
-  const canGoNextMonth = useMemo(() => {
-    const maxDate = new Date(allowedWeeksRange.end.getFullYear(), allowedWeeksRange.end.getMonth(), 1);
-    const currentDisplayedDate = new Date(selectedYear, selectedMonth, 1);
-    return currentDisplayedDate < maxDate;
-  }, [selectedMonth, selectedYear, allowedWeeksRange]);
-
-
-  const handlePrevMonth = () => {
-    setCurrentDate(new Date(selectedYear, selectedMonth - 1, 1));
-    const firstDayStr = toLocalDateKey(new Date(selectedYear, selectedMonth - 1, 1));
-    setSelectedDateStr(firstDayStr);
-  };
-
-  const handleNextMonth = () => {
-    if (!canGoNextMonth) return;
-    setCurrentDate(new Date(selectedYear, selectedMonth + 1, 1));
-    const firstDayStr = toLocalDateKey(new Date(selectedYear, selectedMonth + 1, 1));
-    setSelectedDateStr(firstDayStr);
-  };
-
-  // Get active selected date properties
-  const selectedDate = useMemo(() => new Date(selectedDateStr), [selectedDateStr]);
-  const isSelectedDateInPast = useMemo(() => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return selectedDate < today;
-  }, [selectedDate]);
-
-  const selectedDateEntry = useMemo(() => {
-    if (modifiedEntries[selectedDateStr]) {
-      return {
-        ...modifiedEntries[selectedDateStr],
-        date: selectedDateStr,
-      };
+    if (requestStatus === "approved") {
+      return "Lịch đã được duyệt nên không thể chỉnh sửa.";
     }
-    return scheduleMap[selectedDateStr]?.entry || {
-      date: selectedDateStr,
-      type: undefined,
-      note: "",
-    };
-  }, [selectedDateStr, modifiedEntries, scheduleMap]);
-
-  const selectedDateWeekStatus = useMemo(() => {
-    return scheduleMap[selectedDateStr]?.status || "none";
-  }, [selectedDateStr, scheduleMap]);
-
-  // Is selected week editable
-  const isSelectedWeekReadOnly = useMemo(() => {
-    return selectedDateWeekStatus === "approved" || selectedDateWeekStatus === "pending";
-  }, [selectedDateWeekStatus]);
-
-  const isSelectedWeekAllowed = useMemo(() => {
-    const monday = getWeekStartMonday(selectedDate);
-    return monday >= allowedWeeksRange.start && monday <= allowedWeeksRange.end;
-  }, [selectedDate, allowedWeeksRange]);
-
-  const isSelectedDateReadOnly = useMemo(() => {
-    if (isSelectedDateInPast) return true;
-    if (isOutsideRegistrationWindow) return true;
-    if (isSelectedWeekReadOnly) return true;
-    if (!isSelectedWeekAllowed) return true;
-    return false;
-  }, [isSelectedDateInPast, isOutsideRegistrationWindow, isSelectedWeekReadOnly, isSelectedWeekAllowed]);
-
-  const readOnlyReason = useMemo(() => {
-    if (isSelectedDateInPast) {
-      return "Ngày đã trôi qua (Không thể chỉnh sửa)";
-    }
-    if (isOutsideRegistrationWindow) {
-      return "Hệ thống đang khóa cổng đăng ký";
-    }
-    if (isSelectedWeekReadOnly) {
-      if (selectedDateWeekStatus === "approved") {
-        return "Lịch tuần này đã được duyệt";
-      }
-      if (selectedDateWeekStatus === "pending") {
-        return "Lịch tuần này đang chờ duyệt";
-      }
-    }
-    if (!isSelectedWeekAllowed) {
-      return "Nằm ngoài phạm vi tuần được đăng ký";
+    if (requestStatus === "rejected") {
+      return "Lịch bị từ chối. Hãy mở chi tiết để xem lý do.";
     }
     return null;
-  }, [isSelectedDateInPast, isOutsideRegistrationWindow, isSelectedWeekReadOnly, selectedDateWeekStatus, isSelectedWeekAllowed]);
+  }, [registrationClosed, requestStatus]);
 
-  // Modify schedule locally
-  const handleUpdateLocalEntry = (field: "type" | "note", value: string) => {
-    if (isSelectedDateReadOnly) return;
-    setModifiedEntries((prev) => ({
-      ...prev,
-      [selectedDateStr]: {
-        type: field === "type" ? (value as EntryType) : (prev[selectedDateStr]?.type || selectedDateEntry.type),
-        note: field === "note" ? value : (prev[selectedDateStr]?.note || selectedDateEntry.note || ""),
-      },
-    }));
+  const selectedDayReadOnlyReason =
+    weekReadOnlyReason ||
+    (selectedDate < today ? "Ngày này đã trôi qua nên chỉ có thể xem." : null);
+  const busy = saving || submitting;
+
+  const changeSelectedWeek = (nextIndex: number) => {
+    if (nextIndex < 0 || nextIndex >= allowedWeeks.length) return;
+    setSelectedWeekIndex(nextIndex);
+    setSelectedDayIndex(0);
   };
 
-  // Calculate breakdown counts of registered statuses for the selected calendar month
-  const monthStats = useMemo(() => {
-    let office = 0;
-    let remote = 0;
-    let day_off = 0;
-
-    for (let day = 1; day <= 31; day++) {
-      const d = new Date(selectedYear, selectedMonth, day);
-      if (d.getMonth() !== selectedMonth) break;
-      const dStr = toLocalDateKey(d);
-
-      const entry = modifiedEntries[dStr] || scheduleMap[dStr]?.entry;
-      if (entry) {
-        if (entry.type === "office") office++;
-        else if (entry.type === "remote") remote++;
-        else day_off++;
-      } else {
-        day_off++;
-      }
+  const selectDraftSchedule = (schedule: IScheduleRequest) => {
+    const scheduleMondayKey = toLocalDateKey(
+      getWeekStartMonday(new Date(schedule.week_start)),
+    );
+    const weekIndex = allowedWeeks.findIndex(
+      (week) => toLocalDateKey(week) === scheduleMondayKey,
+    );
+    if (weekIndex < 0) {
+      router.push({
+        pathname: "/(main)/user/workschedule/[id]",
+        params: { id: schedule._id },
+      } as never);
+      return;
     }
+    setSelectedWeekIndex(weekIndex);
+    setSelectedDayIndex(0);
+    scrollRef.current?.scrollTo({ y: 0, animated: true });
+  };
 
-    return { office, remote, day_off };
-  }, [selectedMonth, selectedYear, modifiedEntries, scheduleMap]);
+  const handleEntryChange = (field: "type" | "note", value: string) => {
+    if (selectedDayReadOnlyReason) return;
+    const dateKey = toLocalDateKey(selectedDate);
+    setDraftEntries((previous) => {
+      const current = previous[dateKey] || selectedEntry;
+      return {
+        ...previous,
+        [dateKey]: {
+          type: field === "type" ? (value as EntryType) : current.type,
+          note: field === "note" ? value : current.note || "",
+        },
+      };
+    });
+  };
 
-  // Group changed entries by week and persist to backend
-  const handleSaveDraft = async () => {
-    if (isOutsideRegistrationWindow) {
-      Alert.alert("Lỗi", "Ngoài khoảng thời gian đăng ký lịch làm việc");
-      return false;
-    }
-    try {
-      setSaving(true);
-      // Ensure the currently selected date is saved even if modifiedEntries is empty
-      const currentType = modifiedEntries[selectedDateStr]?.type || scheduleMap[selectedDateStr]?.entry?.type || "day_off";
-      const entriesToSave = { ...modifiedEntries };
-      if (!entriesToSave[selectedDateStr]) {
-        entriesToSave[selectedDateStr] = {
-          type: currentType,
-          note: selectedDateEntry.note || "",
+  const applyPreset = (weekdayType: "office" | "remote") => {
+    if (weekReadOnlyReason) return;
+    setDraftEntries((previous) => {
+      const next = { ...previous };
+      weekDays.forEach((date, index) => {
+        if (date < today) return;
+        const key = toLocalDateKey(date);
+        const current = previous[key] || backendEntryMap[key];
+        next[key] = {
+          type: index < 5 ? weekdayType : "day_off",
+          note: current?.note || "",
         };
-      }
-
-      // Group dates by their start Monday
-      const weekGroups: Record<string, Record<string, { type: EntryType | undefined; note: string }>> = {};
-      Object.keys(entriesToSave).forEach((dateStr) => {
-        const monday = getWeekStartMonday(new Date(dateStr));
-        const mondayStr = toLocalDateKey(monday);
-        if (!weekGroups[mondayStr]) weekGroups[mondayStr] = {};
-        weekGroups[mondayStr][dateStr] = entriesToSave[dateStr];
       });
-
-      let allSuccess = true;
-
-      // Persist week by week
-      const groupMondays = Object.keys(weekGroups);
-      for (const mondayStr of groupMondays) {
-        const monday = new Date(mondayStr);
-        // Build 7 entries for this week
-        const weekEntries: IScheduleEntry[] = Array.from({ length: 7 }).map((_, i) => {
-          const temp = new Date(monday);
-          temp.setDate(temp.getDate() + i);
-          const tempStr = toLocalDateKey(temp);
-
-          // Local modifications first, then backend entry map, then default
-          if (weekGroups[mondayStr][tempStr]) {
-            return {
-              date: tempStr,
-              type: weekGroups[mondayStr][tempStr].type || "day_off",
-              note: weekGroups[mondayStr][tempStr].note || "",
-            };
-          }
-          if (scheduleMap[tempStr]?.entry) {
-            return {
-              date: tempStr,
-              type: scheduleMap[tempStr].entry.type || "day_off",
-              note: scheduleMap[tempStr].entry.note || "",
-            };
-          }
-          return {
-            date: tempStr,
-            type: "day_off",
-            note: "",
-          };
-        });
-
-        // Check if there is an existing ScheduleRequest for this week
-        const existingReq = schedules.find((s) => {
-          const reqMon = getWeekStartMonday(new Date(s.week_start));
-          return toLocalDateKey(reqMon) === mondayStr;
-        });
-
-        if (existingReq) {
-          if (existingReq.status === "draft") {
-            const success = await updateEntries(existingReq._id, weekEntries, false);
-            if (!success) {
-              allSuccess = false;
-            }
-          }
-        } else {
-          const result = await createRequest(monday.toISOString(), weekEntries, false);
-          if (!result) {
-            allSuccess = false;
-          }
-        }
-      }
-
-      if (allSuccess) {
-        setModifiedEntries({});
-        await loadData();
-        Alert.alert("Thành công", "Đã lưu nháp lịch làm việc thành công!");
-        return true;
-      } else {
-        await loadData();
-        return false;
-      }
-    } catch {
-      Alert.alert("Lỗi", "Không thể lưu lịch làm việc");
-      return false;
-    } finally {
-      setSaving(false);
-    }
+      return next;
+    });
   };
+
+  const ensureComplete = () => {
+    if (missingDayIndexes.length === 0) return true;
+    const firstMissing = missingDayIndexes[0];
+    setSelectedDayIndex(firstMissing);
+    Alert.alert(
+      "Chưa hoàn tất lịch",
+      `Bạn chưa chọn hình thức làm việc cho ${missingDayIndexes
+        .map((index) => DAY_NAMES[index])
+        .join(", ")}.`,
+    );
+    return false;
+  };
+
+  const buildEntries = (): IScheduleEntry[] =>
+    effectiveEntries.map((entry) => ({
+      date: entry.date,
+      type: entry.type || "day_off",
+      note: entry.note || "",
+    }));
+
+  const persistSelectedWeek = async () => {
+    if (!ensureComplete()) return null;
+    const entries = buildEntries();
+    if (selectedRequest?.status === "draft") {
+      const updated = await updateEntries(selectedRequest._id, entries, false);
+      return updated ? selectedRequest._id : null;
+    }
+    if (selectedRequest) return null;
+    const created = await createRequest(
+      selectedWeekStart.toISOString(),
+      entries,
+      false,
+    );
+    return created?._id || null;
+  };
+
+  const clearSelectedWeekDraft = () => {
+    const weekKeys = new Set(weekDays.map(toLocalDateKey));
+    setDraftEntries((previous) => {
+      const next = { ...previous };
+      weekKeys.forEach((key) => delete next[key]);
+      return next;
+    });
+  };
+
+  const saveDraft = async () => {
+    if (weekReadOnlyReason) {
+      Alert.alert("Không thể chỉnh sửa", weekReadOnlyReason);
+      return;
+    }
+    setSaving(true);
+    const requestId = await persistSelectedWeek();
+    if (requestId) {
+      clearSelectedWeekDraft();
+      await loadData();
+      Alert.alert("Thành công", "Đã lưu bản nháp. Bạn có thể quay lại sửa sau.");
+    }
+    setSaving(false);
+  };
+
+  const submitForApproval = () => {
+    if (weekReadOnlyReason) {
+      Alert.alert("Không thể gửi lịch", weekReadOnlyReason);
+      return;
+    }
+    if (!ensureComplete()) return;
+
+    Alert.alert(
+      "Gửi lịch để duyệt?",
+      "Hãy kiểm tra đủ 7 ngày. Sau khi gửi, bạn sẽ không thể chỉnh sửa cho đến khi quản lý phản hồi.",
+      [
+        { text: "Kiểm tra lại", style: "cancel" },
+        {
+          text: "Gửi duyệt",
+          onPress: async () => {
+            setSubmitting(true);
+            const requestId = await persistSelectedWeek();
+            if (requestId) {
+              const submitted = await submitRequest(requestId);
+              if (submitted) {
+                clearSelectedWeekDraft();
+                await loadData();
+              }
+            }
+            setSubmitting(false);
+          },
+        },
+      ],
+    );
+  };
+
+  const goToNextDay = () => {
+    const nextMissing = missingDayIndexes.find((index) => index > selectedDayIndex);
+    setSelectedDayIndex(nextMissing ?? Math.min(selectedDayIndex + 1, 6));
+  };
+
+  const summary = useMemo(
+    () =>
+      (["office", "remote", "day_off", "leave"] as EntryType[])
+        .map((type) => ({
+          type,
+          count: effectiveEntries.filter((entry) => entry.type === type).length,
+        }))
+        .filter((item) => item.count > 0),
+    [effectiveEntries],
+  );
+
+  if (initialLoad && loading) {
+    return (
+      <View className="flex-1 items-center justify-center bg-slate-50">
+        <ActivityIndicator size="large" color="#dc2626" />
+        <Text className="mt-3 text-sm font-semibold text-slate-400">
+          Đang tải lịch làm việc...
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <View className="flex-1 bg-slate-50">
-      {/* View Mode and Top Header */}
-      <View className="bg-white px-4 pt-3 pb-4 border-b border-slate-100 flex-row justify-between items-center z-10 shadow-xs">
-        <View>
-          <Text className="text-xs text-slate-400 font-extrabold uppercase tracking-wider">Lịch làm việc</Text>
-          <Text className="text-xl font-black text-slate-900">
-            Tháng {selectedMonth + 1}, {selectedYear}
-          </Text>
-        </View>
-
-        {/* View mode switcher */}
-        <View className="flex-row bg-slate-100 p-1 rounded-2xl border border-slate-200">
-          <Pressable
-            onPress={() => setViewMode("calendar")}
-            className={`px-3 py-1.5 rounded-xl flex-row items-center space-x-1 ${viewMode === "calendar" ? "bg-white shadow-xs" : ""}`}
-          >
-            <Ionicons name="calendar-sharp" size={14} color={viewMode === "calendar" ? "#2563eb" : "#64748b"} />
-            <Text className={`text-xs font-bold ${viewMode === "calendar" ? "text-blue-600" : "text-slate-500"}`}>Lịch</Text>
-          </Pressable>
-
-          <Pressable
-            onPress={() => setViewMode("list")}
-            className={`px-3 py-1.5 rounded-xl flex-row items-center space-x-1 ${viewMode === "list" ? "bg-white shadow-xs" : ""}`}
-          >
-            <Ionicons name="list" size={14} color={viewMode === "list" ? "#2563eb" : "#64748b"} />
-            <Text className={`text-xs font-bold ${viewMode === "list" ? "text-blue-600" : "text-slate-500"}`}>Tuần</Text>
-          </Pressable>
-        </View>
+      <View className="border-b border-slate-100 bg-white px-4 pb-4 pt-3">
+        <Text className="text-xl font-black tracking-tight text-slate-900">
+          Đăng ký lịch làm việc
+        </Text>
+        <Text className="mt-1 text-xs leading-5 text-slate-500">
+          Chọn nơi làm việc cho từng ngày rồi gửi quản lý duyệt.
+        </Text>
       </View>
 
-      {initialLoad && loading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#2563eb" />
-          <Text className="text-slate-400 font-medium mt-3">Đang tải lịch biểu...</Text>
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+        ref={scrollRef}
+        showsVerticalScrollIndicator={false}
+      >
+        {policy ? (
+          <RegistrationPolicyCard
+            policy={policy}
+            closed={registrationClosed}
+            allowedWeeks={allowedWeeksRange}
+            className="mb-4"
+          />
+        ) : null}
+
+        <View className="mb-4 flex-row items-center rounded-2xl border border-blue-100 bg-blue-50 p-3">
+          {["Chọn tuần", "Chọn từng ngày", "Gửi duyệt"].map((label, index) => (
+            <React.Fragment key={label}>
+              <View className="flex-1 items-center">
+                <View className="h-6 w-6 items-center justify-center rounded-full bg-blue-600">
+                  <Text className="text-[10px] font-black text-white">{index + 1}</Text>
+                </View>
+                <Text className="mt-1 text-center text-[9px] font-bold text-blue-800">
+                  {label}
+                </Text>
+              </View>
+              {index < 2 ? <View className="mb-4 h-px w-5 bg-blue-200" /> : null}
+            </React.Fragment>
+          ))}
         </View>
-      ) : viewMode === "list" ? (
-        <ScrollView contentContainerStyle={{ padding: 16 }}>
-          {policy && (
-            <RegistrationPolicyCard
-              policy={policy}
-              closed={isOutsideRegistrationWindow}
-              allowedWeeks={allowedWeeksRange}
-              className="mb-4"
-            />
-          )}
-          <View className="flex-row justify-between items-center mb-6">
-            <Text className="text-base font-bold text-slate-800">Tất cả lịch tuần đã tạo</Text>
-            <Pressable
-              onPress={() => {
-                if (isOutsideRegistrationWindow) {
-                  Alert.alert("Thông báo", "Hiện đang ngoài khoảng thời gian đăng ký lịch làm việc");
-                  return;
-                }
-                router.push("/(main)/user/workschedule");
-              }}
-              className={`px-4 py-2 rounded-xl flex-row items-center ${isOutsideRegistrationWindow ? "bg-slate-300" : "bg-blue-600"}`}
-            >
-              <Ionicons name="add-outline" size={16} color="white" />
-              <Text className="text-white text-xs font-bold ml-1">Đăng ký mới</Text>
-            </Pressable>
-          </View>
-          <ScheduleList schedules={schedules} />
-        </ScrollView>
-      ) : (
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-          {policy && (
-            <RegistrationPolicyCard
-              policy={policy}
-              closed={isOutsideRegistrationWindow}
-              allowedWeeks={allowedWeeksRange}
-              className="mx-4 mt-4"
-            />
-          )}
-          <ScheduleCalendar
-            month={selectedMonth}
-            year={selectedYear}
-            days={calendarDays}
-            selectedDateKey={selectedDateStr}
-            scheduleMap={scheduleMap}
-            modifiedEntries={modifiedEntries}
-            canGoNext={canGoNextMonth}
-            onSelectDate={setSelectedDateStr}
-            onPreviousMonth={handlePrevMonth}
-            onNextMonth={handleNextMonth}
-          />
 
-          {/* Month Stats breakdown */}
-          <View className="mx-4 mt-3 bg-white p-4 rounded-3xl border border-slate-200/80 shadow-xs flex-row justify-between flex-wrap gap-2">
-            <View className="flex-1 min-w-[70px] bg-blue-50/50 p-2.5 rounded-2xl items-center border border-blue-100/50">
-              <Text className="text-blue-500 font-black text-sm">{monthStats.office}</Text>
-              <Text className="text-[10px] font-bold text-blue-700 mt-0.5">Cơ quan</Text>
+        <WeekPicker
+          weekStart={selectedWeekStart}
+          index={selectedWeekIndex}
+          total={allowedWeeks.length}
+          statusLabel={status.label}
+          statusBoxClassName={status.box}
+          statusTextClassName={status.text}
+          onPrevious={() => changeSelectedWeek(selectedWeekIndex - 1)}
+          onNext={() => changeSelectedWeek(selectedWeekIndex + 1)}
+        />
+
+        <View className="mt-4 rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm">
+          <View className="flex-row items-center">
+            <View className="h-8 w-8 items-center justify-center rounded-xl bg-red-50">
+              <Text className="text-sm font-black text-red-600">2</Text>
             </View>
-            <View className="flex-1 min-w-[70px] bg-purple-50/50 p-2.5 rounded-2xl items-center border border-purple-100/50">
-              <Text className="text-purple-500 font-black text-sm">{monthStats.remote}</Text>
-              <Text className="text-[10px] font-bold text-purple-700 mt-0.5">Từ xa</Text>
-            </View>
-            <View className="flex-1 min-w-[70px] bg-slate-50 p-2.5 rounded-2xl items-center border border-slate-200/50">
-              <Text className="text-slate-500 font-black text-sm">{monthStats.day_off}</Text>
-              <Text className="text-[10px] font-bold text-slate-600 mt-0.5">Nghỉ</Text>
+            <View className="ml-3 flex-1">
+              <Text className="text-base font-black text-slate-900">
+                Chọn lịch cho từng ngày
+              </Text>
+              <Text className="mt-0.5 text-xs text-slate-500">
+                Chạm vào một ngày để thiết lập
+              </Text>
             </View>
           </View>
 
+          {!weekReadOnlyReason ? (
+            <View className="mt-4 rounded-2xl bg-slate-50 p-3">
+              <Text className="mb-2 text-[11px] font-black uppercase tracking-wider text-slate-500">
+                Thiết lập nhanh T2 - T6
+              </Text>
+              <View className="flex-row">
+                <Pressable
+                  className="mr-2 flex-1 flex-row items-center justify-center rounded-xl border border-blue-100 bg-white py-2.5"
+                  onPress={() => applyPreset("office")}
+                >
+                  <Ionicons name="business-outline" size={15} color="#2563eb" />
+                  <Text className="ml-1.5 text-xs font-black text-blue-700">
+                    Tại công ty
+                  </Text>
+                </Pressable>
+                <Pressable
+                  className="flex-1 flex-row items-center justify-center rounded-xl border border-purple-100 bg-white py-2.5"
+                  onPress={() => applyPreset("remote")}
+                >
+                  <Ionicons name="home-outline" size={15} color="#9333ea" />
+                  <Text className="ml-1.5 text-xs font-black text-purple-700">
+                    Làm từ xa
+                  </Text>
+                </Pressable>
+              </View>
+              <Text className="mt-2 text-[10px] leading-4 text-slate-400">
+                T7 và Chủ nhật sẽ tự đặt là ngày nghỉ. Bạn vẫn có thể đổi từng ngày.
+              </Text>
+            </View>
+          ) : (
+            <View className="mt-4 rounded-2xl bg-slate-50 p-3">
+              <Text className="text-xs font-semibold leading-5 text-slate-600">
+                {status.description}
+              </Text>
+            </View>
+          )}
 
+          <View className="mt-4 flex-row justify-between">
+            {weekDays.map((date, index) => {
+              const entry = effectiveEntries[index];
+              const selected = selectedDayIndex === index;
+              const typeMeta = entry.type ? TYPE_META[entry.type] : null;
+              return (
+                <Pressable
+                  className={`w-[13%] items-center rounded-2xl border py-2.5 ${
+                    selected
+                      ? "border-red-600 bg-red-600"
+                      : "border-slate-200 bg-white"
+                  }`}
+                  key={toLocalDateKey(date)}
+                  onPress={() => setSelectedDayIndex(index)}
+                >
+                  <Text
+                    className={`text-[10px] font-black ${
+                      selected ? "text-white/80" : "text-slate-400"
+                    }`}
+                  >
+                    {DAY_NAMES[index]}
+                  </Text>
+                  <Text
+                    className={`mt-1 text-sm font-black ${
+                      selected ? "text-white" : "text-slate-800"
+                    }`}
+                  >
+                    {date.getDate()}
+                  </Text>
+                  <View
+                    className={`mt-1.5 h-1.5 w-1.5 rounded-full ${
+                      selected
+                        ? "bg-white"
+                        : typeMeta?.dot || "bg-amber-400"
+                    }`}
+                  />
+                </Pressable>
+              );
+            })}
+          </View>
 
-          <ScheduleEntryEditor
+          <DayScheduleEditor
             date={selectedDate}
-            entry={selectedDateEntry}
-            weekStatus={selectedDateWeekStatus}
-            readOnly={isSelectedDateReadOnly}
-            readOnlyReason={readOnlyReason}
-            saving={saving}
-            onChange={handleUpdateLocalEntry}
-            onSave={handleSaveDraft}
+            entry={selectedEntry}
+            readOnly={Boolean(selectedDayReadOnlyReason)}
+            readOnlyReason={selectedDayReadOnlyReason}
+            hasNext={selectedDayIndex < 6}
+            onChange={handleEntryChange}
+            onNext={goToNextDay}
           />
-        </ScrollView>
-      )}
+        </View>
+
+        <View className="mt-4 rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm">
+          <View className="flex-row items-center">
+            <View className="h-8 w-8 items-center justify-center rounded-xl bg-red-50">
+              <Text className="text-sm font-black text-red-600">3</Text>
+            </View>
+            <View className="ml-3 flex-1">
+              <Text className="text-base font-black text-slate-900">
+                Kiểm tra và hoàn tất
+              </Text>
+              <Text className="mt-0.5 text-xs text-slate-500">
+                {completedDays === 7
+                  ? "Lịch đã đủ 7 ngày, bạn có thể gửi duyệt."
+                  : `Còn ${7 - completedDays} ngày chưa chọn.`}
+              </Text>
+            </View>
+            <Text className="text-sm font-black text-slate-700">
+              {completedDays}/7
+            </Text>
+          </View>
+
+          <View className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
+            <View
+              className={`h-full rounded-full ${
+                completedDays === 7 ? "bg-emerald-500" : "bg-red-500"
+              }`}
+              style={{ width: `${(completedDays / 7) * 100}%` }}
+            />
+          </View>
+
+          <View className="mt-4 flex-row flex-wrap">
+            {summary.map(({ type, count }) => (
+              <View
+                className="mb-2 mr-2 flex-row items-center rounded-full bg-slate-50 px-3 py-2"
+                key={type}
+              >
+                <View className={`mr-1.5 h-2 w-2 rounded-full ${TYPE_META[type].dot}`} />
+                <Text className={`text-[11px] font-bold ${TYPE_META[type].color}`}>
+                  {TYPE_META[type].shortLabel}: {count}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          {weekReadOnlyReason ? (
+            selectedRequest?._id ? (
+              <Pressable
+                className="mt-2 flex-row items-center justify-center rounded-2xl bg-slate-900 py-4"
+                onPress={() =>
+                  router.push({
+                    pathname: "/(main)/user/workschedule/[id]",
+                    params: { id: selectedRequest._id },
+                  } as never)
+                }
+              >
+                <Text className="mr-1.5 text-sm font-black text-white">
+                  Xem chi tiết lịch
+                </Text>
+                <Ionicons name="arrow-forward" size={17} color="white" />
+              </Pressable>
+            ) : (
+              <View className="mt-2 rounded-2xl bg-slate-100 p-3">
+                <Text className="text-center text-xs font-semibold text-slate-500">
+                  {weekReadOnlyReason}
+                </Text>
+              </View>
+            )
+          ) : (
+            <View className="mt-2 gap-3">
+              <Pressable
+                className="items-center justify-center rounded-2xl border border-slate-200 bg-white py-4 active:bg-slate-50"
+                disabled={busy}
+                onPress={saveDraft}
+              >
+                <Text className="text-sm font-black text-slate-700">
+                  {saving ? "Đang lưu..." : "Lưu bản nháp"}
+                </Text>
+              </Pressable>
+              <Pressable
+                className={`flex-row items-center justify-center rounded-2xl py-4 ${
+                  completedDays === 7 ? "bg-red-600" : "bg-red-300"
+                }`}
+                disabled={busy}
+                onPress={submitForApproval}
+              >
+                <Text className="mr-1.5 text-sm font-black text-white">
+                  {submitting ? "Đang gửi..." : "Gửi lịch để duyệt"}
+                </Text>
+                <Ionicons name="paper-plane" size={16} color="white" />
+              </Pressable>
+            </View>
+          )}
+        </View>
+
+        <View className="mb-3 mt-7">
+          <Text className="text-base font-black text-slate-900">Lịch của tôi</Text>
+          <Text className="mt-1 text-xs text-slate-500">
+            Chạm vào một lịch để xem chi tiết hoặc chỉnh sửa bản nháp.
+          </Text>
+        </View>
+        <ScheduleList
+          schedules={schedules}
+          onSelectDraft={selectDraftSchedule}
+        />
+      </ScrollView>
     </View>
   );
 }
