@@ -10,9 +10,10 @@ import {
   isRegistrationClosed,
 } from "@/src/features/workschedule/utils/date";
 import { useWorkscheduleUser } from "@/src/features/workschedule/hooks/useWorkscheduleUser";
+import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useCallback, useEffect, useState } from "react";
-import { ActivityIndicator, Alert, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 
 export default function UserWorkscheduleDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();

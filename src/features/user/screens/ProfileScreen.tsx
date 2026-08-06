@@ -1,12 +1,12 @@
 import type { AppArea } from "@/src/application/access/roles";
 import { APP_ROUTES } from "@/src/application/navigation/routes";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
+import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import type { ComponentProps, ReactNode } from "react";
 import {
-  Alert,
   ImageBackground,
   Pressable,
   ScrollView,

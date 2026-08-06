@@ -1,9 +1,9 @@
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
+import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
 import React, { useEffect, useState, useCallback } from "react";
 import {
-  Alert,
   ImageBackground,
   Pressable,
   ScrollView,

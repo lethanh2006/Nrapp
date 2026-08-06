@@ -1,6 +1,7 @@
 import { AuthSessionProvider } from "@/src/features/auth/model/AuthSessionContext";
 import { ChatSocketProvider } from "@/src/features/chat/model/ChatSocketContext";
 import { useColorScheme } from "@/src/shared/hooks/useColorScheme";
+import { AppAlertHost } from "@/src/shared/ui/AppAlert";
 import {
   DarkTheme,
   DefaultTheme,
@@ -32,6 +33,7 @@ export default function RootLayout() {
               <Stack.Screen name="(auth)" />
               <Stack.Screen name="(main)" />
             </Stack>
+            <AppAlertHost />
             <StatusBar style="auto" />
           </ThemeProvider>
         </ChatSocketProvider>

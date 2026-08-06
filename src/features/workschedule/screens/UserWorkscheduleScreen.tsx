@@ -3,6 +3,7 @@ import { ScheduleCalendar } from "@/src/features/workschedule/ui/user/ScheduleCa
 import { ScheduleEntryEditor } from "@/src/features/workschedule/ui/user/ScheduleEntryEditor";
 import { RegistrationPolicyCard } from "@/src/features/workschedule/ui/user/RegistrationPolicyCard";
 import { useWorkscheduleUser } from "@/src/features/workschedule/hooks/useWorkscheduleUser";
+import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import type {
   EntryType,
   IScheduleEntry,
@@ -19,7 +20,6 @@ import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useState, useMemo } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   ScrollView,
   Text,

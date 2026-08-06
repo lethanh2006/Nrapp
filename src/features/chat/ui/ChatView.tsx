@@ -6,6 +6,7 @@ import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { useChatSocket } from "@/src/features/chat/model/ChatSocketContext";
 import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import { normalizeUser } from "@/src/features/user/model/normalize-user";
+import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import type {
   ChatImageUpload,
   ChatSummary,
@@ -24,7 +25,6 @@ import { router } from "expo-router";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   BackHandler,
   KeyboardAvoidingView,
   Platform,

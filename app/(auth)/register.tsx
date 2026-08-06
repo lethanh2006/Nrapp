@@ -5,14 +5,10 @@ import {
 } from "@/src/features/auth/ui/AuthForm";
 import { registerUser } from "@/src/services/auth/auth.service";
 import { getApiErrorMessage } from "@/src/utils/apiHelper";
+import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import { router } from "expo-router";
 import React, { useState } from "react";
-import {
-  Alert,
-  Pressable,
-  Text,
-  View,
-} from "react-native";
+import { Pressable, Text, View } from "react-native";
 
 export default function RegisterScreen() {
   const [username, setUsername] = useState("");

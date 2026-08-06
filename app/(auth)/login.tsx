@@ -9,12 +9,12 @@ import {
 import { loginUser } from "@/src/services/auth/auth.service";
 import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import { ipNR } from "@/src/utils/ip";
+import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import { isAxiosError } from "axios";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   Text,
   View,

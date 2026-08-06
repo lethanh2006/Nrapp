@@ -11,12 +11,12 @@ import {
   verifyOtp,
 } from "@/src/services/auth/auth.service";
 import { getApiErrorMessage } from "@/src/utils/apiHelper";
+import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   Pressable,
   Text,
   TextInput,

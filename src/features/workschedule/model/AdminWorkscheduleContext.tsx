@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from "react";
-import { Alert } from "react-native";
+import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import {
   AdminAttendanceRecord,

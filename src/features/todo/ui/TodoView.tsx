@@ -18,11 +18,11 @@ import {
   updateTodoStatus,
 } from "@/src/services/todo/todo.service";
 import { getAllUsers } from "@/src/services/user/user.service";
+import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import type { User } from "@/src/services/user/constant";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   ActivityIndicator,
-  Alert,
   RefreshControl,
   ScrollView,
   View,
@@ -73,8 +73,8 @@ export default function TodoView({ isAdmin }: TodoViewProps) {
       }
     } catch (error: any) {
       Alert.alert(
-        "Loi",
-        error?.response?.data?.message || "Khong tai duoc cong viec",
+        "Lỗi",
+        error?.response?.data?.message || "Không tải được công việc",
       );
     }
   }, [getToken, isAdmin, isAuth]);
@@ -99,12 +99,12 @@ export default function TodoView({ isAdmin }: TodoViewProps) {
 
   const createTask = async () => {
     if (!title.trim()) {
-      Alert.alert("Thong bao", "Vui long nhap tieu de");
+      Alert.alert("Thông báo", "Vui lòng nhập tiêu đề");
       return;
     }
 
     if (createAssignee && createAssignee === user?._id) {
-      Alert.alert("Thong bao", "Khong the tu giao viec cho chinh minh");
+      Alert.alert("Thông báo", "Không thể tự giao việc cho chính mình");
       return;
     }
 
@@ -128,11 +128,11 @@ export default function TodoView({ isAdmin }: TodoViewProps) {
       setDeadline(null);
       setCreateAssignee("");
       await loadTasks();
-      Alert.alert("Thanh cong", "Da tao cong viec");
+      Alert.alert("Thành công", "Đã tạo công việc");
     } catch (error: any) {
       Alert.alert(
-        "Loi",
-        error?.response?.data?.message || "Khong tao duoc cong viec",
+        "Lỗi",
+        error?.response?.data?.message || "Không tạo được công việc",
       );
     } finally {
       setCreating(false);
@@ -142,12 +142,12 @@ export default function TodoView({ isAdmin }: TodoViewProps) {
   const assignTask = async (taskId: string) => {
     const assignedTo = assignByTask[taskId];
     if (!assignedTo) {
-      Alert.alert("Thong bao", "Hay chon nguoi duoc giao");
+      Alert.alert("Thông báo", "Hãy chọn người được giao");
       return;
     }
 
     if (assignedTo === user?._id) {
-      Alert.alert("Thong bao", "Khong the tu giao viec cho chinh minh");
+      Alert.alert("Thông báo", "Không thể tự giao việc cho chính mình");
       return;
     }
 
@@ -157,11 +157,11 @@ export default function TodoView({ isAdmin }: TodoViewProps) {
       if (!token) return;
       await assignTodoTask(token, taskId, assignedTo);
       await loadTasks();
-      Alert.alert("Thanh cong", "Da giao cong viec");
+      Alert.alert("Thành công", "Đã giao công việc");
     } catch (error: any) {
       Alert.alert(
-        "Loi",
-        error?.response?.data?.message || "Khong giao duoc cong viec",
+        "Lỗi",
+        error?.response?.data?.message || "Không giao được công việc",
       );
     } finally {
       setAssigningTaskId(null);
@@ -177,8 +177,8 @@ export default function TodoView({ isAdmin }: TodoViewProps) {
       await loadTasks();
     } catch (error: any) {
       Alert.alert(
-        "Loi",
-        error?.response?.data?.message || "Khong cap nhat duoc trang thai",
+        "Lỗi",
+        error?.response?.data?.message || "Không cập nhật được trạng thái",
       );
     } finally {
       setUpdatingTaskId(null);
@@ -192,11 +192,11 @@ export default function TodoView({ isAdmin }: TodoViewProps) {
       if (!token) return;
       await deleteTodoTask(token, taskId);
       await loadTasks();
-      Alert.alert("Thanh cong", "Da xoa cong viec");
+      Alert.alert("Thành công", "Đã xoá công việc");
     } catch (error: any) {
       Alert.alert(
-        "Loi",
-        error?.response?.data?.message || "Khong xoa duoc cong viec",
+        "Lỗi",
+        error?.response?.data?.message || "Không xoá được công việc",
       );
     } finally {
       setDeletingTaskId(null);

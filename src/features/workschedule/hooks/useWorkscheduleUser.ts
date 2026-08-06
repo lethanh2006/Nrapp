@@ -15,7 +15,7 @@ import type {
   IWorkPolicy,
 } from "@/src/services/workschedule/constant";
 import { useCallback, useState } from "react";
-import { Alert } from "react-native";
+import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 
 export function useWorkscheduleUser() {
   const { getToken } = useAuthSession();

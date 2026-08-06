@@ -1,8 +1,8 @@
 import type { ChatImageUpload } from "@/src/services/chat/constant";
+import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import {
-  Alert,
   Image,
   Pressable,
   StyleSheet,
