@@ -1,12 +1,17 @@
-import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { getAreaForRole } from "@/src/application/access/roles";
 import { APP_ROUTES } from "@/src/application/navigation/routes";
+import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
+import {
+  AuthPrimaryButton,
+  AuthScreen,
+} from "@/src/features/auth/ui/AuthForm";
 import { normalizeUser } from "@/src/features/user/model/normalize-user";
-import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import {
   saveAuthSession,
   verifyOtp,
 } from "@/src/services/auth/auth.service";
+import { getApiErrorMessage } from "@/src/utils/apiHelper";
+import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useRef, useState } from "react";
 import {
@@ -23,6 +28,7 @@ export default function VerifyScreen() {
   const { isAuth, setUser, setIsAuth, loading: userLoading, user } = useAuthSession();
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
   const [loading, setLoading] = useState(false);
+  const [focusedIndex, setFocusedIndex] = useState<number | null>(null);
   const inputRefs = useRef<(TextInput | null)[]>([]);
   const hasRedirectedRef = useRef(false);
 
@@ -38,11 +44,26 @@ export default function VerifyScreen() {
   }, [email]);
 
   const onChange = (i: number, v: string) => {
-    if (!/^\d?$/.test(v)) return;
+    const digits = v.replace(/\D/g, "");
+    if (!digits && v) return;
+
     const n = [...otp];
-    n[i] = v;
+    if (digits.length > 1) {
+      digits
+        .slice(0, 6 - i)
+        .split("")
+        .forEach((digit, offset) => {
+          n[i + offset] = digit;
+        });
+    } else {
+      n[i] = digits;
+    }
+
     setOtp(n);
-    if (v && i < 5) inputRefs.current[i + 1]?.focus();
+    if (digits) {
+      const nextIndex = Math.min(i + digits.length, 5);
+      inputRefs.current[nextIndex]?.focus();
+    }
   };
 
   const onKeyPress = (i: number, e: { nativeEvent: { key: string } }) => {
@@ -85,46 +106,81 @@ export default function VerifyScreen() {
   if (!email) return null;
 
   return (
-    <View className="flex-1 bg-white justify-center p-4">
-      <View className="bg-white rounded-2xl p-6 border border-gray-200">
-        <Text className="text-xl font-semibold text-black text-center mb-2">
-          Xác nhận OTP
-        </Text>
+    <AuthScreen
+      eyebrow="Bảo mật tài khoản"
+      title="Xác nhận đăng nhập"
+      subtitle="Nhập mã gồm 6 chữ số để hoàn tất đăng nhập an toàn."
+    >
+      <View className="rounded-[28px] border border-white bg-white p-5 shadow-xl shadow-slate-200/80">
+        <View className="mb-5 items-center">
+          <View className="mb-3 h-12 w-12 items-center justify-center rounded-2xl bg-blue-50">
+            <Ionicons name="mail-unread-outline" size={23} color="#153b6f" />
+          </View>
+          <Text className="text-center text-sm leading-5 text-slate-500">
+            Mã xác thực đã được gửi đến
+          </Text>
+          <Text
+            className="mt-1 max-w-full text-center text-sm font-extrabold text-[#153b6f]"
+            numberOfLines={1}
+          >
+            {email}
+          </Text>
+        </View>
 
-        <Text className="text-sm text-gray-400 text-center mb-6">
-          Nhập mã 6 số đã gửi về email của bạn
+        <Text className="mb-2 text-[13px] font-bold text-slate-700">
+          Mã xác thực
         </Text>
-
-        <View className="flex-row justify-between mb-6">
+        <View className="mb-5 flex-row justify-between">
           {otp.map((v, i) => (
             <TextInput
               key={i}
               ref={(el) => {
                 inputRefs.current[i] = el;
               }}
-              className="flex-1 h-12 border border-gray-200 rounded-lg bg-gray-100 text-black text-lg text-center mx-1"
+              className={
+                focusedIndex === i || v
+                  ? "mx-1 h-14 min-w-0 flex-1 rounded-xl border-2 border-[#153b6f] bg-blue-50 text-center text-xl font-extrabold text-slate-900"
+                  : "mx-1 h-14 min-w-0 flex-1 rounded-xl border border-slate-200 bg-slate-50 text-center text-xl font-extrabold text-slate-900"
+              }
               value={v}
               onChangeText={(t) => onChange(i, t)}
               onKeyPress={(e) => onKeyPress(i, e)}
+              onFocus={() => setFocusedIndex(i)}
+              onBlur={() => setFocusedIndex(null)}
               keyboardType="number-pad"
-              maxLength={1}
+              maxLength={6}
               selectTextOnFocus
+              editable={!loading}
+              textContentType="oneTimeCode"
+              selectionColor="#153b6f"
+              accessibilityLabel={`Chữ số OTP thứ ${i + 1}`}
             />
           ))}
         </View>
 
-        <Pressable
-          className={`bg-blue-500 rounded-lg p-4 items-center ${loading ? "opacity-60" : ""}`}
+        <AuthPrimaryButton
+          icon="shield-checkmark-outline"
+          label="Xác nhận mã"
+          loading={loading}
           onPress={submit}
+        />
+
+        <View className="my-5 h-px bg-slate-100" />
+
+        <Pressable
+          className="flex-row items-center justify-center py-1"
+          onPress={() =>
+            router.replace({ pathname: "/(auth)/login", params: { email } })
+          }
           disabled={loading}
+          accessibilityRole="button"
         >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text className="text-white text-base font-semibold">Xác nhận</Text>
-          )}
+          <Ionicons name="arrow-back" size={17} color="#1d4ed8" />
+          <Text className="ml-2 text-sm font-extrabold text-blue-700">
+            Quay lại đăng nhập
+          </Text>
         </Pressable>
       </View>
-    </View>
+    </AuthScreen>
   );
 }

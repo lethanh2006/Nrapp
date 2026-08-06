@@ -1,14 +1,13 @@
 import {
   AuthInput,
+  AuthPrimaryButton,
   AuthScreen,
 } from "@/src/features/auth/ui/AuthForm";
 import { registerUser } from "@/src/services/auth/auth.service";
 import { getApiErrorMessage } from "@/src/utils/apiHelper";
-import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import React, { useState } from "react";
 import {
-  ActivityIndicator,
   Alert,
   Pressable,
   Text,
@@ -57,6 +56,7 @@ export default function RegisterScreen() {
     <AuthScreen
       eyebrow="Gia nhập HDG"
       title="Tạo tài khoản mới"
+      subtitle="Tạo tài khoản để bắt đầu làm việc và kết nối cùng đội ngũ của bạn."
     >
       <View className="rounded-[28px] border border-white bg-white p-5 shadow-xl shadow-slate-200/80">
         <AuthInput
@@ -109,29 +109,11 @@ export default function RegisterScreen() {
           editable={!loading}
         />
 
-        <Pressable
-          className="mt-1 min-h-14 flex-row items-center justify-center rounded-2xl bg-[#c9252d] px-5 shadow-md shadow-red-900/20 active:bg-[#a91f26]"
-          style={loading ? { opacity: 0.65 } : undefined}
+        <AuthPrimaryButton
+          label="Tạo tài khoản"
+          loading={loading}
           onPress={handleRegister}
-          disabled={loading}
-          accessibilityRole="button"
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <>
-              <Text className="text-base font-extrabold text-white">
-                Tạo tài khoản
-              </Text>
-              <Ionicons
-                name="arrow-forward"
-                size={19}
-                color="#ffffff"
-                style={{ marginLeft: 8 }}
-              />
-            </>
-          )}
-        </Pressable>
+        />
 
         <View className="my-5 h-px bg-slate-100" />
 

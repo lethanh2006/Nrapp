@@ -3,12 +3,12 @@ import { APP_ROUTES } from "@/src/application/navigation/routes";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import {
   AuthInput,
+  AuthPrimaryButton,
   AuthScreen,
 } from "@/src/features/auth/ui/AuthForm";
 import { loginUser } from "@/src/services/auth/auth.service";
 import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import { ipNR } from "@/src/utils/ip";
-import { Ionicons } from "@expo/vector-icons";
 import { isAxiosError } from "axios";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -126,29 +126,11 @@ export default function LoginScreen() {
           editable={!loading}
         />
 
-        <Pressable
-          className="mt-1 min-h-14 flex-row items-center justify-center rounded-2xl bg-[#153b6f] px-5 shadow-md shadow-blue-900/30 active:bg-[#0f2d56]"
-          style={loading ? { opacity: 0.65 } : undefined}
+        <AuthPrimaryButton
+          label="Đăng nhập"
+          loading={loading}
           onPress={handleSubmit}
-          disabled={loading}
-          accessibilityRole="button"
-        >
-          {loading ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <>
-              <Text className="text-base font-extrabold text-white">
-                Đăng nhập
-              </Text>
-              <Ionicons
-                name="arrow-forward"
-                size={19}
-                color="#ffffff"
-                style={{ marginLeft: 8 }}
-              />
-            </>
-          )}
-        </Pressable>
+        />
 
         <View className="my-5 h-px bg-slate-100" />
 

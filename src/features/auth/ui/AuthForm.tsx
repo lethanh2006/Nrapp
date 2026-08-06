@@ -1,6 +1,7 @@
 import { Ionicons } from "@expo/vector-icons";
 import React, { ReactNode, useState } from "react";
 import {
+  ActivityIndicator,
   Image,
   KeyboardAvoidingView,
   Platform,
@@ -25,6 +26,13 @@ type AuthInputProps = TextInputProps & {
   secure?: boolean;
 };
 
+type AuthPrimaryButtonProps = {
+  icon?: keyof typeof Ionicons.glyphMap;
+  label: string;
+  loading?: boolean;
+  onPress: () => void;
+};
+
 export function AuthScreen({
   children,
   eyebrow,
@@ -42,7 +50,7 @@ export function AuthScreen({
       />
       <View
         pointerEvents="none"
-        className="absolute -bottom-40 -left-28 h-80 w-80 rounded-full bg-red-100/50"
+        className="absolute -bottom-40 -left-28 h-80 w-80 rounded-full bg-blue-100/40"
       />
 
       <ScrollView
@@ -90,6 +98,38 @@ export function AuthScreen({
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
+  );
+}
+
+export function AuthPrimaryButton({
+  icon = "arrow-forward",
+  label,
+  loading = false,
+  onPress,
+}: AuthPrimaryButtonProps) {
+  return (
+    <Pressable
+      className="mt-1 min-h-14 flex-row items-center justify-center rounded-2xl bg-[#153b6f] px-5 shadow-md shadow-blue-900/30 active:bg-[#0f2d56]"
+      style={loading ? { opacity: 0.65 } : undefined}
+      onPress={onPress}
+      disabled={loading}
+      accessibilityRole="button"
+      accessibilityState={{ disabled: loading, busy: loading }}
+    >
+      {loading ? (
+        <ActivityIndicator color="#ffffff" />
+      ) : (
+        <>
+          <Text className="text-base font-extrabold text-white">{label}</Text>
+          <Ionicons
+            name={icon}
+            size={19}
+            color="#ffffff"
+            style={{ marginLeft: 8 }}
+          />
+        </>
+      )}
+    </Pressable>
   );
 }
 
