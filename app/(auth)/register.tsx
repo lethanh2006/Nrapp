@@ -94,7 +94,7 @@ export default function RegisterScreen() {
 
         <AuthInput
           label="Xác nhận mật khẩu"
-          icon="shield-checkmark-outline"
+          icon="key-outline"
           placeholder="Nhập lại mật khẩu"
           value={confirmPassword}
           onChangeText={setConfirmPassword}

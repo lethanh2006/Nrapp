@@ -159,7 +159,7 @@ export default function VerifyScreen() {
         </View>
 
         <AuthPrimaryButton
-          icon="shield-checkmark-outline"
+          icon="checkmark-circle-outline"
           label="Xác nhận mã"
           loading={loading}
           onPress={submit}

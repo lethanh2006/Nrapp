@@ -90,8 +90,7 @@ export function AuthScreen({
           {children}
 
           <View className="mt-6 flex-row items-center justify-center">
-            <Ionicons name="shield-checkmark" size={15} color="#64748b" />
-            <Text className="ml-1.5 text-xs font-medium text-slate-500">
+            <Text className="text-xs font-medium text-slate-500">
               Kết nối nội bộ được bảo mật bởi HDG
             </Text>
           </View>

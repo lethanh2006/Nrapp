@@ -101,7 +101,7 @@ export default function ProfileScreen({ area }: ProfileScreenProps) {
         >
           <View className="absolute inset-0 bg-red-950/75" />
 
-          <View className="mb-7 flex-row items-center justify-between px-5">
+          <View className="mb-7 px-5">
             <View>
               <Text className="text-[11px] font-black uppercase tracking-[2px] text-white/60">
                 WorkSpace
@@ -109,9 +109,6 @@ export default function ProfileScreen({ area }: ProfileScreenProps) {
               <Text className="mt-1 text-2xl font-black tracking-tight text-white">
                 Hồ sơ cá nhân
               </Text>
-            </View>
-            <View className="h-11 w-11 items-center justify-center rounded-2xl border border-white/20 bg-white/10">
-              <Ionicons name="shield-checkmark" size={22} color="white" />
             </View>
           </View>
 
