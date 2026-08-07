@@ -8,7 +8,11 @@ import {
   AdminScheduleRequest,
   useWorkscheduleAdmin,
 } from "@/src/features/workschedule/hooks/useWorkscheduleAdmin";
-import type { IWorkPolicy } from "@/src/services/workschedule/constant";
+import type {
+  EntryType,
+  IWorkPolicy,
+  WorkPeriod,
+} from "@/src/services/workschedule/constant";
 import { isAdminRole } from "@/src/application/access/roles";
 
 type RequestStatus = "all" | "draft" | "pending" | "approved" | "rejected";
@@ -143,7 +147,10 @@ export interface AdminContextValue {
 
   // Actions
   loadAdminData: (showRefreshing?: boolean) => Promise<void>;
-  handleAdminUpdateEntries: (id: string, entries: { date: string; type: string; note?: string }[]) => Promise<boolean>;
+  handleAdminUpdateEntries: (
+    id: string,
+    entries: { date: string; type: EntryType; period?: WorkPeriod; note?: string }[],
+  ) => Promise<boolean>;
 }
 
 const AdminContext = createContext<AdminContextValue | null>(null);
@@ -261,17 +268,15 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     setTodayAttendance(attendanceData);
     setReportRows(reportData);
     setTodayExpected(expected);
-    setSelectedPendingIds((previous) => previous.filter((id) => pendingData.some((req) => req._id === id)));
+    setSelectedPendingIds((previous) =>
+      previous.filter((id) => allData.some((request) => request._id === id && request.status === "pending")),
+    );
     setInitialLoading(false);
 
     if (showRefreshing) setRefreshing(false);
   }, [
     currentWeek, getPolicy, getPendingSchedules, getAllSchedules, getHeatmap, getTodayAttendance, getReport, getScheduleDetail, requestFilter, reportRange, selectedWeek, user
   ]);
-
-  useEffect(() => {
-    loadAdminData();
-  }, [selectedWeek, requestFilter, reportRange, loadAdminData]);
 
   useEffect(() => {
     if (!generatedQr?.expires_at) {
@@ -390,8 +395,13 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   };
 
   const handleReject = async (id: string) => {
+    const reason = rejectReason.trim();
+    if (!reason) {
+      Alert.alert("Thiếu lý do", "Vui lòng nhập lý do từ chối để nhân viên có thể xem lại.");
+      return;
+    }
     setBusyRequestId(id);
-    const success = await rejectRequest(id, rejectReason.trim() || "Từ chối bởi quản trị viên");
+    const success = await rejectRequest(id, reason);
     setBusyRequestId(null);
     if (success) {
       setRejectingRequestId(null);
@@ -400,7 +410,10 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const handleAdminUpdateEntries = async (id: string, entries: { date: string; type: string; note?: string }[]) => {
+  const handleAdminUpdateEntries = async (
+    id: string,
+    entries: { date: string; type: EntryType; period?: WorkPeriod; note?: string }[],
+  ) => {
     setBusyRequestId(id);
     const success = await adminUpdateEntries(id, entries);
     setBusyRequestId(null);
