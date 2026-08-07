@@ -30,6 +30,14 @@ const utilities: {
     route: "/(main)/user/utilities/calendar",
   },
   {
+    title: "Đơn từ",
+    description: "Nghỉ, đi muộn, về sớm, OT, công tác và remote",
+    icon: "mail-outline",
+    color: "#7c3aed",
+    background: "bg-violet-50",
+    route: "/(main)/user/utilities/requests",
+  },
+  {
     title: "Thống kê tháng",
     description: "Tổng hợp số buổi làm, remote, nghỉ và đơn đã duyệt",
     icon: "stats-chart-outline",
