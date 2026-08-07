@@ -54,13 +54,6 @@ export default function WorkscheduleUtilitiesScreen() {
       contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
       showsVerticalScrollIndicator={false}
     >
-      <View className="mb-5">
-        <Text className="text-2xl font-black text-slate-900">Tiện ích nhân sự</Text>
-        <Text className="mt-1 text-xs leading-5 text-slate-500">
-          Lịch làm việc và các thủ tục thường dùng, gói gọn trong một nơi.
-        </Text>
-      </View>
-
       <View className="mb-5 rounded-3xl bg-slate-900 p-5">
         <View className="h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
           <Ionicons name="sparkles" size={22} color="white" />

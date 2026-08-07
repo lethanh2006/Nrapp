@@ -256,7 +256,7 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
             <Pressable
               onPress={() =>
                 router.push(
-                  areaRoutes.workschedule
+                  area === "user" ? areaRoutes.utilities : areaRoutes.workschedule
                 )
               }
               className="w-10 h-10 rounded-full bg-white/15 items-center justify-center active:scale-95"
@@ -401,7 +401,7 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
                 <Ionicons name="calendar-sharp" size={24} color="#a855f7" />
               </View>
               <Text className="text-[11px] text-slate-700 font-extrabold text-center mt-2.5">
-                Lịch biểu
+                Lịch làm
               </Text>
             </Pressable>
           </View>
