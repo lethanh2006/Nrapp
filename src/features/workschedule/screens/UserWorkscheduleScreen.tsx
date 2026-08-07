@@ -343,7 +343,7 @@ export default function UserWorkscheduleScreen() {
     }
     if (selectedRequest) return null;
     const created = await createRequest(
-      selectedWeekStart.toISOString(),
+      toLocalDateKey(selectedWeekStart),
       entries,
       false,
     );
