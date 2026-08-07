@@ -108,7 +108,7 @@ export function DayScheduleEditor({
 
       {readOnlyReason ? (
         <View className="mb-4 flex-row items-start rounded-2xl bg-slate-100 p-3">
-          <Ionicons name="lock-closed" size={15} color="#64748b" />
+          <Ionicons name="information-circle-outline" size={16} color="#64748b" />
           <Text className="ml-2 flex-1 text-xs font-semibold leading-5 text-slate-600">
             {readOnlyReason}
           </Text>
@@ -159,8 +159,8 @@ export function DayScheduleEditor({
             const selected = (entry.period || "full_day") === option.value;
             return (
               <Pressable
-                className={`flex-1 items-center rounded-xl px-2 py-2.5 ${
-                  selected ? "bg-white shadow-sm" : "bg-transparent"
+                className={`flex-1 items-center rounded-xl border px-2 py-2.5 ${
+                  selected ? "border-red-100 bg-white" : "border-transparent bg-transparent"
                 } ${readOnly ? "opacity-60" : ""}`}
                 disabled={readOnly}
                 key={option.value}
