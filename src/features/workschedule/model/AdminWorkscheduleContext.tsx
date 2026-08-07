@@ -368,7 +368,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         registration_end: formatDateString(updated.registration_end),
         locked: true,
       });
-      Alert.alert("Thành công", "Đã khóa đăng ký lịch làm việc");
+      Alert.alert("Đã cập nhật", "Đã tạm dừng nhận đăng ký lịch làm việc");
     }
   };
 

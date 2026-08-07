@@ -155,7 +155,7 @@ export function PolicySection() {
         <View className="flex-row items-center gap-3">
           <View className={`rounded-full px-3 py-1 ${policy?.locked ?? true ? "bg-rose-50 border border-rose-100" : "bg-emerald-50 border border-emerald-100"}`}>
             <Text className={`text-xs font-semibold ${policy?.locked ?? true ? "text-rose-600" : "text-emerald-600"}`}>
-              {policy?.locked ?? true ? "Đã khóa" : "Đang mở"}
+              {policy?.locked ?? true ? "Tạm dừng" : "Đang nhận lịch"}
             </Text>
           </View>
           <Ionicons name={isOpen ? "chevron-up" : "chevron-down"} size={20} color="#64748b" />
@@ -165,11 +165,11 @@ export function PolicySection() {
       {isOpen && (
         <View className="p-5 pt-0 border-t border-slate-100">
           <View className={`flex-row items-center gap-3 p-4 rounded-2xl border mt-4 ${policyDraft.locked ? "bg-rose-50 border-rose-100/60" : "bg-emerald-50 border-emerald-100/60"}`}>
-            <Ionicons name={policyDraft.locked ? "lock-closed-sharp" : "lock-open-sharp"} size={18} color={policyDraft.locked ? "#e11d48" : "#059669"} />
+            <Ionicons name="information-circle-outline" size={19} color={policyDraft.locked ? "#e11d48" : "#059669"} />
             <Text className={`text-xs font-bold flex-1 ${policyDraft.locked ? "text-rose-800" : "text-emerald-800"}`}>
               {policyDraft.locked 
-                ? "Hệ thống đang KHÓA đăng ký lịch. Bấm 'Mở khóa' để thay đổi thời gian đăng ký." 
-                : "Hệ thống đang MỞ KHÓA chỉnh sửa. Điền thời gian mới sau đó chọn 'Lưu chính sách'."}
+                ? "Nhân viên đang không thể gửi lịch mới. Chọn 'Chỉnh thời gian' để mở đợt đăng ký."
+                : "Kiểm tra thời gian bắt đầu, kết thúc rồi lưu để áp dụng cho nhân viên."}
             </Text>
           </View>
 
@@ -202,11 +202,11 @@ export function PolicySection() {
             {policyDraft.locked ? (
               <Pressable
                 onPress={() => setPolicyDraft(prev => ({ ...prev, locked: false }))}
-                className="flex-1 min-w-[150px] bg-emerald-600 active:scale-95 rounded-2xl py-3.5 flex-row items-center justify-center space-x-2"
+                className="flex-1 min-w-[150px] bg-red-600 active:scale-95 rounded-2xl py-3.5 flex-row items-center justify-center space-x-2"
               >
-                <Ionicons name="lock-open-outline" size={16} color="white" />
+                <Ionicons name="create-outline" size={16} color="white" />
                 <Text className="text-white font-extrabold text-center ml-1">
-                  Mở khóa chỉnh sửa
+                  Chỉnh thời gian
                 </Text>
               </Pressable>
             ) : (
@@ -214,7 +214,7 @@ export function PolicySection() {
                 <Pressable
                   onPress={handleSavePolicy}
                   disabled={savingPolicy}
-                  className={`flex-1 min-w-[150px] rounded-2xl py-3.5 flex-row items-center justify-center space-x-2 ${savingPolicy ? "bg-slate-300" : "bg-slate-900 active:scale-95"}`}
+                  className={`flex-1 min-w-[150px] rounded-2xl py-3.5 flex-row items-center justify-center space-x-2 ${savingPolicy ? "bg-red-200" : "bg-red-600 active:scale-95"}`}
                 >
                   <Ionicons name="save-outline" size={16} color="white" />
                   <Text className="text-white font-semibold text-center ml-1">
@@ -225,24 +225,24 @@ export function PolicySection() {
                 <Pressable
                   onPress={handleLockPolicy}
                   disabled={savingPolicy}
-                  className={`flex-1 min-w-[150px] rounded-2xl py-3.5 flex-row items-center justify-center space-x-2 ${savingPolicy ? "bg-slate-300" : "bg-rose-600 active:scale-95"}`}
+                  className={`flex-1 min-w-[150px] rounded-2xl py-3.5 flex-row items-center justify-center space-x-2 ${savingPolicy ? "bg-slate-200" : "bg-slate-700 active:scale-95"}`}
                 >
-                  <Ionicons name="lock-closed-outline" size={16} color="white" />
+                  <Ionicons name="pause-circle-outline" size={16} color="white" />
                   <Text className="text-white font-semibold text-center ml-1">
-                    {savingPolicy ? "Đang khóa..." : "Khóa đăng ký"}
+                    {savingPolicy ? "Đang lưu..." : "Dừng nhận lịch"}
                   </Text>
                 </Pressable>
               </>
             )}
             
-            <View className="flex-1 min-w-[200px] rounded-2xl py-3 px-4 bg-cyan-50 border border-cyan-100 justify-center">
-              <Text className="text-cyan-900 text-xs uppercase tracking-[2px] font-semibold">
+            <View className="flex-1 min-w-[200px] rounded-2xl py-3 px-4 bg-red-50 border border-red-100 justify-center">
+              <Text className="text-red-800 text-xs uppercase tracking-[2px] font-semibold">
                 ĐANG ÁP DỤNG
               </Text>
-              <Text className="text-cyan-950 font-medium mt-1 text-sm">
+              <Text className="text-red-950 font-medium mt-1 text-sm">
                 Từ: {formatDisplayDate(policy?.registration_start ?? policyDraft.registration_start)}
               </Text>
-              <Text className="text-cyan-950 font-medium mt-0.5 text-sm">
+              <Text className="text-red-950 font-medium mt-0.5 text-sm">
                 Đến: {formatDisplayDate(policy?.registration_end ?? policyDraft.registration_end)}
               </Text>
             </View>

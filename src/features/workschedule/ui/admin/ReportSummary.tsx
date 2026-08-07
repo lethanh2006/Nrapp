@@ -12,7 +12,7 @@ const entryLabels: Record<string, string> = {
 
 const formatEmployee = (employee?: any, fallback = "Không rõ") => {
   if (!employee) return fallback;
-  return employee.username || employee.name || employee.email || fallback;
+  return employee.name || employee.username || employee.email || fallback;
 };
 
 const formatDate = (value?: string) => {
@@ -168,7 +168,7 @@ export function ReportSummary() {
               <Pressable
                 key={range}
                 onPress={() => setReportRange(range)}
-                className={`px-3 py-2 rounded-full ${reportRange === range ? "bg-slate-900" : "bg-transparent"}`}
+                className={`px-3 py-2 rounded-full ${reportRange === range ? "bg-red-600" : "bg-transparent"}`}
               >
                 <Text
                   className={
@@ -195,9 +195,9 @@ export function ReportSummary() {
           <StatCard
             title="Nhân sự"
             value={totalReportEmployees}
-            containerStyle="bg-cyan-50 border-cyan-100"
-            titleStyle="text-cyan-700"
-            valueStyle="text-cyan-950"
+            containerStyle="bg-red-50 border-red-100"
+            titleStyle="text-red-700"
+            valueStyle="text-red-950"
           />
           <StatCard
             title="Remote"
@@ -237,10 +237,10 @@ export function ReportSummary() {
                     )}
                   </View>
                   <View
-                    className={`rounded-full px-3 py-1 ${record.schedule_type === "remote" ? "bg-violet-100" : "bg-blue-100"}`}
+                    className={`rounded-full px-3 py-1 ${record.schedule_type === "remote" ? "bg-violet-100" : "bg-slate-200"}`}
                   >
                     <Text
-                      className={`text-xs font-semibold ${record.schedule_type === "remote" ? "text-violet-800" : "text-blue-800"}`}
+                      className={`text-xs font-semibold ${record.schedule_type === "remote" ? "text-violet-800" : "text-slate-700"}`}
                     >
                       {entryLabels[record.schedule_type] ||
                         record.schedule_type}

@@ -23,7 +23,7 @@ export function AttendanceQR() {
         <Pressable
           onPress={handleGenerateQr}
           disabled={qrBusy}
-          className={`rounded-2xl px-4 py-3 ${qrBusy ? "bg-cyan-200" : "bg-cyan-600"}`}
+          className={`rounded-2xl px-4 py-3 ${qrBusy ? "bg-red-200" : "bg-red-600"}`}
         >
           <Text className="text-white font-semibold">
             {qrBusy ? "Đang tạo..." : "Tạo QR"}
@@ -32,18 +32,18 @@ export function AttendanceQR() {
       </View>
 
       {generatedQr ? (
-        <View className="rounded-3xl border border-cyan-100 bg-cyan-50 p-4">
+        <View className="rounded-3xl border border-red-100 bg-red-50 p-4">
           <View className="flex-row items-center justify-between mb-3">
-            <Text className="text-cyan-900 font-semibold">Token hiện tại</Text>
+            <Text className="text-red-900 font-semibold">Mã đang sử dụng</Text>
             <View
-              className={`rounded-full px-3 py-1 ${qrRemaining > 0 ? "bg-cyan-600" : "bg-slate-400"}`}
+              className={`rounded-full px-3 py-1 ${qrRemaining > 0 ? "bg-red-600" : "bg-slate-400"}`}
             >
               <Text className="text-white text-xs font-semibold">
                 {qrRemaining > 0 ? `${qrRemaining}s còn lại` : "Đã hết hạn"}
               </Text>
             </View>
           </View>
-          <View className="bg-white rounded-2xl border border-cyan-100 p-6 items-center">
+          <View className="bg-white rounded-2xl border border-red-100 p-6 items-center">
             <View className="p-3 bg-white rounded-2xl shadow-sm border border-slate-100 mb-4">
               <QRCode
                 value={generatedQr.token}
@@ -52,7 +52,7 @@ export function AttendanceQR() {
                 backgroundColor="white"
               />
             </View>
-            <Text className="text-[11px] uppercase tracking-[2px] text-cyan-700 font-bold mb-1">
+            <Text className="text-[11px] uppercase tracking-[2px] text-red-700 font-bold mb-1">
               Token Check-in
             </Text>
             <Text className="text-slate-900 font-bold text-lg mb-1">
