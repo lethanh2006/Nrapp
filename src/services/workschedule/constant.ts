@@ -1,6 +1,14 @@
 export type EntryType = "office" | "remote" | "day_off" | "leave";
 export type WorkPeriod = "full_day" | "morning" | "afternoon";
 export type RequestStatus = "draft" | "pending" | "approved" | "rejected";
+export type WorkRequestType =
+  | "leave"
+  | "late"
+  | "early"
+  | "overtime"
+  | "business_trip"
+  | "remote";
+export type WorkRequestStatus = "pending" | "approved" | "rejected" | "cancelled";
 
 export interface IScheduleEntry {
   _id?: string;
@@ -53,6 +61,58 @@ export interface IMonthlyScheduleOverview {
   month: string;
   entries: IMonthlyScheduleEntry[];
   stats: IMonthlyScheduleStats;
+}
+
+export interface IWorkRequest {
+  _id: string;
+  employee_id: string;
+  type: WorkRequestType;
+  status: WorkRequestStatus;
+  start_at: string;
+  end_at?: string;
+  period: WorkPeriod;
+  reason: string;
+  location?: string;
+  project?: string;
+  estimated_cost?: number;
+  manager_id?: string;
+  attachment_urls?: string[];
+  is_school_leave?: boolean;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  reject_reason?: string;
+  createdAt?: string;
+  employee?: AdminEmployeeProfile | null;
+}
+
+export interface CreateWorkRequestPayload {
+  type: WorkRequestType;
+  start_at: string;
+  end_at?: string;
+  period: WorkPeriod;
+  reason: string;
+  location?: string;
+  project?: string;
+  estimated_cost?: number;
+  manager_id?: string;
+  attachment_urls?: string[];
+  is_school_leave?: boolean;
+}
+
+export interface IWorkRequestStats {
+  total: number;
+  pending: number;
+  approved: number;
+  rejected: number;
+  cancelled: number;
+  approved_overtime_hours: number;
+  by_type: Partial<Record<WorkRequestType, number>>;
+}
+
+export interface WorkRequestQuery {
+  month?: string;
+  type?: WorkRequestType | "all";
+  status?: WorkRequestStatus | "all";
 }
 
 export interface AdminEmployeeProfile {

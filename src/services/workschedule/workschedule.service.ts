@@ -11,12 +11,78 @@ import type {
   IMonthlyScheduleOverview,
   IWorkPolicy,
   WorkscheduleQuery,
+  CreateWorkRequestPayload,
+  IWorkRequest,
+  IWorkRequestStats,
+  WorkRequestQuery,
 } from "@/src/services/workschedule/constant";
 
 export async function getMonthlyScheduleOverview(token: string, month: string) {
   return axios.get<{ data: IMonthlyScheduleOverview }>(
     `${ipNR}/workschedule/schedule/monthly-overview`,
     { ...getAuthHeader(token), params: { month } },
+  );
+}
+
+export async function getMyWorkRequests(
+  token: string,
+  params: WorkRequestQuery = {},
+) {
+  return axios.get<{ data: IWorkRequest[] }>(`${ipNR}/workschedule/requests/my`, {
+    ...getAuthHeader(token),
+    params,
+  });
+}
+
+export async function getMyWorkRequestStats(token: string, month?: string) {
+  return axios.get<{ data: IWorkRequestStats }>(
+    `${ipNR}/workschedule/requests/my/stats`,
+    { ...getAuthHeader(token), params: month ? { month } : {} },
+  );
+}
+
+export async function createWorkRequest(
+  token: string,
+  payload: CreateWorkRequestPayload,
+) {
+  return axios.post<{ data: IWorkRequest }>(
+    `${ipNR}/workschedule/requests`,
+    payload,
+    getAuthHeader(token),
+  );
+}
+
+export async function cancelWorkRequest(token: string, id: string) {
+  return axios.patch<{ data: IWorkRequest }>(
+    `${ipNR}/workschedule/requests/${encodeURIComponent(id)}/cancel`,
+    {},
+    getAuthHeader(token),
+  );
+}
+
+export async function getAdminWorkRequests(
+  token: string,
+  params: WorkRequestQuery = {},
+) {
+  return axios.get<{ data: IWorkRequest[] }>(
+    `${ipNR}/workschedule/requests/admin`,
+    { ...getAuthHeader(token), params },
+  );
+}
+
+export async function approveWorkRequest(token: string, id: string) {
+  return axios.post<{ data: IWorkRequest }>(
+    `${ipNR}/workschedule/requests/${encodeURIComponent(id)}/approve`,
+    {},
+    getAuthHeader(token),
+  );
+}
+
+export async function rejectWorkRequest(token: string, id: string, reason: string) {
+  return axios.post<{ data: IWorkRequest }>(
+    `${ipNR}/workschedule/requests/${encodeURIComponent(id)}/reject`,
+    { reason },
+    getAuthHeader(token),
   );
 }
 
