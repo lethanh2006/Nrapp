@@ -43,7 +43,7 @@ const utilities: {
     icon: "stats-chart-outline",
     color: "#059669",
     background: "bg-emerald-50",
-    route: "/(main)/user/utilities/calendar",
+    route: "/(main)/user/utilities/overview",
   },
 ];
 

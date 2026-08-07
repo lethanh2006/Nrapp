@@ -107,6 +107,7 @@ export interface IWorkRequestStats {
   cancelled: number;
   approved_overtime_hours: number;
   by_type: Partial<Record<WorkRequestType, number>>;
+  approved_by_type: Partial<Record<WorkRequestType, number>>;
 }
 
 export interface WorkRequestQuery {
