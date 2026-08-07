@@ -253,7 +253,7 @@ export async function getAttendanceReport(
 export async function updateAdminSchedule(
   token: string,
   id: string,
-  entries: { date: string; type: string; note?: string }[],
+  entries: IScheduleEntry[],
 ) {
   return axios.patch(
     `${ipNR}/workschedule/schedule/requests/${encodeURIComponent(id)}`,

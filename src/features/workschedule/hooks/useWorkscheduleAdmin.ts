@@ -23,6 +23,7 @@ import type {
   AdminHeatmapRow,
   AdminScheduleRequest,
   IWorkPolicy,
+  IScheduleEntry,
   WorkscheduleQuery,
   IWorkRequest,
   WorkRequestQuery,
@@ -280,7 +281,7 @@ export function useWorkscheduleAdmin() {
   const adminUpdateEntries = useCallback(
     async (
       id: string,
-      entries: { date: string; type: string; note?: string }[],
+      entries: IScheduleEntry[],
       silent = false,
     ) => {
       try {
