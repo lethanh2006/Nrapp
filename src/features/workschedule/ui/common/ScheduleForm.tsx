@@ -3,12 +3,17 @@ import { Pressable, Text, TextInput, View } from "react-native";
 import type {
   EntryType,
   IScheduleEntry,
+  WorkPeriod,
 } from "@/src/services/workschedule/constant";
 
 interface Props {
   startDate: Date;
   entries: IScheduleEntry[];
-  onChangeEntry: (date: string, field: "type" | "note", value: string) => void;
+  onChangeEntry: (
+    date: string,
+    field: "type" | "period" | "note",
+    value: string,
+  ) => void;
   readOnly?: boolean;
 }
 
@@ -20,6 +25,11 @@ const typeOptions: { value: EntryType; label: string; color: string }[] = [
 ];
 
 const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
+const periodOptions: { value: WorkPeriod; label: string }[] = [
+  { value: "full_day", label: "Cả ngày" },
+  { value: "morning", label: "Sáng" },
+  { value: "afternoon", label: "Chiều" },
+];
 
 export default function ScheduleForm({
   startDate,
@@ -40,6 +50,7 @@ export default function ScheduleForm({
         const entry = entries.find((e) => e.date.startsWith(dateStr)) || {
           date: dateStr,
           type: "office",
+          period: "full_day",
           note: "",
         };
 
@@ -82,6 +93,30 @@ export default function ScheduleForm({
                       }`}
                     >
                       {opt.label}
+                    </Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+
+            <View className="mb-3 flex-row rounded-lg bg-gray-100 p-1">
+              {periodOptions.map((option) => {
+                const selected = (entry.period || "full_day") === option.value;
+                return (
+                  <Pressable
+                    className={`flex-1 items-center rounded-md py-2 ${
+                      selected ? "bg-white" : "bg-transparent"
+                    } ${readOnly ? "opacity-70" : ""}`}
+                    disabled={readOnly}
+                    key={option.value}
+                    onPress={() => onChangeEntry(dateStr, "period", option.value)}
+                  >
+                    <Text
+                      className={`text-xs font-bold ${
+                        selected ? "text-blue-700" : "text-gray-500"
+                      }`}
+                    >
+                      {option.label}
                     </Text>
                   </Pressable>
                 );

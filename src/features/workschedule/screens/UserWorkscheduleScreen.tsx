@@ -14,6 +14,7 @@ import type {
   IScheduleEntry,
   IScheduleRequest,
   IWorkPolicy,
+  WorkPeriod,
 } from "@/src/services/workschedule/constant";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import { Ionicons } from "@expo/vector-icons";
@@ -27,7 +28,11 @@ import {
   View,
 } from "react-native";
 
-type DraftEntry = { type: EntryType | undefined; note: string };
+type DraftEntry = {
+  type: EntryType | undefined;
+  period: WorkPeriod;
+  note: string;
+};
 
 const DAY_NAMES = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 
@@ -195,12 +200,18 @@ export default function UserWorkscheduleScreen() {
         const key = toLocalDateKey(date);
         const stored = draftEntries[key] || backendEntryMap[key];
         if (stored) {
-          return { date: key, type: stored.type, note: stored.note || "" };
+          return {
+            date: key,
+            type: stored.type,
+            period: stored.period || "full_day",
+            note: stored.note || "",
+          };
         }
         const defaultsToDayOff = date < today || index >= 5;
         return {
           date: key,
           type: defaultsToDayOff ? ("day_off" as const) : undefined,
+          period: "full_day" as const,
           note: "",
         };
       }),
@@ -262,7 +273,10 @@ export default function UserWorkscheduleScreen() {
     scrollRef.current?.scrollTo({ y: 0, animated: true });
   };
 
-  const handleEntryChange = (field: "type" | "note", value: string) => {
+  const handleEntryChange = (
+    field: "type" | "period" | "note",
+    value: string,
+  ) => {
     if (selectedDayReadOnlyReason) return;
     const dateKey = toLocalDateKey(selectedDate);
     setDraftEntries((previous) => {
@@ -271,6 +285,10 @@ export default function UserWorkscheduleScreen() {
         ...previous,
         [dateKey]: {
           type: field === "type" ? (value as EntryType) : current.type,
+          period:
+            field === "period"
+              ? (value as WorkPeriod)
+              : current.period || "full_day",
           note: field === "note" ? value : current.note || "",
         },
       };
@@ -287,6 +305,7 @@ export default function UserWorkscheduleScreen() {
         const current = previous[key] || backendEntryMap[key];
         next[key] = {
           type: index < 5 ? weekdayType : "day_off",
+          period: current?.period || "full_day",
           note: current?.note || "",
         };
       });
@@ -311,6 +330,7 @@ export default function UserWorkscheduleScreen() {
     effectiveEntries.map((entry) => ({
       date: entry.date,
       type: entry.type || "day_off",
+      period: entry.period || "full_day",
       note: entry.note || "",
     }));
 

@@ -86,7 +86,11 @@ export function RequestManager() {
     }
   };
 
-  const handleChangeEntry = (date: string, field: "type" | "note", value: string) => {
+  const handleChangeEntry = (
+    date: string,
+    field: "type" | "period" | "note",
+    value: string,
+  ) => {
     setEditEntries((prev) =>
       prev.map((e) => (e.date.startsWith(date) ? { ...e, [field]: value } : e))
     );

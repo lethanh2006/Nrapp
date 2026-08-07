@@ -1,6 +1,7 @@
 import type {
   EntryType,
   IScheduleEntry,
+  WorkPeriod,
 } from "@/src/services/workschedule/constant";
 import { Ionicons } from "@expo/vector-icons";
 import type { ComponentProps } from "react";
@@ -14,7 +15,7 @@ type DayScheduleEditorProps = {
   readOnly: boolean;
   readOnlyReason?: string | null;
   hasNext: boolean;
-  onChange: (field: "type" | "note", value: string) => void;
+  onChange: (field: "type" | "period" | "note", value: string) => void;
   onNext: () => void;
 };
 
@@ -58,6 +59,12 @@ const WORK_OPTIONS: {
     color: "#ea580c",
     selectedBox: "border-orange-500 bg-orange-50",
   },
+];
+
+const PERIOD_OPTIONS: { value: WorkPeriod; label: string; hint: string }[] = [
+  { value: "full_day", label: "Cả ngày", hint: "2 buổi" },
+  { value: "morning", label: "Buổi sáng", hint: "1 buổi" },
+  { value: "afternoon", label: "Buổi chiều", hint: "1 buổi" },
 ];
 
 export function DayScheduleEditor({
@@ -146,6 +153,34 @@ export function DayScheduleEditor({
       </View>
 
       <View className="mt-1">
+        <Text className="mb-2 text-xs font-bold text-slate-700">Ca đăng ký</Text>
+        <View className="flex-row rounded-2xl bg-slate-100 p-1">
+          {PERIOD_OPTIONS.map((option) => {
+            const selected = (entry.period || "full_day") === option.value;
+            return (
+              <Pressable
+                className={`flex-1 items-center rounded-xl px-2 py-2.5 ${
+                  selected ? "bg-white shadow-sm" : "bg-transparent"
+                } ${readOnly ? "opacity-60" : ""}`}
+                disabled={readOnly}
+                key={option.value}
+                onPress={() => onChange("period", option.value)}
+              >
+                <Text
+                  className={`text-[11px] font-black ${
+                    selected ? "text-red-600" : "text-slate-500"
+                  }`}
+                >
+                  {option.label}
+                </Text>
+                <Text className="mt-0.5 text-[9px] text-slate-400">{option.hint}</Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      </View>
+
+      <View className="mt-4">
         <Text className="mb-2 text-xs font-bold text-slate-700">
           Ghi chú <Text className="font-normal text-slate-400">(không bắt buộc)</Text>
         </Text>

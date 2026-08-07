@@ -4,6 +4,7 @@ import {
   deleteScheduleRequest,
   getMySchedules as fetchMySchedules,
   getScheduleRequest,
+  getMonthlyScheduleOverview,
   getWorkPolicy,
   submitScheduleRequest,
   updateScheduleRequest,
@@ -13,6 +14,7 @@ import type {
   IScheduleEntry,
   IScheduleRequest,
   IWorkPolicy,
+  IMonthlyScheduleOverview,
 } from "@/src/services/workschedule/constant";
 import { useCallback, useState } from "react";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
@@ -47,6 +49,24 @@ export function useWorkscheduleUser() {
       } catch (error) {
         showError(error, "Không thể tải danh sách lịch");
         return [];
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getToken, showError],
+  );
+
+  const getMonthlyOverview = useCallback(
+    async (month: string): Promise<IMonthlyScheduleOverview | null> => {
+      try {
+        setLoading(true);
+        const token = await getToken();
+        if (!token) return null;
+        const { data } = await getMonthlyScheduleOverview(token, month);
+        return data.data || null;
+      } catch (error) {
+        showError(error, "Không thể tải lịch làm việc trong tháng");
+        return null;
       } finally {
         setLoading(false);
       }
@@ -160,6 +180,7 @@ export function useWorkscheduleUser() {
     loading,
     getPolicy,
     getMySchedules,
+    getMonthlyOverview,
     createRequest,
     getRequestInfo,
     updateEntries,

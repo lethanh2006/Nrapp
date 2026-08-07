@@ -8,9 +8,17 @@ import type {
   AttendanceScanResponse,
   IScheduleEntry,
   IScheduleRequest,
+  IMonthlyScheduleOverview,
   IWorkPolicy,
   WorkscheduleQuery,
 } from "@/src/services/workschedule/constant";
+
+export async function getMonthlyScheduleOverview(token: string, month: string) {
+  return axios.get<{ data: IMonthlyScheduleOverview }>(
+    `${ipNR}/workschedule/schedule/monthly-overview`,
+    { ...getAuthHeader(token), params: { month } },
+  );
+}
 
 export async function getWorkPolicy(token: string) {
   return axios.get<{ data: IWorkPolicy }>(

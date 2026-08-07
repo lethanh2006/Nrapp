@@ -1,10 +1,12 @@
 export type EntryType = "office" | "remote" | "day_off" | "leave";
+export type WorkPeriod = "full_day" | "morning" | "afternoon";
 export type RequestStatus = "draft" | "pending" | "approved" | "rejected";
 
 export interface IScheduleEntry {
   _id?: string;
   date: string;
   type: EntryType;
+  period?: WorkPeriod;
   note?: string;
 }
 
@@ -24,6 +26,33 @@ export interface IWorkPolicy {
   registration_start: string;
   registration_end: string;
   locked?: boolean;
+}
+
+export interface IMonthlyScheduleEntry extends IScheduleEntry {
+  schedule_request_id: string;
+  week_start?: string;
+  request_status: RequestStatus;
+  reject_reason?: string;
+}
+
+export interface IMonthlyScheduleStats {
+  registered_sessions: number;
+  approved_sessions: number;
+  office_sessions: number;
+  remote_sessions: number;
+  leave_sessions: number;
+  day_off_sessions: number;
+  approved_work_days: number;
+  draft_requests: number;
+  pending_requests: number;
+  approved_requests: number;
+  rejected_requests: number;
+}
+
+export interface IMonthlyScheduleOverview {
+  month: string;
+  entries: IMonthlyScheduleEntry[];
+  stats: IMonthlyScheduleStats;
 }
 
 export interface AdminEmployeeProfile {

@@ -119,6 +119,13 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
       );
     }
 
+    const periodTime =
+      entry.period === "morning"
+        ? "08:30 - 12:00"
+        : entry.period === "afternoon"
+          ? "13:30 - 17:30"
+          : "08:30 - 17:30";
+
     switch (entry.type) {
       case "office":
         return (
@@ -127,7 +134,7 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
               Lên công ty
             </Text>
             <Text className="text-blue-700 text-[9px] font-bold mt-1">
-              08:30 - 17:30
+              {periodTime}
             </Text>
             <Text className="text-blue-500 text-[9px] font-semibold mt-0.5" numberOfLines={1}>
               {entry.note || "Gaming Studio 1"}
@@ -141,7 +148,7 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
               Làm việc từ xa
             </Text>
             <Text className="text-purple-700 text-[9px] font-bold mt-1">
-              08:30 - 17:30
+              {periodTime}
             </Text>
             <Text className="text-purple-500 text-[9px] font-semibold mt-0.5" numberOfLines={1}>
               {entry.note || "Online qua Slack/Meet"}

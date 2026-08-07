@@ -47,7 +47,11 @@ export default function UserWorkscheduleDetailScreen() {
     if (id) void loadData();
   }, [id, loadData]);
 
-  const handleChangeEntry = (date: string, field: "type" | "note", value: string) => {
+  const handleChangeEntry = (
+    date: string,
+    field: "type" | "period" | "note",
+    value: string,
+  ) => {
     setEntries((prev) => {
       return prev.map((e) => (e.date.startsWith(date) ? { ...e, [field]: value } : e));
     });
