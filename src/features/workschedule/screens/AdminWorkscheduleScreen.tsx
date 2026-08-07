@@ -1,23 +1,37 @@
+import { AdminProvider, useAdminData } from "@/src/features/workschedule/model/AdminWorkscheduleContext";
+import { AttendanceQR } from "@/src/features/workschedule/ui/admin/AttendanceQR";
+import { PolicySection } from "@/src/features/workschedule/ui/admin/PolicySection";
+import { ReportSummary } from "@/src/features/workschedule/ui/admin/ReportSummary";
+import { RequestManager } from "@/src/features/workschedule/ui/admin/RequestManager";
+import { StatCard } from "@/src/features/workschedule/ui/admin/StatCard";
+import { WorkRequestManager } from "@/src/features/workschedule/ui/admin/WorkRequestManager";
+import { Ionicons } from "@expo/vector-icons";
+import { useFocusEffect } from "expo-router";
 import React, { useState } from "react";
 import {
   ActivityIndicator,
+  Pressable,
   RefreshControl,
   ScrollView,
   Text,
   View,
-  Pressable,
 } from "react-native";
-import { useFocusEffect } from "expo-router";
-import { AdminProvider, useAdminData } from "@/src/features/workschedule/model/AdminWorkscheduleContext";
 
-import { PolicySection } from "@/src/features/workschedule/ui/admin/PolicySection";
-import { AttendanceQR } from "@/src/features/workschedule/ui/admin/AttendanceQR";
-import { RequestManager } from "@/src/features/workschedule/ui/admin/RequestManager";
-import { ReportSummary } from "@/src/features/workschedule/ui/admin/ReportSummary";
-import { StatCard } from "@/src/features/workschedule/ui/admin/StatCard";
-import { WorkRequestManager } from "@/src/features/workschedule/ui/admin/WorkRequestManager";
+type TabType = "requests" | "forms" | "system" | "reports";
+type IconName = React.ComponentProps<typeof Ionicons>["name"];
 
-type TabType = "system" | "requests" | "forms" | "reports";
+const TABS: { key: TabType; label: string; icon: IconName }[] = [
+  { key: "requests", label: "Duyệt lịch", icon: "calendar-outline" },
+  { key: "forms", label: "Đơn từ", icon: "document-text-outline" },
+  { key: "system", label: "Vận hành", icon: "qr-code-outline" },
+  { key: "reports", label: "Báo cáo", icon: "bar-chart-outline" },
+];
+
+const roleLabel: Record<string, string> = {
+  admin: "Quản trị viên",
+  manager: "Quản lý",
+  chef: "Điều hành",
+};
 
 function AdminDashboardContent() {
   const {
@@ -31,23 +45,21 @@ function AdminDashboardContent() {
     totalTodayMissing,
     reportRows,
   } = useAdminData();
-
   const [activeTab, setActiveTab] = useState<TabType>("requests");
+  const normalizedRole = String(user?.role || "admin").toLowerCase();
+  const canEditPolicy = normalizedRole === "admin";
 
   useFocusEffect(
     React.useCallback(() => {
-      loadAdminData();
+      void loadAdminData();
     }, [loadAdminData]),
   );
 
-  const handleRefresh = async () => {
-    await loadAdminData(true);
-  };
-
   if (appLoading || initialLoading) {
     return (
-      <View className="flex-1 bg-white items-center justify-center">
-        <ActivityIndicator size="large" color="#0ea5e9" />
+      <View className="flex-1 items-center justify-center bg-slate-50">
+        <ActivityIndicator size="large" color="#dc2626" />
+        <Text className="mt-3 text-xs font-semibold text-slate-500">Đang tải dữ liệu quản lý...</Text>
       </View>
     );
   }
@@ -55,118 +67,98 @@ function AdminDashboardContent() {
   return (
     <View className="flex-1 bg-slate-50">
       <ScrollView
-        contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 40 }}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={handleRefresh}
-            tintColor="#0ea5e9"
+            onRefresh={() => void loadAdminData(true)}
+            tintColor="#dc2626"
           />
         }
       >
-        {/* Header Overview */}
-        <View className="bg-white rounded-3xl p-5 border border-slate-200 shadow-sm shadow-slate-100">
-          <View className="flex-row items-start justify-between gap-4">
-            <View className="flex-1">
-              <Text className="text-xs uppercase tracking-[3px] text-cyan-600 font-bold">
-                Workschedule
+        <View className="overflow-hidden bg-red-600 px-5 pb-7 pt-5">
+          <View className="absolute -right-10 -top-14 h-40 w-40 rounded-full bg-red-500" />
+          <View className="absolute -bottom-20 left-12 h-40 w-40 rounded-full bg-red-700/40" />
+          <View className="flex-row items-center justify-between">
+            <View className="flex-1 pr-3">
+              <Text className="text-[11px] font-black uppercase tracking-[2px] text-red-100">
+                Khu vực quản lý
               </Text>
-              <Text className="text-3xl font-bold text-slate-900 mt-2">
-                Quản trị lịch làm việc
-              </Text>
-              <Text className="text-slate-500 mt-2 leading-5">
-                Quản lý chính sách, duyệt lịch, tạo QR chấm công và theo dõi báo
-                cáo.
+              <Text className="mt-1 text-2xl font-black text-white">Lịch làm & chấm công</Text>
+              <Text className="mt-1 text-xs leading-5 text-red-100">
+                Theo dõi các yêu cầu cần xử lý trong ngày.
               </Text>
             </View>
-            <View className="bg-slate-50 rounded-2xl px-3 py-2 border border-slate-200">
-              <Text className="text-slate-500 text-xs uppercase tracking-[2px]">
-                Role
-              </Text>
-              <Text className="text-slate-900 font-semibold mt-1">
-                {user?.role || "admin"}
+            <View className="items-center rounded-2xl bg-white/15 px-3 py-2">
+              <Ionicons name="person-circle-outline" size={22} color="#fff" />
+              <Text className="mt-1 text-[10px] font-bold text-white">
+                {roleLabel[normalizedRole] || "Quản lý"}
               </Text>
             </View>
           </View>
+        </View>
 
-          <View className="flex-row flex-wrap mt-5" style={{ gap: 10 }}>
+        <View className="-mt-3 px-4">
+          <View className="flex-row flex-wrap rounded-3xl border border-slate-100 bg-white p-3 shadow-sm shadow-slate-200" style={{ gap: 8 }}>
             <StatCard
-              title="Chờ duyệt"
+              containerStyle="bg-red-50 border-red-100"
+              title="Lịch chờ duyệt"
+              titleStyle="text-red-600"
               value={pendingSchedules.length}
+              valueStyle="text-red-800"
             />
             <StatCard
+              containerStyle="bg-emerald-50 border-emerald-100"
               title="Đã check-in"
+              titleStyle="text-emerald-600"
               value={totalTodayCheckedIn}
+              valueStyle="text-emerald-800"
             />
             <StatCard
-              title="Thiếu hôm nay"
+              containerStyle="bg-amber-50 border-amber-100"
+              title="Chưa check-in"
+              titleStyle="text-amber-700"
               value={totalTodayMissing}
-              containerStyle="bg-rose-50 border-rose-100"
-              titleStyle="text-rose-600"
-              valueStyle="text-rose-900"
+              valueStyle="text-amber-900"
             />
-            <StatCard
-              title="Báo cáo"
-              value={reportRows.length}
-            />
+            <StatCard title="Bản ghi báo cáo" value={reportRows.length} />
           </View>
+
+          <View className="my-4 flex-row rounded-2xl border border-slate-200 bg-white p-1">
+            {TABS.map((tab) => {
+              const active = activeTab === tab.key;
+              return (
+                <Pressable
+                  accessibilityRole="tab"
+                  accessibilityState={{ selected: active }}
+                  className={`flex-1 items-center rounded-xl py-2.5 ${active ? "bg-red-50" : "bg-white"}`}
+                  key={tab.key}
+                  onPress={() => setActiveTab(tab.key)}
+                >
+                  <Ionicons name={tab.icon} size={18} color={active ? "#dc2626" : "#94a3b8"} />
+                  <Text className={`mt-1 text-[10px] font-black ${active ? "text-red-700" : "text-slate-500"}`}>
+                    {tab.label}
+                  </Text>
+                  {tab.key === "requests" && pendingSchedules.length > 0 ? (
+                    <View className="absolute right-2 top-1 h-4 min-w-4 items-center justify-center rounded-full bg-red-600 px-1">
+                      <Text className="text-[9px] font-black text-white">{pendingSchedules.length}</Text>
+                    </View>
+                  ) : null}
+                </Pressable>
+              );
+            })}
+          </View>
+
+          {activeTab === "requests" ? <RequestManager /> : null}
+          {activeTab === "forms" ? <WorkRequestManager /> : null}
+          {activeTab === "system" ? (
+            <View style={{ gap: 16 }}>
+              {canEditPolicy ? <PolicySection /> : null}
+              <AttendanceQR />
+            </View>
+          ) : null}
+          {activeTab === "reports" ? <ReportSummary /> : null}
         </View>
-
-        {/* Custom Top Tab Bar */}
-        <View className="flex-row rounded-2xl bg-slate-200 p-1 mb-2">
-          <Pressable
-            onPress={() => setActiveTab("requests")}
-            className={`flex-1 py-3 items-center rounded-xl ${activeTab === "requests" ? "bg-white shadow-sm" : ""}`}
-          >
-            <Text className={`font-semibold ${activeTab === "requests" ? "text-slate-900" : "text-slate-500"}`}>
-              Duyệt Lịch
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setActiveTab("forms")}
-            className={`flex-1 py-3 items-center rounded-xl ${activeTab === "forms" ? "bg-white shadow-sm" : ""}`}
-          >
-            <Text className={`text-xs font-semibold ${activeTab === "forms" ? "text-slate-900" : "text-slate-500"}`}>
-              Đơn từ
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setActiveTab("system")}
-            className={`flex-1 py-3 items-center rounded-xl ${activeTab === "system" ? "bg-white shadow-sm" : ""}`}
-          >
-            <Text className={`text-xs font-semibold ${activeTab === "system" ? "text-slate-900" : "text-slate-500"}`}>
-              Hệ thống
-            </Text>
-          </Pressable>
-          <Pressable
-            onPress={() => setActiveTab("reports")}
-            className={`flex-1 py-3 items-center rounded-xl ${activeTab === "reports" ? "bg-white shadow-sm" : ""}`}
-          >
-            <Text className={`text-xs font-semibold ${activeTab === "reports" ? "text-slate-900" : "text-slate-500"}`}>
-              Báo cáo
-            </Text>
-          </Pressable>
-        </View>
-
-        {/* Tab Content */}
-        {activeTab === "system" && (
-          <View style={{ gap: 16 }}>
-            <PolicySection />
-            <AttendanceQR />
-          </View>
-        )}
-
-        {activeTab === "requests" && (
-          <RequestManager />
-        )}
-
-        {activeTab === "forms" && <WorkRequestManager />}
-
-        {activeTab === "reports" && (
-          <View style={{ gap: 16 }}>
-            <ReportSummary />
-          </View>
-        )}
       </ScrollView>
     </View>
   );
