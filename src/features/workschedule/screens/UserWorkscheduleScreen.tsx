@@ -6,8 +6,6 @@ import {
   toLocalDateKey,
 } from "@/src/features/workschedule/utils/date";
 import { DayScheduleEditor } from "@/src/features/workschedule/ui/user/DayScheduleEditor";
-import { RegistrationPolicyCard } from "@/src/features/workschedule/ui/user/RegistrationPolicyCard";
-import ScheduleList from "@/src/features/workschedule/ui/user/ScheduleList";
 import { WeekPicker } from "@/src/features/workschedule/ui/user/WeekPicker";
 import type {
   EntryType,
@@ -19,7 +17,7 @@ import type {
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Pressable,
@@ -105,6 +103,25 @@ const TYPE_META: Record<
 const isSameWeek = (date: string | Date, weekStart: Date) =>
   toLocalDateKey(getWeekStartMonday(new Date(date))) === toLocalDateKey(weekStart);
 
+const padCountdownValue = (value: number) => String(value).padStart(2, "0");
+
+function RegistrationHeader({ onBack }: { onBack: () => void }) {
+  return (
+    <View className="flex-row items-center border-b border-slate-100 bg-white px-4 py-3">
+      <Pressable
+        className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-slate-100"
+        onPress={onBack}
+      >
+        <Ionicons name="arrow-back" size={20} color="#334155" />
+      </Pressable>
+      <View>
+        <Text className="text-lg font-black text-slate-900">Đăng ký lịch làm</Text>
+        <Text className="text-[11px] text-slate-500">Chọn lịch và gửi quản lý duyệt</Text>
+      </View>
+    </View>
+  );
+}
+
 export default function UserWorkscheduleScreen() {
   const {
     getMySchedules,
@@ -112,7 +129,6 @@ export default function UserWorkscheduleScreen() {
     updateEntries,
     submitRequest,
     getPolicy,
-    loading,
   } = useWorkscheduleUser();
   const [schedules, setSchedules] = useState<IScheduleRequest[]>([]);
   const [policy, setPolicy] = useState<IWorkPolicy | null>(null);
@@ -122,7 +138,9 @@ export default function UserWorkscheduleScreen() {
   const [draftEntries, setDraftEntries] = useState<Record<string, DraftEntry>>({});
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [currentTime, setCurrentTime] = useState(Date.now());
   const scrollRef = useRef<ScrollView>(null);
+  const closedAlertShownRef = useRef(false);
 
   const allowedWeeksRange = useMemo(() => getAllowedWeekRange(), []);
   const allowedWeeks = useMemo(() => {
@@ -176,9 +194,41 @@ export default function UserWorkscheduleScreen() {
   const requestStatus = selectedRequest?.status || "none";
   const status = STATUS_CONFIG[requestStatus] || STATUS_CONFIG.none;
   const registrationClosed = useMemo(
-    () => isRegistrationClosed(policy),
-    [policy],
+    () => isRegistrationClosed(policy, new Date(currentTime)),
+    [currentTime, policy],
   );
+
+  useEffect(() => {
+    if (!policy) return;
+    setCurrentTime(Date.now());
+    const timer = setInterval(() => setCurrentTime(Date.now()), 1000);
+    return () => clearInterval(timer);
+  }, [policy]);
+
+  const returnToUtilities = useCallback(() => {
+    router.replace("/(main)/user/utilities");
+  }, []);
+
+  useEffect(() => {
+    if (initialLoad || !policy || !registrationClosed || closedAlertShownRef.current) return;
+    closedAlertShownRef.current = true;
+    Alert.alert(
+      "Ngoài thời gian đăng ký",
+      "Hiện tại không nằm trong thời gian đăng ký lịch làm.",
+      [{ text: "Đồng ý", onPress: returnToUtilities }],
+    );
+  }, [initialLoad, policy, registrationClosed, returnToUtilities]);
+
+  const countdown = useMemo(() => {
+    const endTime = policy ? new Date(policy.registration_end).getTime() : currentTime;
+    const totalSeconds = Math.max(0, Math.floor((endTime - currentTime) / 1000));
+    return {
+      days: Math.floor(totalSeconds / 86400),
+      hours: Math.floor((totalSeconds % 86400) / 3600),
+      minutes: Math.floor((totalSeconds % 3600) / 60),
+      seconds: totalSeconds % 60,
+    };
+  }, [currentTime, policy]);
 
   const today = useMemo(() => {
     const value = new Date();
@@ -252,25 +302,6 @@ export default function UserWorkscheduleScreen() {
     if (nextIndex < 0 || nextIndex >= allowedWeeks.length) return;
     setSelectedWeekIndex(nextIndex);
     setSelectedDayIndex(0);
-  };
-
-  const selectDraftSchedule = (schedule: IScheduleRequest) => {
-    const scheduleMondayKey = toLocalDateKey(
-      getWeekStartMonday(new Date(schedule.week_start)),
-    );
-    const weekIndex = allowedWeeks.findIndex(
-      (week) => toLocalDateKey(week) === scheduleMondayKey,
-    );
-    if (weekIndex < 0) {
-      router.push({
-        pathname: "/(main)/user/workschedule/[id]",
-        params: { id: schedule._id },
-      } as never);
-      return;
-    }
-    setSelectedWeekIndex(weekIndex);
-    setSelectedDayIndex(0);
-    scrollRef.current?.scrollTo({ y: 0, animated: true });
   };
 
   const handleEntryChange = (
@@ -421,27 +452,31 @@ export default function UserWorkscheduleScreen() {
     [effectiveEntries],
   );
 
-  if (initialLoad && loading) {
+  if (initialLoad) {
     return (
-      <View className="flex-1 items-center justify-center bg-slate-50">
-        <ActivityIndicator size="large" color="#dc2626" />
-        <Text className="mt-3 text-sm font-semibold text-slate-400">
-          Đang tải lịch làm việc...
-        </Text>
+      <View className="flex-1 bg-slate-50">
+        <RegistrationHeader onBack={returnToUtilities} />
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#dc2626" />
+          <Text className="mt-3 text-sm font-semibold text-slate-400">
+            Đang tải lịch làm việc...
+          </Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (policy && registrationClosed) {
+    return (
+      <View className="flex-1 bg-slate-50">
+        <RegistrationHeader onBack={returnToUtilities} />
       </View>
     );
   }
 
   return (
     <View className="flex-1 bg-slate-50">
-      <View className="border-b border-slate-100 bg-white px-4 pb-4 pt-3">
-        <Text className="text-xl font-black tracking-tight text-slate-900">
-          Đăng ký lịch làm việc
-        </Text>
-        <Text className="mt-1 text-xs leading-5 text-slate-500">
-          Chọn nơi làm việc cho từng ngày rồi gửi quản lý duyệt.
-        </Text>
-      </View>
+      <RegistrationHeader onBack={returnToUtilities} />
 
       <ScrollView
         className="flex-1"
@@ -450,12 +485,41 @@ export default function UserWorkscheduleScreen() {
         showsVerticalScrollIndicator={false}
       >
         {policy ? (
-          <RegistrationPolicyCard
-            policy={policy}
-            closed={registrationClosed}
-            allowedWeeks={allowedWeeksRange}
-            className="mb-4"
-          />
+          <View className="mb-4 overflow-hidden rounded-3xl bg-slate-900 p-4">
+            <View className="mb-4 flex-row items-center">
+              <View className="h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
+                <Ionicons name="time-outline" size={22} color="white" />
+              </View>
+              <View className="ml-3">
+                <Text className="text-sm font-black text-white">Thời gian đăng ký còn lại</Text>
+                <Text className="mt-0.5 text-[10px] text-slate-400">
+                  Biểu mẫu sẽ đóng khi đồng hồ kết thúc
+                </Text>
+              </View>
+            </View>
+            <View className="flex-row items-center justify-between">
+              {[
+                { label: "Ngày", value: countdown.days },
+                { label: "Giờ", value: countdown.hours },
+                { label: "Phút", value: countdown.minutes },
+                { label: "Giây", value: countdown.seconds },
+              ].map((item, index) => (
+                <React.Fragment key={item.label}>
+                  <View className="min-w-[58px] items-center rounded-2xl bg-white/10 px-2 py-3">
+                    <Text className="text-xl font-black tabular-nums text-white">
+                      {padCountdownValue(item.value)}
+                    </Text>
+                    <Text className="mt-1 text-[9px] font-bold uppercase text-slate-400">
+                      {item.label}
+                    </Text>
+                  </View>
+                  {index < 3 ? (
+                    <Text className="pb-4 text-base font-black text-red-400">:</Text>
+                  ) : null}
+                </React.Fragment>
+              ))}
+            </View>
+          </View>
         ) : null}
 
         <View className="mb-4 flex-row items-center rounded-2xl border border-blue-100 bg-blue-50 p-3">
@@ -682,16 +746,6 @@ export default function UserWorkscheduleScreen() {
           )}
         </View>
 
-        <View className="mb-3 mt-7">
-          <Text className="text-base font-black text-slate-900">Lịch của tôi</Text>
-          <Text className="mt-1 text-xs text-slate-500">
-            Chạm vào một lịch để xem chi tiết hoặc chỉnh sửa bản nháp.
-          </Text>
-        </View>
-        <ScheduleList
-          schedules={schedules}
-          onSelectDraft={selectDraftSchedule}
-        />
       </ScrollView>
     </View>
   );
