@@ -1,7 +1,7 @@
 import type { AppArea } from "@/src/application/access/roles";
 import { getAreaRoutes } from "@/src/application/navigation/routes";
 import { Ionicons } from "@expo/vector-icons";
-import { router } from "expo-router";
+import { router, usePathname } from "expo-router";
 import { Pressable, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -20,6 +20,9 @@ export function MainBottomBar({
 }: MainBottomBarProps) {
   const insets = useSafeAreaInsets();
   const routes = getAreaRoutes(area);
+  const pathname = usePathname();
+  const utilitiesActive = pathname.includes("/utilities");
+  const scheduleActive = pathname.includes("/workschedule");
 
   return (
     <View
@@ -47,6 +50,29 @@ export function MainBottomBar({
         </Text>
       </Pressable>
 
+      <Pressable
+        onPress={() => router.replace(area === "user" ? routes.utilities : routes.todo)}
+        className="flex-1 items-center justify-center"
+      >
+        <Ionicons
+          name={
+            area === "user"
+              ? utilitiesActive
+                ? "grid"
+                : "grid-outline"
+              : "checkbox-outline"
+          }
+          size={23}
+          color={utilitiesActive ? "#b91c1c" : "#94a3b8"}
+        />
+        <Text
+          className="mt-1 text-[10px] font-semibold"
+          style={{ color: utilitiesActive ? "#b91c1c" : "#64748b" }}
+        >
+          {area === "user" ? "Tiện ích" : "Công việc"}
+        </Text>
+      </Pressable>
+
       <View className="-mt-6 flex-1 items-center justify-center">
         <Pressable
           onPress={onOpenScanner}
@@ -56,6 +82,23 @@ export function MainBottomBar({
           <Ionicons name="scan" size={28} color="white" />
         </Pressable>
       </View>
+
+      <Pressable
+        onPress={() => router.replace(routes.workschedule)}
+        className="flex-1 items-center justify-center"
+      >
+        <Ionicons
+          name={scheduleActive ? "calendar" : "calendar-outline"}
+          size={23}
+          color={scheduleActive ? "#b91c1c" : "#94a3b8"}
+        />
+        <Text
+          className="mt-1 text-[10px] font-semibold"
+          style={{ color: scheduleActive ? "#b91c1c" : "#64748b" }}
+        >
+          Lịch làm
+        </Text>
+      </Pressable>
 
       <Pressable
         onPress={() => router.replace(routes.profile)}
