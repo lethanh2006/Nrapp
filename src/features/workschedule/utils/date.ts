@@ -28,10 +28,16 @@ export const isRegistrationClosed = (
 ) => {
   if (!policy) return false;
   if (policy.locked) return true;
-  return (
-    now < new Date(policy.registration_start) ||
-    now > new Date(policy.registration_end)
-  );
+  const registrationStart = new Date(policy.registration_start);
+  const registrationEnd = new Date(policy.registration_end);
+  if (
+    Number.isNaN(registrationStart.getTime()) ||
+    Number.isNaN(registrationEnd.getTime()) ||
+    registrationStart >= registrationEnd
+  ) {
+    return true;
+  }
+  return now < registrationStart || now > registrationEnd;
 };
 
 export const formatDateVi = (value: string | Date | undefined) => {

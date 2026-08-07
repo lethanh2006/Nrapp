@@ -280,7 +280,7 @@ export default function UserWorkscheduleScreen() {
   const selectedEntry = effectiveEntries[selectedDayIndex] || effectiveEntries[0];
 
   const weekReadOnlyReason = useMemo(() => {
-    if (registrationClosed) return "Cổng đăng ký hiện đang khóa.";
+    if (registrationClosed) return "Đã hết thời gian đăng ký lịch làm.";
     if (requestStatus === "pending") {
       return "Lịch đã gửi duyệt nên không thể chỉnh sửa.";
     }
@@ -485,40 +485,19 @@ export default function UserWorkscheduleScreen() {
         showsVerticalScrollIndicator={false}
       >
         {policy ? (
-          <View className="mb-4 overflow-hidden rounded-3xl bg-slate-900 p-4">
-            <View className="mb-4 flex-row items-center">
-              <View className="h-10 w-10 items-center justify-center rounded-2xl bg-white/10">
-                <Ionicons name="time-outline" size={22} color="white" />
-              </View>
-              <View className="ml-3">
-                <Text className="text-sm font-black text-white">Thời gian đăng ký còn lại</Text>
-                <Text className="mt-0.5 text-[10px] text-slate-400">
-                  Biểu mẫu sẽ đóng khi đồng hồ kết thúc
-                </Text>
-              </View>
+          <View className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
+            <View className="flex-row items-center justify-center">
+              <Ionicons name="time-outline" size={17} color="#dc2626" />
+              <Text className="ml-2 text-sm font-black text-red-600">
+                Thời gian còn lại: {padCountdownValue(countdown.days)} :{" "}
+                {padCountdownValue(countdown.hours)} :{" "}
+                {padCountdownValue(countdown.minutes)} :{" "}
+                {padCountdownValue(countdown.seconds)}
+              </Text>
             </View>
-            <View className="flex-row items-center justify-between">
-              {[
-                { label: "Ngày", value: countdown.days },
-                { label: "Giờ", value: countdown.hours },
-                { label: "Phút", value: countdown.minutes },
-                { label: "Giây", value: countdown.seconds },
-              ].map((item, index) => (
-                <React.Fragment key={item.label}>
-                  <View className="min-w-[58px] items-center rounded-2xl bg-white/10 px-2 py-3">
-                    <Text className="text-xl font-black tabular-nums text-white">
-                      {padCountdownValue(item.value)}
-                    </Text>
-                    <Text className="mt-1 text-[9px] font-bold uppercase text-slate-400">
-                      {item.label}
-                    </Text>
-                  </View>
-                  {index < 3 ? (
-                    <Text className="pb-4 text-base font-black text-red-400">:</Text>
-                  ) : null}
-                </React.Fragment>
-              ))}
-            </View>
+            <Text className="mt-1 text-center text-[9px] font-semibold uppercase tracking-wider text-red-400">
+              Ngày · Giờ · Phút · Giây
+            </Text>
           </View>
         ) : null}
 
