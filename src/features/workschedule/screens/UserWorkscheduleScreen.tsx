@@ -42,7 +42,7 @@ const STATUS_CONFIG: Record<
     label: "Chưa đăng ký",
     box: "bg-slate-100",
     text: "text-slate-600",
-    description: "Tuần này chưa có lịch. Hãy thiết lập từng ngày bên dưới.",
+    description: "Tuần này chưa có lịch. Chỉ chọn những ngày bạn có thể đi làm.",
   },
   draft: {
     label: "Bản nháp",
@@ -246,36 +246,39 @@ export default function UserWorkscheduleScreen() {
 
   const effectiveEntries = useMemo(
     () =>
-      weekDays.map((date, index) => {
+      weekDays.map((date) => {
         const key = toLocalDateKey(date);
         const stored = draftEntries[key] || backendEntryMap[key];
         if (stored) {
+          const registeredType =
+            stored.type === "office" || stored.type === "remote"
+              ? stored.type
+              : undefined;
           return {
             date: key,
-            type: stored.type,
+            type: registeredType,
             period: stored.period || "full_day",
-            note: stored.note || "",
+            note: registeredType ? stored.note || "" : "",
           };
         }
-        const defaultsToDayOff = date < today || index >= 5;
         return {
           date: key,
-          type: defaultsToDayOff ? ("day_off" as const) : undefined,
+          type: undefined,
           period: "full_day" as const,
           note: "",
         };
       }),
-    [backendEntryMap, draftEntries, today, weekDays],
+    [backendEntryMap, draftEntries, weekDays],
   );
 
-  const missingDayIndexes = useMemo(
+  const unselectedDayIndexes = useMemo(
     () =>
       effectiveEntries
         .map((entry, index) => (entry.type ? -1 : index))
         .filter((index) => index >= 0),
     [effectiveEntries],
   );
-  const completedDays = 7 - missingDayIndexes.length;
+  const selectedWorkDays = 7 - unselectedDayIndexes.length;
   const selectedDate = weekDays[selectedDayIndex] || weekDays[0];
   const selectedEntry = effectiveEntries[selectedDayIndex] || effectiveEntries[0];
 
@@ -326,16 +329,29 @@ export default function UserWorkscheduleScreen() {
     });
   };
 
+  const clearSelectedDay = () => {
+    if (selectedDayReadOnlyReason) return;
+    const dateKey = toLocalDateKey(selectedDate);
+    setDraftEntries((previous) => ({
+      ...previous,
+      [dateKey]: {
+        type: undefined,
+        period: "full_day",
+        note: "",
+      },
+    }));
+  };
+
   const applyPreset = (weekdayType: "office" | "remote") => {
     if (weekReadOnlyReason) return;
     setDraftEntries((previous) => {
       const next = { ...previous };
       weekDays.forEach((date, index) => {
-        if (date < today) return;
+        if (date < today || index >= 5) return;
         const key = toLocalDateKey(date);
         const current = previous[key] || backendEntryMap[key];
         next[key] = {
-          type: index < 5 ? weekdayType : "day_off",
+          type: weekdayType,
           period: current?.period || "full_day",
           note: current?.note || "",
         };
@@ -344,29 +360,30 @@ export default function UserWorkscheduleScreen() {
     });
   };
 
-  const ensureComplete = () => {
-    if (missingDayIndexes.length === 0) return true;
-    const firstMissing = missingDayIndexes[0];
-    setSelectedDayIndex(firstMissing);
+  const ensureHasWorkDay = () => {
+    if (selectedWorkDays > 0) return true;
     Alert.alert(
-      "Chưa hoàn tất lịch",
-      `Bạn chưa chọn hình thức làm việc cho ${missingDayIndexes
-        .map((index) => DAY_NAMES[index])
-        .join(", ")}.`,
+      "Chưa chọn ngày làm",
+      "Hãy chọn ít nhất một ngày bạn có thể đi làm trong tuần này.",
     );
     return false;
   };
 
   const buildEntries = (): IScheduleEntry[] =>
-    effectiveEntries.map((entry) => ({
-      date: entry.date,
-      type: entry.type || "day_off",
-      period: entry.period || "full_day",
-      note: entry.note || "",
-    }));
+    effectiveEntries
+      .filter(
+        (entry): entry is typeof entry & { type: "office" | "remote" } =>
+          entry.type === "office" || entry.type === "remote",
+      )
+      .map((entry) => ({
+        date: entry.date,
+        type: entry.type,
+        period: entry.period || "full_day",
+        note: entry.note || "",
+      }));
 
   const persistSelectedWeek = async () => {
-    if (!ensureComplete()) return null;
+    if (!ensureHasWorkDay()) return null;
     const entries = buildEntries();
     if (selectedRequest?.status === "draft") {
       const updated = await updateEntries(selectedRequest._id, entries, false);
@@ -410,11 +427,11 @@ export default function UserWorkscheduleScreen() {
       Alert.alert("Không thể gửi lịch", weekReadOnlyReason);
       return;
     }
-    if (!ensureComplete()) return;
+    if (!ensureHasWorkDay()) return;
 
     Alert.alert(
       "Gửi lịch để duyệt?",
-      "Hãy kiểm tra đủ 7 ngày. Sau khi gửi, bạn sẽ không thể chỉnh sửa cho đến khi quản lý phản hồi.",
+      `Bạn đang đăng ký ${selectedWorkDays} ngày làm. Sau khi gửi, lịch sẽ chờ quản lý phản hồi.`,
       [
         { text: "Kiểm tra lại", style: "cancel" },
         {
@@ -437,13 +454,13 @@ export default function UserWorkscheduleScreen() {
   };
 
   const goToNextDay = () => {
-    const nextMissing = missingDayIndexes.find((index) => index > selectedDayIndex);
-    setSelectedDayIndex(nextMissing ?? Math.min(selectedDayIndex + 1, 6));
+    const nextUnselected = unselectedDayIndexes.find((index) => index > selectedDayIndex);
+    setSelectedDayIndex(nextUnselected ?? Math.min(selectedDayIndex + 1, 6));
   };
 
   const summary = useMemo(
     () =>
-      (["office", "remote", "day_off", "leave"] as EntryType[])
+      (["office", "remote"] as EntryType[])
         .map((type) => ({
           type,
           count: effectiveEntries.filter((entry) => entry.type === type).length,
@@ -502,7 +519,7 @@ export default function UserWorkscheduleScreen() {
         ) : null}
 
         <View className="mb-4 flex-row items-center rounded-2xl border border-blue-100 bg-blue-50 p-3">
-          {["Chọn tuần", "Chọn từng ngày", "Gửi duyệt"].map((label, index) => (
+          {["Chọn tuần", "Chọn ngày làm", "Gửi duyệt"].map((label, index) => (
             <React.Fragment key={label}>
               <View className="flex-1 items-center">
                 <View className="h-6 w-6 items-center justify-center rounded-full bg-blue-600">
@@ -535,10 +552,10 @@ export default function UserWorkscheduleScreen() {
             </View>
             <View className="ml-3 flex-1">
               <Text className="text-base font-black text-slate-900">
-                Chọn lịch cho từng ngày
+                Chọn những ngày đi làm
               </Text>
               <Text className="mt-0.5 text-xs text-slate-500">
-                Chạm vào một ngày để thiết lập
+                Ngày không chọn sẽ được hiểu là ngày nghỉ
               </Text>
             </View>
           </View>
@@ -569,7 +586,7 @@ export default function UserWorkscheduleScreen() {
                 </Pressable>
               </View>
               <Text className="mt-2 text-[10px] leading-4 text-slate-400">
-                T7 và Chủ nhật sẽ tự đặt là ngày nghỉ. Bạn vẫn có thể đổi từng ngày.
+                T7 và Chủ nhật để trống mặc định. Nếu làm thêm, hãy chọn trực tiếp ngày đó.
               </Text>
             </View>
           ) : (
@@ -613,7 +630,7 @@ export default function UserWorkscheduleScreen() {
                     className={`mt-1.5 h-1.5 w-1.5 rounded-full ${
                       selected
                         ? "bg-white"
-                        : typeMeta?.dot || "bg-amber-400"
+                        : typeMeta?.dot || "bg-slate-300"
                     }`}
                   />
                 </Pressable>
@@ -628,6 +645,7 @@ export default function UserWorkscheduleScreen() {
             readOnlyReason={selectedDayReadOnlyReason}
             hasNext={selectedDayIndex < 6}
             onChange={handleEntryChange}
+            onClear={clearSelectedDay}
             onNext={goToNextDay}
           />
         </View>
@@ -642,23 +660,14 @@ export default function UserWorkscheduleScreen() {
                 Kiểm tra và hoàn tất
               </Text>
               <Text className="mt-0.5 text-xs text-slate-500">
-                {completedDays === 7
-                  ? "Lịch đã đủ 7 ngày, bạn có thể gửi duyệt."
-                  : `Còn ${7 - completedDays} ngày chưa chọn.`}
+                {selectedWorkDays > 0
+                  ? `Đã chọn ${selectedWorkDays} ngày làm trong tuần.`
+                  : "Chọn ít nhất một ngày bạn có thể đi làm."}
               </Text>
             </View>
             <Text className="text-sm font-black text-slate-700">
-              {completedDays}/7
+              {selectedWorkDays} ngày
             </Text>
-          </View>
-
-          <View className="mt-4 h-2 overflow-hidden rounded-full bg-slate-100">
-            <View
-              className={`h-full rounded-full ${
-                completedDays === 7 ? "bg-emerald-500" : "bg-red-500"
-              }`}
-              style={{ width: `${(completedDays / 7) * 100}%` }}
-            />
           </View>
 
           <View className="mt-4 flex-row flex-wrap">
@@ -711,7 +720,7 @@ export default function UserWorkscheduleScreen() {
               </Pressable>
               <Pressable
                 className={`flex-row items-center justify-center rounded-2xl py-4 ${
-                  completedDays === 7 ? "bg-red-600" : "bg-red-300"
+                  selectedWorkDays > 0 ? "bg-red-600" : "bg-red-300"
                 }`}
                 disabled={busy}
                 onPress={submitForApproval}

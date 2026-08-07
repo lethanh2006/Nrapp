@@ -16,6 +16,7 @@ type DayScheduleEditorProps = {
   readOnlyReason?: string | null;
   hasNext: boolean;
   onChange: (field: "type" | "period" | "note", value: string) => void;
+  onClear: () => void;
   onNext: () => void;
 };
 
@@ -43,22 +44,6 @@ const WORK_OPTIONS: {
     color: "#9333ea",
     selectedBox: "border-purple-500 bg-purple-50",
   },
-  {
-    value: "day_off",
-    label: "Ngày nghỉ",
-    description: "Không làm việc",
-    icon: "sunny",
-    color: "#64748b",
-    selectedBox: "border-slate-500 bg-slate-100",
-  },
-  {
-    value: "leave",
-    label: "Nghỉ phép",
-    description: "Sử dụng ngày phép",
-    icon: "cafe",
-    color: "#ea580c",
-    selectedBox: "border-orange-500 bg-orange-50",
-  },
 ];
 
 const PERIOD_OPTIONS: { value: WorkPeriod; label: string; hint: string }[] = [
@@ -74,8 +59,11 @@ export function DayScheduleEditor({
   readOnlyReason,
   hasNext,
   onChange,
+  onClear,
   onNext,
 }: DayScheduleEditorProps) {
+  const hasWorkSelection = entry.type === "office" || entry.type === "remote";
+
   return (
     <View className="mt-4 border-t border-slate-100 pt-4">
       <View className="mb-3 flex-row items-start justify-between">
@@ -93,15 +81,15 @@ export function DayScheduleEditor({
         </View>
         <View
           className={`rounded-full px-2.5 py-1 ${
-            entry.type ? "bg-emerald-50" : "bg-amber-50"
+            hasWorkSelection ? "bg-emerald-50" : "bg-slate-100"
           }`}
         >
           <Text
             className={`text-[10px] font-black ${
-              entry.type ? "text-emerald-700" : "text-amber-700"
+              hasWorkSelection ? "text-emerald-700" : "text-slate-500"
             }`}
           >
-            {entry.type ? "Đã chọn" : "Chưa chọn"}
+            {hasWorkSelection ? "Đã đăng ký" : "Không đăng ký"}
           </Text>
         </View>
       </View>
@@ -115,7 +103,7 @@ export function DayScheduleEditor({
         </View>
       ) : (
         <Text className="mb-3 text-xs leading-5 text-slate-500">
-          Bạn sẽ làm việc theo hình thức nào?
+          Chỉ chọn ngày bạn đi làm. Không chọn đồng nghĩa với nghỉ.
         </Text>
       )}
 
@@ -152,50 +140,60 @@ export function DayScheduleEditor({
         })}
       </View>
 
-      <View className="mt-1">
-        <Text className="mb-2 text-xs font-bold text-slate-700">Ca đăng ký</Text>
-        <View className="flex-row rounded-2xl bg-slate-100 p-1">
-          {PERIOD_OPTIONS.map((option) => {
-            const selected = (entry.period || "full_day") === option.value;
-            return (
-              <Pressable
-                className={`flex-1 items-center rounded-xl border px-2 py-2.5 ${
-                  selected ? "border-red-100 bg-white" : "border-transparent bg-transparent"
-                } ${readOnly ? "opacity-60" : ""}`}
-                disabled={readOnly}
-                key={option.value}
-                onPress={() => onChange("period", option.value)}
-              >
-                <Text
-                  className={`text-[11px] font-black ${
-                    selected ? "text-red-600" : "text-slate-500"
-                  }`}
-                >
-                  {option.label}
-                </Text>
-                <Text className="mt-0.5 text-[9px] text-slate-400">{option.hint}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
+      {hasWorkSelection ? (
+        <View>
+          {!readOnly ? (
+            <Pressable className="mb-3 items-center py-1" onPress={onClear}>
+              <Text className="text-xs font-bold text-slate-500">Bỏ đăng ký ngày này</Text>
+            </Pressable>
+          ) : null}
 
-      <View className="mt-4">
-        <Text className="mb-2 text-xs font-bold text-slate-700">
-          Ghi chú <Text className="font-normal text-slate-400">(không bắt buộc)</Text>
-        </Text>
-        <TextInput
-          className={`min-h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 ${
-            readOnly ? "opacity-60" : ""
-          }`}
-          editable={!readOnly}
-          maxLength={200}
-          onChangeText={(text) => onChange("note", text)}
-          placeholder="Ví dụ: họp với khách hàng lúc 9:00"
-          placeholderTextColor="#94a3b8"
-          value={entry.note || ""}
-        />
-      </View>
+          <View className="mt-1">
+            <Text className="mb-2 text-xs font-bold text-slate-700">Ca đăng ký</Text>
+            <View className="flex-row rounded-2xl bg-slate-100 p-1">
+              {PERIOD_OPTIONS.map((option) => {
+                const selected = (entry.period || "full_day") === option.value;
+                return (
+                  <Pressable
+                    className={`flex-1 items-center rounded-xl border px-2 py-2.5 ${
+                      selected ? "border-red-100 bg-white" : "border-transparent bg-transparent"
+                    } ${readOnly ? "opacity-60" : ""}`}
+                    disabled={readOnly}
+                    key={option.value}
+                    onPress={() => onChange("period", option.value)}
+                  >
+                    <Text
+                      className={`text-[11px] font-black ${
+                        selected ? "text-red-600" : "text-slate-500"
+                      }`}
+                    >
+                      {option.label}
+                    </Text>
+                    <Text className="mt-0.5 text-[9px] text-slate-400">{option.hint}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          </View>
+
+          <View className="mt-4">
+            <Text className="mb-2 text-xs font-bold text-slate-700">
+              Ghi chú <Text className="font-normal text-slate-400">(không bắt buộc)</Text>
+            </Text>
+            <TextInput
+              className={`min-h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 ${
+                readOnly ? "opacity-60" : ""
+              }`}
+              editable={!readOnly}
+              maxLength={200}
+              onChangeText={(text) => onChange("note", text)}
+              placeholder="Ví dụ: họp với khách hàng lúc 9:00"
+              placeholderTextColor="#94a3b8"
+              value={entry.note || ""}
+            />
+          </View>
+        </View>
+      ) : null}
 
       {!readOnly && hasNext ? (
         <Pressable
