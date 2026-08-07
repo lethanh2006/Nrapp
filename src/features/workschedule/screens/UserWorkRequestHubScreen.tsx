@@ -9,6 +9,7 @@ import type {
 } from "@/src/services/workschedule/constant";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import { Ionicons } from "@expo/vector-icons";
+import type { AppArea } from "@/src/application/access/roles";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
@@ -25,7 +26,7 @@ const statusMeta: Record<
 
 const periodLabel = { full_day: "Cả ngày", morning: "Buổi sáng", afternoon: "Buổi chiều" };
 
-export default function UserWorkRequestHubScreen() {
+export default function UserWorkRequestHubScreen({ area = "user" }: { area?: AppArea }) {
   const { getRequests, cancelRequest, loading } = useWorkRequests();
   const [activeTab, setActiveTab] = useState<"types" | "history">("types");
   const [statusFilter, setStatusFilter] = useState<WorkRequestStatus | "all">("all");
@@ -113,7 +114,7 @@ export default function UserWorkRequestHubScreen() {
                   key={type}
                   onPress={() =>
                     router.push({
-                      pathname: "/(main)/user/utilities/requests/create",
+                      pathname: `/(main)/${area}/utilities/requests/create`,
                       params: { type },
                     } as never)
                   }

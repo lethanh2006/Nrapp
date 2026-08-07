@@ -255,9 +255,7 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
 
             <Pressable
               onPress={() =>
-                router.push(
-                  area === "user" ? areaRoutes.utilities : areaRoutes.workschedule
-                )
+                router.push(areaRoutes.utilities)
               }
               className="w-10 h-10 rounded-full bg-white/15 items-center justify-center active:scale-95"
             >
@@ -391,9 +389,7 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
 
             <Pressable
               onPress={() =>
-                router.push(
-                  areaRoutes.workschedule
-                )
+                router.push(areaRoutes.utilities)
               }
               className="items-center justify-center flex-1 active:scale-95 active:opacity-80 transition-all"
             >
