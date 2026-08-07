@@ -5,7 +5,7 @@ import { MainBottomBar } from "@/src/components/layout/MainBottomBar";
 import { AttendanceScannerModal } from "@/src/features/workschedule/ui/AttendanceScannerModal";
 import { Stack, router, usePathname } from "expo-router";
 import { useEffect, useState } from "react";
-import { Text, View } from "react-native";
+import { Keyboard, Platform, Text, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function MainLayout() {
@@ -13,6 +13,7 @@ export default function MainLayout() {
   const pathname = usePathname();
   const { loading, isAuth, user } = useAuthSession();
   const [scannerVisible, setScannerVisible] = useState(false);
+  const [keyboardVisible, setKeyboardVisible] = useState(Keyboard.isVisible());
   const area = getAreaForRole(user?.role);
   const homeActive = pathname.endsWith("/home");
   const profileActive = pathname.endsWith("/profile");
@@ -20,6 +21,24 @@ export default function MainLayout() {
   useEffect(() => {
     if (!loading && !isAuth) router.replace(APP_ROUTES.auth.login);
   }, [isAuth, loading]);
+
+  useEffect(() => {
+    const showEvent =
+      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
+    const hideEvent =
+      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showSubscription = Keyboard.addListener(showEvent, () =>
+      setKeyboardVisible(true),
+    );
+    const hideSubscription = Keyboard.addListener(hideEvent, () =>
+      setKeyboardVisible(false),
+    );
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+    };
+  }, []);
 
   return (
     <View className="flex-1 bg-white">
@@ -45,12 +64,14 @@ export default function MainLayout() {
         </Stack>
       </View>
 
-      <MainBottomBar
-        area={area}
-        homeActive={homeActive}
-        profileActive={profileActive}
-        onOpenScanner={() => setScannerVisible(true)}
-      />
+      {!keyboardVisible ? (
+        <MainBottomBar
+          area={area}
+          homeActive={homeActive}
+          profileActive={profileActive}
+          onOpenScanner={() => setScannerVisible(true)}
+        />
+      ) : null}
 
       <AttendanceScannerModal
         visible={scannerVisible}
