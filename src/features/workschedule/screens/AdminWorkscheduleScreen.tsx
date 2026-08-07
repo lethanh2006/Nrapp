@@ -15,8 +15,9 @@ import { AttendanceQR } from "@/src/features/workschedule/ui/admin/AttendanceQR"
 import { RequestManager } from "@/src/features/workschedule/ui/admin/RequestManager";
 import { ReportSummary } from "@/src/features/workschedule/ui/admin/ReportSummary";
 import { StatCard } from "@/src/features/workschedule/ui/admin/StatCard";
+import { WorkRequestManager } from "@/src/features/workschedule/ui/admin/WorkRequestManager";
 
-type TabType = "system" | "requests" | "reports";
+type TabType = "system" | "requests" | "forms" | "reports";
 
 function AdminDashboardContent() {
   const {
@@ -122,10 +123,18 @@ function AdminDashboardContent() {
             </Text>
           </Pressable>
           <Pressable
+            onPress={() => setActiveTab("forms")}
+            className={`flex-1 py-3 items-center rounded-xl ${activeTab === "forms" ? "bg-white shadow-sm" : ""}`}
+          >
+            <Text className={`text-xs font-semibold ${activeTab === "forms" ? "text-slate-900" : "text-slate-500"}`}>
+              Đơn từ
+            </Text>
+          </Pressable>
+          <Pressable
             onPress={() => setActiveTab("system")}
             className={`flex-1 py-3 items-center rounded-xl ${activeTab === "system" ? "bg-white shadow-sm" : ""}`}
           >
-            <Text className={`font-semibold ${activeTab === "system" ? "text-slate-900" : "text-slate-500"}`}>
+            <Text className={`text-xs font-semibold ${activeTab === "system" ? "text-slate-900" : "text-slate-500"}`}>
               Hệ thống
             </Text>
           </Pressable>
@@ -133,7 +142,7 @@ function AdminDashboardContent() {
             onPress={() => setActiveTab("reports")}
             className={`flex-1 py-3 items-center rounded-xl ${activeTab === "reports" ? "bg-white shadow-sm" : ""}`}
           >
-            <Text className={`font-semibold ${activeTab === "reports" ? "text-slate-900" : "text-slate-500"}`}>
+            <Text className={`text-xs font-semibold ${activeTab === "reports" ? "text-slate-900" : "text-slate-500"}`}>
               Báo cáo
             </Text>
           </Pressable>
@@ -150,6 +159,8 @@ function AdminDashboardContent() {
         {activeTab === "requests" && (
           <RequestManager />
         )}
+
+        {activeTab === "forms" && <WorkRequestManager />}
 
         {activeTab === "reports" && (
           <View style={{ gap: 16 }}>

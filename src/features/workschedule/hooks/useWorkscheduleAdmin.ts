@@ -14,6 +14,9 @@ import {
   rejectSchedule,
   updateAdminSchedule,
   updateWorkPolicy,
+  getAdminWorkRequests,
+  approveWorkRequest as approveEmployeeWorkRequest,
+  rejectWorkRequest as rejectEmployeeWorkRequest,
 } from "@/src/services/workschedule/workschedule.service";
 import type {
   AdminAttendanceRecord,
@@ -21,6 +24,8 @@ import type {
   AdminScheduleRequest,
   IWorkPolicy,
   WorkscheduleQuery,
+  IWorkRequest,
+  WorkRequestQuery,
 } from "@/src/services/workschedule/constant";
 import { useCallback, useState } from "react";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
@@ -294,6 +299,63 @@ export function useWorkscheduleAdmin() {
     [getToken, showError],
   );
 
+  const getEmployeeRequests = useCallback(
+    async (
+      params: WorkRequestQuery = {},
+      silent = false,
+    ): Promise<IWorkRequest[]> => {
+      try {
+        setLoading(true);
+        const token = await getToken();
+        if (!token) return [];
+        const { data } = await getAdminWorkRequests(token, params);
+        return Array.isArray(data.data) ? data.data : [];
+      } catch (error) {
+        showError(error, "Không thể tải danh sách đơn từ", silent);
+        return [];
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getToken, showError],
+  );
+
+  const approveEmployeeRequest = useCallback(
+    async (id: string) => {
+      try {
+        setLoading(true);
+        const token = await getToken();
+        if (!token) return false;
+        await approveEmployeeWorkRequest(token, id);
+        return true;
+      } catch (error) {
+        showError(error, "Không thể duyệt đơn");
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getToken, showError],
+  );
+
+  const rejectEmployeeRequest = useCallback(
+    async (id: string, reason: string) => {
+      try {
+        setLoading(true);
+        const token = await getToken();
+        if (!token) return false;
+        await rejectEmployeeWorkRequest(token, id, reason);
+        return true;
+      } catch (error) {
+        showError(error, "Không thể từ chối đơn");
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getToken, showError],
+  );
+
   return {
     loading,
     getPolicy,
@@ -309,5 +371,8 @@ export function useWorkscheduleAdmin() {
     getTodayAttendance,
     getReport,
     adminUpdateEntries,
+    getEmployeeRequests,
+    approveEmployeeRequest,
+    rejectEmployeeRequest,
   };
 }
