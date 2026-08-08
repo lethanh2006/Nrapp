@@ -1,6 +1,8 @@
 import axios from "@/src/utils/axios";
 import { ipNR } from "@/src/utils/ip";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
+import { Platform } from "react-native";
 import {
   OLD_TOKEN_KEY,
   TOKEN_KEY,
@@ -29,20 +31,38 @@ export async function verifyOtp(payload: VerifyOtpPayload) {
   return axios.post<AuthSessionResponse>(`${ipNR}/auth/verify`, payload);
 }
 
+async function persistToken(token: string) {
+  if (Platform.OS === "web") {
+    await AsyncStorage.setItem(TOKEN_KEY, token);
+  } else {
+    await SecureStore.setItemAsync(TOKEN_KEY, token);
+  }
+  await AsyncStorage.multiRemove([OLD_TOKEN_KEY, ...(Platform.OS === "web" ? [] : [TOKEN_KEY])]);
+}
+
 export async function saveAuthSession({ token }: AuthSessionResponse) {
-  await AsyncStorage.multiSet([
-    [TOKEN_KEY, token],
-    [OLD_TOKEN_KEY, token],
-  ]);
+  await persistToken(token);
 }
 
 export async function getStoredToken() {
-  const token = await AsyncStorage.getItem(TOKEN_KEY);
+  const token =
+    Platform.OS === "web"
+      ? await AsyncStorage.getItem(TOKEN_KEY)
+      : await SecureStore.getItemAsync(TOKEN_KEY);
   if (token) return token;
 
-  return AsyncStorage.getItem(OLD_TOKEN_KEY);
+  const legacyToken =
+    (await AsyncStorage.getItem(TOKEN_KEY)) ||
+    (await AsyncStorage.getItem(OLD_TOKEN_KEY));
+  if (!legacyToken) return null;
+
+  await persistToken(legacyToken);
+  return legacyToken;
 }
 
 export async function clearAuthSession() {
   await AsyncStorage.multiRemove([TOKEN_KEY, OLD_TOKEN_KEY]);
+  if (Platform.OS !== "web") {
+    await SecureStore.deleteItemAsync(TOKEN_KEY);
+  }
 }

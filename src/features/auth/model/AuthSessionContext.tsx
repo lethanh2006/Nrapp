@@ -2,6 +2,7 @@ import {
   clearAuthSession,
   getStoredToken,
 } from "@/src/services/auth/auth.service";
+import axios from "@/src/utils/axios";
 import { getUserProfile } from "@/src/services/user/user.service";
 import { normalizeUser } from "@/src/features/user/model/normalize-user";
 import type { User } from "@/src/services/user/constant";
@@ -48,8 +49,13 @@ export const AuthSessionProvider: React.FC<{ children: React.ReactNode }> = ({
       const userData = data.user || data;
       setUser(normalizeUser(userData));
       setIsAuth(true);
-    } catch {
-      // ignore
+    } catch (error) {
+      const status = (error as { response?: { status?: number } })?.response?.status;
+      if (status === 401 || status === 403 || status === 404) {
+        await clearAuthSession();
+      }
+      setUser(null);
+      setIsAuth(false);
     } finally {
       setLoading(false);
     }
@@ -70,6 +76,19 @@ export const AuthSessionProvider: React.FC<{ children: React.ReactNode }> = ({
   useEffect(() => {
     fetchUser();
   }, [fetchUser]);
+
+  useEffect(() => {
+    const interceptorId = axios.interceptors.response.use(
+      (response) => response,
+      async (error) => {
+        if (error?.response?.status === 401) {
+          await logoutUser();
+        }
+        return Promise.reject(error);
+      },
+    );
+    return () => axios.interceptors.response.eject(interceptorId);
+  }, [logoutUser]);
 
   return (
     <AuthSessionContext.Provider
