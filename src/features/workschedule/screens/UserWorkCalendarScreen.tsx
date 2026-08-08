@@ -32,7 +32,6 @@ const periodMeta = (entry?: IMonthlyScheduleEntry) => {
 };
 
 const statusLabel: Record<string, string> = {
-  draft: "Bản nháp",
   pending: "Chờ duyệt",
   approved: "Đã duyệt",
   rejected: "Từ chối",

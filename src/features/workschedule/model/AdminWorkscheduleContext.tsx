@@ -15,7 +15,7 @@ import type {
 } from "@/src/services/workschedule/constant";
 import { isAdminRole } from "@/src/application/access/roles";
 
-type RequestStatus = "all" | "draft" | "pending" | "approved" | "rejected";
+type RequestStatus = "all" | "pending" | "approved" | "rejected";
 type ReportRange = "7d" | "30d";
 
 type TodayExpectedItem = {

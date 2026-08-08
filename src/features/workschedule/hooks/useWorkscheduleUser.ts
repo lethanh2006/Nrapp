@@ -4,8 +4,6 @@ import {
   getMySchedules as fetchMySchedules,
   getMonthlyScheduleOverview,
   getWorkPolicy,
-  submitScheduleRequest,
-  updateScheduleRequest,
 } from "@/src/services/workschedule/workschedule.service";
 import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import type {
@@ -76,23 +74,13 @@ export function useWorkscheduleUser() {
     async (
       weekStart: string,
       entries: IScheduleEntry[],
-      existingRequestId?: string,
     ): Promise<boolean> => {
       try {
         setLoading(true);
         const token = await getToken();
         if (!token) return false;
 
-        let requestId = existingRequestId;
-        if (requestId) {
-          await updateScheduleRequest(token, requestId, entries);
-        } else {
-          const { data } = await createScheduleRequest(token, weekStart, entries);
-          requestId = data.data?._id;
-        }
-
-        if (!requestId) throw new Error("Không nhận được mã lịch đăng ký");
-        await submitScheduleRequest(token, requestId);
+        await createScheduleRequest(token, weekStart, entries);
         Alert.alert("Thành công", "Đã nộp lịch để chờ duyệt");
         return true;
       } catch (error) {

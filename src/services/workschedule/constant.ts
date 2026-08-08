@@ -1,6 +1,6 @@
 export type EntryType = "office" | "remote" | "day_off" | "leave";
 export type WorkPeriod = "full_day" | "morning" | "afternoon";
-export type RequestStatus = "draft" | "pending" | "approved" | "rejected";
+export type RequestStatus = "pending" | "approved" | "rejected";
 export type WorkRequestType =
   | "leave"
   | "late"
@@ -51,7 +51,6 @@ export interface IMonthlyScheduleStats {
   leave_sessions: number;
   day_off_sessions: number;
   approved_work_days: number;
-  draft_requests: number;
   pending_requests: number;
   approved_requests: number;
   rejected_requests: number;

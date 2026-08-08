@@ -115,26 +115,6 @@ export async function createScheduleRequest(
   );
 }
 
-export async function updateScheduleRequest(
-  token: string,
-  id: string,
-  entries: IScheduleEntry[],
-) {
-  return axios.patch(
-    `${ipNR}/workschedule/schedule/requests/${encodeURIComponent(id)}`,
-    { entries },
-    getAuthHeader(token),
-  );
-}
-
-export async function submitScheduleRequest(token: string, id: string) {
-  return axios.post(
-    `${ipNR}/workschedule/schedule/requests/${encodeURIComponent(id)}/submit`,
-    {},
-    getAuthHeader(token),
-  );
-}
-
 export async function updateWorkPolicy(
   token: string,
   payload: Partial<IWorkPolicy>,

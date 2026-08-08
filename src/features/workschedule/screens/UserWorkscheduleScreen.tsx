@@ -44,12 +44,6 @@ const STATUS_CONFIG: Record<
     text: "text-slate-600",
     description: "Tuần này chưa có lịch. Chỉ chọn những ngày bạn có thể đi làm.",
   },
-  draft: {
-    label: "Bản nháp",
-    box: "bg-blue-50",
-    text: "text-blue-700",
-    description: "Lịch đã được lưu nhưng chưa gửi cho quản lý duyệt.",
-  },
   pending: {
     label: "Chờ duyệt",
     box: "bg-amber-50",
@@ -378,7 +372,6 @@ export default function UserWorkscheduleScreen() {
             const submitted = await sendScheduleRequest(
               toLocalDateKey(selectedWeekStart),
               buildEntries(),
-              selectedRequest?.status === "draft" ? selectedRequest._id : undefined,
             );
             if (submitted) {
               clearSelectedWeekChanges();

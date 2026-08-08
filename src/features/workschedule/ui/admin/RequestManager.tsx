@@ -10,11 +10,10 @@ import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from 
 type RequestStatus = "all" | "pending" | "approved" | "rejected";
 
 const requestStatusMeta: Record<
-  RequestStatus | "draft",
+  RequestStatus,
   { label: string; box: string; text: string }
 > = {
   all: { label: "Tất cả", box: "bg-slate-100", text: "text-slate-700" },
-  draft: { label: "Nháp", box: "bg-slate-100", text: "text-slate-700" },
   pending: { label: "Chờ duyệt", box: "bg-amber-50", text: "text-amber-700" },
   approved: { label: "Đã duyệt", box: "bg-emerald-50", text: "text-emerald-700" },
   rejected: { label: "Từ chối", box: "bg-red-50", text: "text-red-700" },
