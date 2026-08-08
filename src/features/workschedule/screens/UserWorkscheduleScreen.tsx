@@ -70,34 +70,11 @@ const STATUS_CONFIG: Record<
   },
 };
 
-const TYPE_META: Record<
-  EntryType,
-  { label: string; shortLabel: string; color: string; dot: string }
-> = {
-  office: {
-    label: "Tại công ty",
-    shortLabel: "Công ty",
-    color: "text-blue-700",
-    dot: "bg-blue-500",
-  },
-  remote: {
-    label: "Làm từ xa",
-    shortLabel: "Từ xa",
-    color: "text-purple-700",
-    dot: "bg-purple-500",
-  },
-  day_off: {
-    label: "Ngày nghỉ",
-    shortLabel: "Nghỉ",
-    color: "text-slate-600",
-    dot: "bg-slate-400",
-  },
-  leave: {
-    label: "Nghỉ phép",
-    shortLabel: "Phép",
-    color: "text-orange-700",
-    dot: "bg-orange-500",
-  },
+const TYPE_META: Record<EntryType, { dot: string }> = {
+  office: { dot: "bg-blue-500" },
+  remote: { dot: "bg-purple-500" },
+  day_off: { dot: "bg-slate-400" },
+  leave: { dot: "bg-orange-500" },
 };
 
 const isSameWeek = (date: string | Date, weekStart: Date) =>
@@ -342,7 +319,10 @@ export default function UserWorkscheduleScreen() {
     }));
   };
 
-  const applyPreset = (weekdayType: "office" | "remote") => {
+  const applyPreset = (
+    weekdayType: "office" | "remote",
+    period?: WorkPeriod,
+  ) => {
     if (weekReadOnlyReason) return;
     setDraftEntries((previous) => {
       const next = { ...previous };
@@ -352,7 +332,7 @@ export default function UserWorkscheduleScreen() {
         const current = previous[key] || backendEntryMap[key];
         next[key] = {
           type: weekdayType,
-          period: current?.period || "full_day",
+          period: period || current?.period || "full_day",
           note: current?.note || "",
         };
       });
@@ -458,17 +438,6 @@ export default function UserWorkscheduleScreen() {
     setSelectedDayIndex(nextUnselected ?? Math.min(selectedDayIndex + 1, 6));
   };
 
-  const summary = useMemo(
-    () =>
-      (["office", "remote"] as EntryType[])
-        .map((type) => ({
-          type,
-          count: effectiveEntries.filter((entry) => entry.type === type).length,
-        }))
-        .filter((item) => item.count > 0),
-    [effectiveEntries],
-  );
-
   if (initialLoad) {
     return (
       <View className="flex-1 bg-slate-50">
@@ -519,7 +488,7 @@ export default function UserWorkscheduleScreen() {
         ) : null}
 
         <View className="mb-4 flex-row items-center rounded-2xl border border-blue-100 bg-blue-50 p-3">
-          {["Chọn tuần", "Chọn ngày làm", "Gửi duyệt"].map((label, index) => (
+          {["Chọn tuần", "Chọn ngày làm"].map((label, index) => (
             <React.Fragment key={label}>
               <View className="flex-1 items-center">
                 <View className="h-6 w-6 items-center justify-center rounded-full bg-blue-600">
@@ -529,7 +498,7 @@ export default function UserWorkscheduleScreen() {
                   {label}
                 </Text>
               </View>
-              {index < 2 ? <View className="mb-4 h-px w-5 bg-blue-200" /> : null}
+              {index < 1 ? <View className="mb-4 h-px w-5 bg-blue-200" /> : null}
             </React.Fragment>
           ))}
         </View>
@@ -565,6 +534,25 @@ export default function UserWorkscheduleScreen() {
               <Text className="mb-2 text-[11px] font-black uppercase tracking-wider text-slate-500">
                 Thiết lập nhanh T2 - T6
               </Text>
+              <Pressable
+                accessibilityHint="Chọn làm cả ngày tại công ty từ Thứ Hai đến Thứ Sáu"
+                accessibilityLabel="Chọn full tuần"
+                className="mb-2 flex-row items-center rounded-xl bg-blue-600 px-3 py-3 active:bg-blue-700"
+                onPress={() => applyPreset("office", "full_day")}
+              >
+                <View className="h-8 w-8 items-center justify-center rounded-lg bg-white/20">
+                  <Ionicons name="calendar" size={17} color="#ffffff" />
+                </View>
+                <View className="ml-2.5 flex-1">
+                  <Text className="text-xs font-black text-white">
+                    Chọn full tuần
+                  </Text>
+                  <Text className="mt-0.5 text-[10px] font-semibold text-blue-100">
+                    T2 - T6 · Cả ngày · Tại công ty
+                  </Text>
+                </View>
+                <Ionicons name="checkmark-circle-outline" size={20} color="#ffffff" />
+              </Pressable>
               <View className="flex-row">
                 <Pressable
                   className="mr-2 flex-1 flex-row items-center justify-center rounded-xl border border-blue-100 bg-white py-2.5"
@@ -648,67 +636,9 @@ export default function UserWorkscheduleScreen() {
             onClear={clearSelectedDay}
             onNext={goToNextDay}
           />
-        </View>
 
-        <View className="mt-4 rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm">
-          <View className="flex-row items-center">
-            <View className="h-8 w-8 items-center justify-center rounded-xl bg-red-50">
-              <Text className="text-sm font-black text-red-600">3</Text>
-            </View>
-            <View className="ml-3 flex-1">
-              <Text className="text-base font-black text-slate-900">
-                Kiểm tra và hoàn tất
-              </Text>
-              <Text className="mt-0.5 text-xs text-slate-500">
-                {selectedWorkDays > 0
-                  ? `Đã chọn ${selectedWorkDays} ngày làm trong tuần.`
-                  : "Chọn ít nhất một ngày bạn có thể đi làm."}
-              </Text>
-            </View>
-            <Text className="text-sm font-black text-slate-700">
-              {selectedWorkDays} ngày
-            </Text>
-          </View>
-
-          <View className="mt-4 flex-row flex-wrap">
-            {summary.map(({ type, count }) => (
-              <View
-                className="mb-2 mr-2 flex-row items-center rounded-full bg-slate-50 px-3 py-2"
-                key={type}
-              >
-                <View className={`mr-1.5 h-2 w-2 rounded-full ${TYPE_META[type].dot}`} />
-                <Text className={`text-[11px] font-bold ${TYPE_META[type].color}`}>
-                  {TYPE_META[type].shortLabel}: {count}
-                </Text>
-              </View>
-            ))}
-          </View>
-
-          {weekReadOnlyReason ? (
-            selectedRequest?._id ? (
-              <Pressable
-                className="mt-2 flex-row items-center justify-center rounded-2xl bg-slate-900 py-4"
-                onPress={() =>
-                  router.push({
-                    pathname: "/(main)/user/workschedule/[id]",
-                    params: { id: selectedRequest._id },
-                  } as never)
-                }
-              >
-                <Text className="mr-1.5 text-sm font-black text-white">
-                  Xem chi tiết lịch
-                </Text>
-                <Ionicons name="arrow-forward" size={17} color="white" />
-              </Pressable>
-            ) : (
-              <View className="mt-2 rounded-2xl bg-slate-100 p-3">
-                <Text className="text-center text-xs font-semibold text-slate-500">
-                  {weekReadOnlyReason}
-                </Text>
-              </View>
-            )
-          ) : (
-            <View className="mt-2 gap-3">
+          {!weekReadOnlyReason ? (
+            <View className="mt-5 gap-3 border-t border-slate-100 pt-4">
               <Pressable
                 className="items-center justify-center rounded-2xl border border-slate-200 bg-white py-4 active:bg-slate-50"
                 disabled={busy}
@@ -731,7 +661,7 @@ export default function UserWorkscheduleScreen() {
                 <Ionicons name="paper-plane" size={16} color="white" />
               </Pressable>
             </View>
-          )}
+          ) : null}
         </View>
 
       </ScrollView>

@@ -1,9 +1,7 @@
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import {
   createScheduleRequest,
-  deleteScheduleRequest,
   getMySchedules as fetchMySchedules,
-  getScheduleRequest,
   getMonthlyScheduleOverview,
   getWorkPolicy,
   submitScheduleRequest,
@@ -101,24 +99,6 @@ export function useWorkscheduleUser() {
     [getToken, showError],
   );
 
-  const getRequestInfo = useCallback(
-    async (id: string): Promise<IScheduleRequest | null> => {
-      try {
-        setLoading(true);
-        const token = await getToken();
-        if (!token) return null;
-        const { data } = await getScheduleRequest(token, id);
-        return data.data || null;
-      } catch (error) {
-        showError(error, "Không thể tải thông tin lịch");
-        return null;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getToken, showError],
-  );
-
   const updateEntries = useCallback(
     async (id: string, entries: IScheduleEntry[], showSuccess = true) => {
       try {
@@ -157,34 +137,13 @@ export function useWorkscheduleUser() {
     [getToken, showError],
   );
 
-  const deleteRequest = useCallback(
-    async (id: string) => {
-      try {
-        setLoading(true);
-        const token = await getToken();
-        if (!token) return false;
-        await deleteScheduleRequest(token, id);
-        Alert.alert("Thành công", "Đã xoá lịch nháp");
-        return true;
-      } catch (error) {
-        showError(error, "Không thể xoá lịch");
-        return false;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getToken, showError],
-  );
-
   return {
     loading,
     getPolicy,
     getMySchedules,
     getMonthlyOverview,
     createRequest,
-    getRequestInfo,
     updateEntries,
     submitRequest,
-    deleteRequest,
   };
 }

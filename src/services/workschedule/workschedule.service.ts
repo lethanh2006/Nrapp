@@ -115,13 +115,6 @@ export async function createScheduleRequest(
   );
 }
 
-export async function getScheduleRequest(token: string, id: string) {
-  return axios.get<{ data: IScheduleRequest }>(
-    `${ipNR}/workschedule/schedule/requests/${encodeURIComponent(id)}`,
-    getAuthHeader(token),
-  );
-}
-
 export async function updateScheduleRequest(
   token: string,
   id: string,
@@ -138,13 +131,6 @@ export async function submitScheduleRequest(token: string, id: string) {
   return axios.post(
     `${ipNR}/workschedule/schedule/requests/${encodeURIComponent(id)}/submit`,
     {},
-    getAuthHeader(token),
-  );
-}
-
-export async function deleteScheduleRequest(token: string, id: string) {
-  return axios.delete(
-    `${ipNR}/workschedule/schedule/requests/${encodeURIComponent(id)}`,
     getAuthHeader(token),
   );
 }
