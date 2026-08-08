@@ -245,14 +245,7 @@ export default function UserWorkscheduleScreen() {
     [backendEntryMap, editedEntries, weekDays],
   );
 
-  const unselectedDayIndexes = useMemo(
-    () =>
-      effectiveEntries
-        .map((entry, index) => (entry.type ? -1 : index))
-        .filter((index) => index >= 0),
-    [effectiveEntries],
-  );
-  const selectedWorkDays = 7 - unselectedDayIndexes.length;
+  const selectedWorkDays = effectiveEntries.filter((entry) => entry.type).length;
   const selectedDate = weekDays[selectedDayIndex] || weekDays[0];
   const selectedEntry = effectiveEntries[selectedDayIndex] || effectiveEntries[0];
 
@@ -398,11 +391,6 @@ export default function UserWorkscheduleScreen() {
     );
   };
 
-  const goToNextDay = () => {
-    const nextUnselected = unselectedDayIndexes.find((index) => index > selectedDayIndex);
-    setSelectedDayIndex(nextUnselected ?? Math.min(selectedDayIndex + 1, 6));
-  };
-
   if (initialLoad) {
     return (
       <View className="flex-1 bg-slate-50">
@@ -446,9 +434,6 @@ export default function UserWorkscheduleScreen() {
                 {padCountdownValue(countdown.seconds)}
               </Text>
             </View>
-            <Text className="mt-1 text-center text-[9px] font-semibold uppercase tracking-wider text-red-400">
-              Ngày · Giờ · Phút · Giây
-            </Text>
           </View>
         ) : null}
 
@@ -596,10 +581,8 @@ export default function UserWorkscheduleScreen() {
             entry={selectedEntry}
             readOnly={Boolean(selectedDayReadOnlyReason)}
             readOnlyReason={selectedDayReadOnlyReason}
-            hasNext={selectedDayIndex < 6}
             onChange={handleEntryChange}
             onClear={clearSelectedDay}
-            onNext={goToNextDay}
           />
 
           {!weekReadOnlyReason ? (

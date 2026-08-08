@@ -14,10 +14,8 @@ type DayScheduleEditorProps = {
   entry: Partial<IScheduleEntry>;
   readOnly: boolean;
   readOnlyReason?: string | null;
-  hasNext: boolean;
   onChange: (field: "type" | "period" | "note", value: string) => void;
   onClear: () => void;
-  onNext: () => void;
 };
 
 const WORK_OPTIONS: {
@@ -57,10 +55,8 @@ export function DayScheduleEditor({
   entry,
   readOnly,
   readOnlyReason,
-  hasNext,
   onChange,
   onClear,
-  onNext,
 }: DayScheduleEditorProps) {
   const hasWorkSelection = entry.type === "office" || entry.type === "remote";
 
@@ -195,15 +191,6 @@ export function DayScheduleEditor({
         </View>
       ) : null}
 
-      {!readOnly && hasNext ? (
-        <Pressable
-          className="mt-4 flex-row items-center justify-center rounded-2xl bg-slate-900 py-3.5 active:opacity-80"
-          onPress={onNext}
-        >
-          <Text className="mr-1 text-sm font-black text-white">Ngày tiếp theo</Text>
-          <Ionicons name="arrow-forward" size={17} color="white" />
-        </Pressable>
-      ) : null}
     </View>
   );
 }
