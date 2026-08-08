@@ -26,7 +26,7 @@ import {
   View,
 } from "react-native";
 
-type DraftEntry = {
+type EditableEntry = {
   type: EntryType | undefined;
   period: WorkPeriod;
   note: string;
@@ -102,9 +102,7 @@ function RegistrationHeader({ onBack }: { onBack: () => void }) {
 export default function UserWorkscheduleScreen() {
   const {
     getMySchedules,
-    createRequest,
-    updateEntries,
-    submitRequest,
+    sendScheduleRequest,
     getPolicy,
   } = useWorkscheduleUser();
   const [schedules, setSchedules] = useState<IScheduleRequest[]>([]);
@@ -112,8 +110,7 @@ export default function UserWorkscheduleScreen() {
   const [initialLoad, setInitialLoad] = useState(true);
   const [selectedWeekIndex, setSelectedWeekIndex] = useState(1);
   const [selectedDayIndex, setSelectedDayIndex] = useState(0);
-  const [draftEntries, setDraftEntries] = useState<Record<string, DraftEntry>>({});
-  const [saving, setSaving] = useState(false);
+  const [editedEntries, setEditedEntries] = useState<Record<string, EditableEntry>>({});
   const [submitting, setSubmitting] = useState(false);
   const [currentTime, setCurrentTime] = useState(Date.now());
   const scrollRef = useRef<ScrollView>(null);
@@ -225,7 +222,7 @@ export default function UserWorkscheduleScreen() {
     () =>
       weekDays.map((date) => {
         const key = toLocalDateKey(date);
-        const stored = draftEntries[key] || backendEntryMap[key];
+        const stored = editedEntries[key] || backendEntryMap[key];
         if (stored) {
           const registeredType =
             stored.type === "office" || stored.type === "remote"
@@ -245,7 +242,7 @@ export default function UserWorkscheduleScreen() {
           note: "",
         };
       }),
-    [backendEntryMap, draftEntries, weekDays],
+    [backendEntryMap, editedEntries, weekDays],
   );
 
   const unselectedDayIndexes = useMemo(
@@ -276,8 +273,6 @@ export default function UserWorkscheduleScreen() {
   const selectedDayReadOnlyReason =
     weekReadOnlyReason ||
     (selectedDate < today ? "Ngày này đã trôi qua nên chỉ có thể xem." : null);
-  const busy = saving || submitting;
-
   const changeSelectedWeek = (nextIndex: number) => {
     if (nextIndex < 0 || nextIndex >= allowedWeeks.length) return;
     setSelectedWeekIndex(nextIndex);
@@ -290,7 +285,7 @@ export default function UserWorkscheduleScreen() {
   ) => {
     if (selectedDayReadOnlyReason) return;
     const dateKey = toLocalDateKey(selectedDate);
-    setDraftEntries((previous) => {
+    setEditedEntries((previous) => {
       const current = previous[dateKey] || selectedEntry;
       return {
         ...previous,
@@ -309,7 +304,7 @@ export default function UserWorkscheduleScreen() {
   const clearSelectedDay = () => {
     if (selectedDayReadOnlyReason) return;
     const dateKey = toLocalDateKey(selectedDate);
-    setDraftEntries((previous) => ({
+    setEditedEntries((previous) => ({
       ...previous,
       [dateKey]: {
         type: undefined,
@@ -324,7 +319,7 @@ export default function UserWorkscheduleScreen() {
     period?: WorkPeriod,
   ) => {
     if (weekReadOnlyReason) return;
-    setDraftEntries((previous) => {
+    setEditedEntries((previous) => {
       const next = { ...previous };
       weekDays.forEach((date, index) => {
         if (date < today || index >= 5) return;
@@ -362,44 +357,13 @@ export default function UserWorkscheduleScreen() {
         note: entry.note || "",
       }));
 
-  const persistSelectedWeek = async () => {
-    if (!ensureHasWorkDay()) return null;
-    const entries = buildEntries();
-    if (selectedRequest?.status === "draft") {
-      const updated = await updateEntries(selectedRequest._id, entries, false);
-      return updated ? selectedRequest._id : null;
-    }
-    if (selectedRequest) return null;
-    const created = await createRequest(
-      toLocalDateKey(selectedWeekStart),
-      entries,
-      false,
-    );
-    return created?._id || null;
-  };
-
-  const clearSelectedWeekDraft = () => {
+  const clearSelectedWeekChanges = () => {
     const weekKeys = new Set(weekDays.map(toLocalDateKey));
-    setDraftEntries((previous) => {
+    setEditedEntries((previous) => {
       const next = { ...previous };
       weekKeys.forEach((key) => delete next[key]);
       return next;
     });
-  };
-
-  const saveDraft = async () => {
-    if (weekReadOnlyReason) {
-      Alert.alert("Không thể chỉnh sửa", weekReadOnlyReason);
-      return;
-    }
-    setSaving(true);
-    const requestId = await persistSelectedWeek();
-    if (requestId) {
-      clearSelectedWeekDraft();
-      await loadData();
-      Alert.alert("Thành công", "Đã lưu bản nháp. Bạn có thể quay lại sửa sau.");
-    }
-    setSaving(false);
   };
 
   const submitForApproval = () => {
@@ -418,13 +382,14 @@ export default function UserWorkscheduleScreen() {
           text: "Gửi duyệt",
           onPress: async () => {
             setSubmitting(true);
-            const requestId = await persistSelectedWeek();
-            if (requestId) {
-              const submitted = await submitRequest(requestId);
-              if (submitted) {
-                clearSelectedWeekDraft();
-                await loadData();
-              }
+            const submitted = await sendScheduleRequest(
+              toLocalDateKey(selectedWeekStart),
+              buildEntries(),
+              selectedRequest?.status === "draft" ? selectedRequest._id : undefined,
+            );
+            if (submitted) {
+              clearSelectedWeekChanges();
+              await loadData();
             }
             setSubmitting(false);
           },
@@ -638,21 +603,12 @@ export default function UserWorkscheduleScreen() {
           />
 
           {!weekReadOnlyReason ? (
-            <View className="mt-5 gap-3 border-t border-slate-100 pt-4">
-              <Pressable
-                className="items-center justify-center rounded-2xl border border-slate-200 bg-white py-4 active:bg-slate-50"
-                disabled={busy}
-                onPress={saveDraft}
-              >
-                <Text className="text-sm font-black text-slate-700">
-                  {saving ? "Đang lưu..." : "Lưu bản nháp"}
-                </Text>
-              </Pressable>
+            <View className="mt-5 border-t border-slate-100 pt-4">
               <Pressable
                 className={`flex-row items-center justify-center rounded-2xl py-4 ${
                   selectedWorkDays > 0 ? "bg-red-600" : "bg-red-300"
                 }`}
-                disabled={busy}
+                disabled={submitting}
                 onPress={submitForApproval}
               >
                 <Text className="mr-1.5 text-sm font-black text-white">

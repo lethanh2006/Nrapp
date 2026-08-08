@@ -72,59 +72,27 @@ export function useWorkscheduleUser() {
     [getToken, showError],
   );
 
-  const createRequest = useCallback(
+  const sendScheduleRequest = useCallback(
     async (
       weekStart: string,
       entries: IScheduleEntry[],
-      showSuccess = true,
-    ): Promise<IScheduleRequest | null> => {
-      try {
-        setLoading(true);
-        const token = await getToken();
-        if (!token) return null;
-        const { data } = await createScheduleRequest(
-          token,
-          weekStart,
-          entries,
-        );
-        if (showSuccess) Alert.alert("Thành công", "Đã tạo lịch nháp");
-        return data.data || null;
-      } catch (error) {
-        showError(error, "Không thể tạo lịch");
-        return null;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getToken, showError],
-  );
-
-  const updateEntries = useCallback(
-    async (id: string, entries: IScheduleEntry[], showSuccess = true) => {
+      existingRequestId?: string,
+    ): Promise<boolean> => {
       try {
         setLoading(true);
         const token = await getToken();
         if (!token) return false;
-        await updateScheduleRequest(token, id, entries);
-        if (showSuccess) Alert.alert("Thành công", "Đã cập nhật lịch");
-        return true;
-      } catch (error) {
-        showError(error, "Không thể cập nhật lịch");
-        return false;
-      } finally {
-        setLoading(false);
-      }
-    },
-    [getToken, showError],
-  );
 
-  const submitRequest = useCallback(
-    async (id: string) => {
-      try {
-        setLoading(true);
-        const token = await getToken();
-        if (!token) return false;
-        await submitScheduleRequest(token, id);
+        let requestId = existingRequestId;
+        if (requestId) {
+          await updateScheduleRequest(token, requestId, entries);
+        } else {
+          const { data } = await createScheduleRequest(token, weekStart, entries);
+          requestId = data.data?._id;
+        }
+
+        if (!requestId) throw new Error("Không nhận được mã lịch đăng ký");
+        await submitScheduleRequest(token, requestId);
         Alert.alert("Thành công", "Đã nộp lịch để chờ duyệt");
         return true;
       } catch (error) {
@@ -142,8 +110,6 @@ export function useWorkscheduleUser() {
     getPolicy,
     getMySchedules,
     getMonthlyOverview,
-    createRequest,
-    updateEntries,
-    submitRequest,
+    sendScheduleRequest,
   };
 }
