@@ -122,12 +122,12 @@ trong những file này.
 | `app/(auth)/verify.tsx` | `/verify?email=...` | Nhập OTP và lưu phiên |
 | `app/(main)/admin/home.tsx` | `/admin/home` | `HomeDashboard` cho admin |
 | `app/(main)/admin/chat.tsx` | `/admin/chat` | `ChatView` |
-| `app/(main)/admin/todo.tsx` | `/admin/todo` | `TodoView` có quyền quản lý |
-| `app/(main)/admin/workschedule.tsx` | `/admin/workschedule` | Quản trị lịch làm việc |
+| `app/(main)/admin/todo.tsx` | `/admin/todo` | `TodoView area="admin"` |
+| `app/(main)/admin/workschedule.tsx` | `/admin/workschedule` | `WorkscheduleScreen area="admin"` |
 | `app/(main)/user/home.tsx` | `/user/home` | `HomeDashboard` cho user |
 | `app/(main)/user/chat.tsx` | `/user/chat` | `ChatView` |
-| `app/(main)/user/todo.tsx` | `/user/todo` | `TodoView` của nhân viên |
-| `app/(main)/user/workschedule/index.tsx` | `/user/workschedule` | Danh sách/lịch tháng |
+| `app/(main)/user/todo.tsx` | `/user/todo` | `TodoView area="user"` |
+| `app/(main)/user/workschedule/index.tsx` | `/user/workschedule` | `WorkscheduleScreen area="user"` |
 | `app/(main)/user/workschedule/[id].tsx` | `/user/workschedule/:id` | Chi tiết một yêu cầu lịch |
 
 Trong code có thể dùng đường dẫn kèm group như `/(main)/user/home`. Expo Router
@@ -210,10 +210,10 @@ dùng tự nhập URL không đúng khu vực.
   khối quản trị được render route con.
 - `app/(main)/admin/home.tsx`: mở `HomeDashboard` với `area="admin"`.
 - `app/(main)/admin/chat.tsx`: mở giao diện Chat dùng chung.
-- `app/(main)/admin/todo.tsx`: mở Todo với `isAdmin`, cho phép tạo, giao và xóa
-  công việc.
-- `app/(main)/admin/workschedule.tsx`: mở màn quản trị lịch, chính sách, QR và
-  báo cáo.
+- `app/(main)/admin/todo.tsx`: mở `TodoView area="admin"`, cho phép tạo, giao và
+  xóa công việc.
+- `app/(main)/admin/workschedule.tsx`: mở `WorkscheduleScreen area="admin"` để
+  hiển thị màn quản trị lịch, chính sách, QR và báo cáo.
 
 #### Khu `app/(main)/user/`
 
@@ -221,9 +221,10 @@ dùng tự nhập URL không đúng khu vực.
   render route con.
 - `app/(main)/user/home.tsx`: mở `HomeDashboard` với `area="user"`.
 - `app/(main)/user/chat.tsx`: mở giao diện Chat dùng chung.
-- `app/(main)/user/todo.tsx`: mở Todo với `isAdmin={false}`; nhân viên chỉ xem
-  task được giao và cập nhật trạng thái.
-- `app/(main)/user/workschedule/index.tsx`: route chính của lịch nhân viên.
+- `app/(main)/user/todo.tsx`: mở `TodoView area="user"`; nhân viên chỉ xem task
+  được giao và cập nhật trạng thái.
+- `app/(main)/user/workschedule/index.tsx`: mở `WorkscheduleScreen area="user"`
+  cho lịch nhân viên.
 - `app/(main)/user/workschedule/[id].tsx`: route động nhận ID yêu cầu lịch để
   mở màn chi tiết/chỉnh sửa.
 
@@ -348,8 +349,8 @@ export async function someRequest(token: string, payload: Payload) {
 
 ### 4.9 `src/features/todo/`
 
-- `ui/TodoView.tsx`: component điều phối Todo. Dựa vào `isAdmin` để chọn API,
-  quản lý loading/refresh/form, danh sách user và các thao tác CRUD.
+- `ui/TodoView.tsx`: component điều phối Todo. Nhận `AppArea`, chọn API theo khu
+  vực và quản lý loading/refresh/form, danh sách user cùng các thao tác CRUD.
 - `ui/TodoIntroCard.tsx`: phần giới thiệu khác nhau giữa admin và user.
 - `ui/TodoCreateTaskCard.tsx`: form admin tạo task, chọn deadline, độ ưu tiên và
   người được giao.
@@ -373,6 +374,8 @@ export async function someRequest(token: string, payload: Payload) {
 
 #### Screens
 
+- `screens/WorkscheduleScreen.tsx`: entry point dùng chung nhận `AppArea` và mở
+  màn quản trị hoặc nhân viên tương ứng.
 - `screens/AdminWorkscheduleScreen.tsx`: bọc màn hình bằng `AdminProvider`, tạo
   ba tab `Duyệt lịch`, `Hệ thống`, `Báo cáo` và ghép các component admin.
 - `screens/UserWorkscheduleScreen.tsx`: màn lịch tháng/danh sách của nhân viên;
