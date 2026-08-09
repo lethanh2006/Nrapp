@@ -1,6 +1,7 @@
 import TodoCreateTaskCard from "@/src/features/todo/ui/TodoCreateTaskCard";
 import TodoIntroCard from "@/src/features/todo/ui/TodoIntroCard";
 import TodoTaskListCard from "@/src/features/todo/ui/TodoTaskListCard";
+import type { AppArea } from "@/src/application/access/roles";
 import type {
   CreateTaskInput,
   TaskItem,
@@ -29,11 +30,12 @@ import {
 } from "react-native";
 
 interface TodoViewProps {
-  isAdmin: boolean;
+  area: AppArea;
 }
 
-export default function TodoView({ isAdmin }: TodoViewProps) {
+export default function TodoView({ area }: TodoViewProps) {
   const { loading: appLoading, isAuth, user, getToken } = useAuthSession();
+  const isAdminArea = area === "admin";
   const [users, setUsers] = useState<User[]>([]);
 
   const [tasks, setTasks] = useState<TaskItem[]>([]);
@@ -65,9 +67,9 @@ export default function TodoView({ isAdmin }: TodoViewProps) {
       if (!token) return;
 
       setTasks(
-        isAdmin ? await getAdminTasks(token) : await getMyTasks(token),
+        isAdminArea ? await getAdminTasks(token) : await getMyTasks(token),
       );
-      if (isAdmin) {
+      if (isAdminArea) {
         const { data } = await getAllUsers(token);
         setUsers((data.users ?? []).map(normalizeUser));
       }
@@ -77,7 +79,7 @@ export default function TodoView({ isAdmin }: TodoViewProps) {
         error?.response?.data?.message || "Không tải được công việc",
       );
     }
-  }, [getToken, isAdmin, isAuth]);
+  }, [getToken, isAdminArea, isAuth]);
 
   useEffect(() => {
     let mounted = true;
@@ -219,9 +221,9 @@ export default function TodoView({ isAdmin }: TodoViewProps) {
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }
     >
-      <TodoIntroCard isAdmin={isAdmin} />
+      <TodoIntroCard area={area} />
 
-      {isAdmin ? (
+      {isAdminArea ? (
         <TodoCreateTaskCard
           title={title}
           description={description}
@@ -240,7 +242,7 @@ export default function TodoView({ isAdmin }: TodoViewProps) {
       ) : null}
 
       <TodoTaskListCard
-        isAdmin={isAdmin}
+        area={area}
         tasks={tasks}
         users={selectableUsers}
         currentUser={user}

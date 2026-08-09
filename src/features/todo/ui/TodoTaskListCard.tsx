@@ -1,3 +1,4 @@
+import type { AppArea } from "@/src/application/access/roles";
 import type { User } from "@/src/services/user/constant";
 import { Ionicons } from "@expo/vector-icons";
 import React from "react";
@@ -12,7 +13,7 @@ import {
 } from "@/src/services/todo/constant";
 
 type Props = {
-  isAdmin: boolean;
+  area: AppArea;
   tasks: TaskItem[];
   users: User[];
   currentUser?: User | null;
@@ -46,7 +47,7 @@ const displayName = (
 };
 
 export default function TodoTaskListCard({
-  isAdmin,
+  area,
   tasks,
   users,
   currentUser,
@@ -59,6 +60,8 @@ export default function TodoTaskListCard({
   onUpdateStatus,
   onRemoveTask,
 }: Props) {
+  const isAdminArea = area === "admin";
+
   return (
     <View className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
       <View className="flex-row items-center justify-between mb-4 pb-2 border-b border-slate-50">
@@ -67,7 +70,7 @@ export default function TodoTaskListCard({
             <Ionicons name="list-outline" size={20} color="#3b82f6" />
           </View>
           <Text className="text-base font-bold text-slate-800">
-            {isAdmin ? "Tất cả công việc" : "Công việc của tôi"}
+            {isAdminArea ? "Tất cả công việc" : "Công việc của tôi"}
           </Text>
         </View>
         <View className="bg-slate-100 px-2.5 py-1 rounded-full">
@@ -291,7 +294,7 @@ export default function TodoTaskListCard({
                 </View>
 
                 {/* Admin Actions */}
-                {isAdmin ? (
+                {isAdminArea ? (
                   <View className="mt-4 pt-3 border-t border-slate-100">
                     <Text className="text-xs font-bold text-slate-700 mb-2">
                       Bàn giao công việc cho nhân viên khác
