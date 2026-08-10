@@ -62,15 +62,6 @@ export default function WorkscheduleUtilitiesScreen({ area }: { area: AppArea })
       contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
       showsVerticalScrollIndicator={false}
     >
-      <View className="mb-5 rounded-3xl bg-slate-900 p-5">
-        <View className="h-11 w-11 items-center justify-center rounded-2xl bg-white/10">
-          <Ionicons name="sparkles" size={22} color="white" />
-        </View>
-        <Text className="mt-4 text-lg font-black text-white">Quản lý ngày làm chủ động</Text>
-        <Text className="mt-1 text-xs leading-5 text-slate-300">
-          Đăng ký đúng ca, theo dõi phê duyệt và xem thống kê trước khi chấm công.
-        </Text>
-      </View>
 
       <View className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
         {utilities.map((item, index) => (

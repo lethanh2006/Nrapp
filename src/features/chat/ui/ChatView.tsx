@@ -26,10 +26,16 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   BackHandler,
+  Keyboard,
   KeyboardAvoidingView,
+  Platform,
   StyleSheet,
   View,
 } from "react-native";
+import type { KeyboardEvent, LayoutChangeEvent } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+
+const CHAT_AREA_PADDING = 16;
 
 const normalizeChatItem = (raw: any): ChatSummary => {
   const rawUser = raw?.user?.user ?? raw?.user ?? raw?.users?.user ?? {};
@@ -58,6 +64,7 @@ const normalizeChatItem = (raw: any): ChatSummary => {
 };
 
 export default function ChatView() {
+  const insets = useSafeAreaInsets();
   const { loading, isAuth, user: loggedInUser, getToken } = useAuthSession();
   const {
     socket,
@@ -73,7 +80,11 @@ export default function ChatView() {
   const [messages, setMessages] = useState<Message[] | null>(null);
   const [chatUser, setChatUser] = useState<any>(null);
   const [isTyping, setIsTyping] = useState(false);
+  const [androidKeyboardInset, setAndroidKeyboardInset] = useState(0);
   const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const chatAreaRef = useRef<View>(null);
+  const keyboardTopRef = useRef<number | null>(null);
+  const keyboardMeasureFrameRef = useRef<number | null>(null);
 
   const otherUserId = chatUser?.user?._id || chatUser?._id;
 
@@ -270,6 +281,64 @@ export default function ChatView() {
     return () => subscription.remove();
   }, [closeChat, selectedUser]);
 
+  const measureAndroidKeyboardOverlap = useCallback((keyboardTop: number) => {
+    if (keyboardMeasureFrameRef.current !== null) {
+      cancelAnimationFrame(keyboardMeasureFrameRef.current);
+    }
+
+    keyboardMeasureFrameRef.current = requestAnimationFrame(() => {
+      keyboardMeasureFrameRef.current = null;
+      chatAreaRef.current?.measureInWindow((_x, y, _width, height) => {
+        // Android reports measureInWindow from below the status bar while the
+        // keyboard frame uses full-screen coordinates. Normalize both before
+        // calculating how much of the chat is covered.
+        const chatBottomOnScreen = y + height + insets.top;
+        const overlap = Math.max(0, chatBottomOnScreen - keyboardTop);
+        setAndroidKeyboardInset((current) =>
+          Math.abs(current - overlap) < 1 ? current : overlap,
+        );
+      });
+    });
+  }, [insets.top]);
+
+  useEffect(() => {
+    if (Platform.OS !== "android") return;
+
+    const showSubscription = Keyboard.addListener(
+      "keyboardDidShow",
+      (event: KeyboardEvent) => {
+        keyboardTopRef.current = event.endCoordinates.screenY;
+        measureAndroidKeyboardOverlap(event.endCoordinates.screenY);
+      },
+    );
+    const hideSubscription = Keyboard.addListener("keyboardDidHide", () => {
+      keyboardTopRef.current = null;
+      setAndroidKeyboardInset(0);
+    });
+    const currentKeyboard = Keyboard.metrics();
+    if (currentKeyboard) {
+      keyboardTopRef.current = currentKeyboard.screenY;
+      measureAndroidKeyboardOverlap(currentKeyboard.screenY);
+    }
+
+    return () => {
+      showSubscription.remove();
+      hideSubscription.remove();
+      if (keyboardMeasureFrameRef.current !== null) {
+        cancelAnimationFrame(keyboardMeasureFrameRef.current);
+      }
+    };
+  }, [measureAndroidKeyboardOverlap]);
+
+  const handleChatAreaLayout = useCallback(
+    (_event: LayoutChangeEvent) => {
+      if (keyboardTopRef.current !== null) {
+        measureAndroidKeyboardOverlap(keyboardTopRef.current);
+      }
+    },
+    [measureAndroidKeyboardOverlap],
+  );
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -299,10 +368,19 @@ export default function ChatView() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior="padding"
+      behavior={Platform.OS === "ios" ? "padding" : undefined}
       keyboardVerticalOffset={0}
     >
-      <View style={styles.chatArea}>
+      <View
+        ref={chatAreaRef}
+        onLayout={handleChatAreaLayout}
+        style={[
+          styles.chatArea,
+          androidKeyboardInset > 0 && {
+            paddingBottom: CHAT_AREA_PADDING + androidKeyboardInset,
+          },
+        ]}
+      >
         <ChatHeader
           user={chatUser}
           onBack={closeChat}
@@ -341,7 +419,7 @@ const styles = StyleSheet.create({
   },
   chatArea: {
     flex: 1,
-    padding: 16,
+    padding: CHAT_AREA_PADDING,
     backgroundColor: "#ffffff",
   },
 });
