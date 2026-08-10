@@ -21,6 +21,30 @@ function normalizeSocketPath(value: string) {
   return `/${path || "socket.io"}`;
 }
 
+function isAndroidEmulator() {
+  if (Platform.OS !== "android") return false;
+
+  const constants = Platform.constants as typeof Platform.constants & {
+    Brand?: string;
+    Fingerprint?: string;
+    Manufacturer?: string;
+    Model?: string;
+  };
+  const deviceInfo = [
+    constants.Brand,
+    constants.Fingerprint,
+    constants.Manufacturer,
+    constants.Model,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+
+  return /generic|emulator|sdk_gphone|google_sdk|android sdk built for/.test(
+    deviceInfo,
+  );
+}
+
 function getExpoHost() {
   const hostUri =
     Constants.expoConfig?.hostUri ||
@@ -33,10 +57,7 @@ function getExpoHost() {
 function getDevelopmentUrl() {
   const expoHost = getExpoHost();
 
-  if (
-    Platform.OS === "android" &&
-    (!expoHost || expoHost === "localhost" || expoHost === "127.0.0.1")
-  ) {
+  if (isAndroidEmulator()) {
     return `http://10.0.2.2:${apiPort}${apiPath}`;
   }
 
@@ -50,7 +71,12 @@ if (!configuredUrl && !__DEV__) {
   throw new Error("EXPO_PUBLIC_API_URL must be configured for production builds");
 }
 
-export const ipNR = removeTrailingSlash(configuredUrl || getDevelopmentUrl());
+const apiUrl =
+  __DEV__ && isAndroidEmulator()
+    ? getDevelopmentUrl()
+    : configuredUrl || getDevelopmentUrl();
+
+export const ipNR = removeTrailingSlash(apiUrl);
 
 export const socketUrl =
   process.env.EXPO_PUBLIC_SOCKET_URL?.trim().replace(/\/+$/, "") ||
