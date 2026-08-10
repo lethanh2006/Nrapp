@@ -9,7 +9,9 @@ export function getAuthHeader(token: string) {
 }
 
 export function getApiErrorMessage(error: unknown, fallback: string) {
-  if (!isAxiosError(error)) return fallback;
+  if (!isAxiosError(error)) {
+    return error instanceof Error && error.message ? error.message : fallback;
+  }
 
   if (error.code === "ECONNABORTED") {
     return "Kết nối đến máy chủ quá thời gian. Vui lòng kiểm tra backend.";

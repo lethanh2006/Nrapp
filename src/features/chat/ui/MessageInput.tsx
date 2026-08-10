@@ -3,13 +3,17 @@ import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import * as ImagePicker from 'expo-image-picker';
 import React, { useState } from 'react';
 import {
+  ActivityIndicator,
   Image,
+  Keyboard,
   Pressable,
   StyleSheet,
   TextInput,
   View,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024;
 
 interface MessageInputProps {
   selectedUser: string | null;
@@ -28,28 +32,50 @@ export default function MessageInput({
   const [sending, setSending] = useState(false);
 
   const pickImage = async () => {
-    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
-    if (!permission.granted) {
-      Alert.alert('Cần quyền truy cập', 'Vui lòng cho phép ứng dụng truy cập thư viện ảnh.');
-      return;
+    try {
+      Keyboard.dismiss();
+      const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permission.granted) {
+        Alert.alert('Cần quyền truy cập', 'Vui lòng cho phép ứng dụng truy cập thư viện ảnh.');
+        return;
+      }
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        quality: 0.8,
+        selectionLimit: 1,
+      });
+      if (result.canceled) return;
+
+      const selectedImage = result.assets[0];
+      if (selectedImage.fileSize && selectedImage.fileSize > MAX_IMAGE_SIZE) {
+        Alert.alert('Ảnh quá lớn', 'Vui lòng chọn ảnh không vượt quá 5 MB.');
+        return;
+      }
+      setImage(selectedImage);
+    } catch (error) {
+      console.error('[CHAT][PICK_IMAGE_FAILED]', error);
+      Alert.alert('Lỗi', 'Không thể mở hoặc đọc ảnh đã chọn.');
     }
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ['images'],
-      quality: 0.85,
-    });
-    if (!result.canceled) setImage(result.assets[0]);
   };
 
   const handleSubmit = async () => {
     if ((!message.trim() && !image) || sending) return;
     setSending(true);
-    const sent = await handleMessageSend(
-      image
-        ? { uri: image.uri, fileName: image.fileName, mimeType: image.mimeType }
-        : undefined,
-    );
-    if (sent) setImage(null);
-    setSending(false);
+    try {
+      const sent = await handleMessageSend(
+        image
+          ? {
+              uri: image.uri,
+              fileName: image.fileName,
+              mimeType: image.mimeType,
+              fileSize: image.fileSize,
+            }
+          : undefined,
+      );
+      if (sent) setImage(null);
+    } finally {
+      setSending(false);
+    }
   };
 
   if (!selectedUser) return null;
@@ -86,7 +112,11 @@ export default function MessageInput({
           onPress={handleSubmit}
           disabled={(!message.trim() && !image) || sending}
         >
-          <Ionicons name="send" size={20} color="#fff" />
+          {sending ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Ionicons name="send" size={20} color="#fff" />
+          )}
         </Pressable>
       </View>
     </View>
@@ -98,6 +128,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: '#e5e5ea',
     paddingTop: 12,
+    paddingBottom: 4,
   },
   row: {
     flexDirection: 'row',
@@ -140,6 +171,10 @@ const styles = StyleSheet.create({
     padding: 12,
     backgroundColor: '#0084FF',
     borderRadius: 12,
+    minWidth: 44,
+    minHeight: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   sendDisabled: {
     opacity: 0.5,

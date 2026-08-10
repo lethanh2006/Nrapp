@@ -12,6 +12,7 @@ export interface ChatImageUpload {
   uri: string;
   fileName?: string | null;
   mimeType?: string | null;
+  fileSize?: number | null;
 }
 
 export interface ChatRecord {
