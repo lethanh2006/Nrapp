@@ -49,6 +49,8 @@ export default function ChatMessages({
       ref={scrollRef}
       style={styles.scroll}
       contentContainerStyle={styles.scrollContent}
+      keyboardDismissMode="interactive"
+      keyboardShouldPersistTaps="handled"
       onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
     >
       {uniqueMessages.map((msg) => {

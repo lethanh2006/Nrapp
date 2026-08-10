@@ -27,7 +27,6 @@ import {
   ActivityIndicator,
   BackHandler,
   KeyboardAvoidingView,
-  Platform,
   StyleSheet,
   View,
 } from "react-native";
@@ -300,7 +299,7 @@ export default function ChatView() {
   return (
     <KeyboardAvoidingView
       style={styles.container}
-      behavior={Platform.OS === "ios" ? "padding" : undefined}
+      behavior="padding"
       keyboardVerticalOffset={0}
     >
       <View style={styles.chatArea}>
