@@ -1,6 +1,7 @@
 import type { User } from "@/src/services/user/constant";
 
 export const TOKEN_KEY = "auth.accessToken";
+export const REFRESH_TOKEN_KEY = "auth.refreshToken";
 export const OLD_TOKEN_KEY = "token";
 
 export interface RegisterPayload {
@@ -25,5 +26,6 @@ export interface MessageResponse {
 
 export interface AuthSessionResponse extends MessageResponse {
   token: string;
+  refreshToken: string;
   user: User;
 }

@@ -1,10 +1,12 @@
 import axios from "@/src/utils/axios";
+import rawAxios from "axios";
 import { ipNR } from "@/src/utils/ip";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import {
   OLD_TOKEN_KEY,
+  REFRESH_TOKEN_KEY,
   TOKEN_KEY,
   type AuthSessionResponse,
   type LoginPayload,
@@ -33,17 +35,24 @@ export async function verifyOtp(payload: VerifyOtpPayload) {
   return axios.post<AuthSessionResponse>(`${ipNR}/auth/verify`, payload);
 }
 
-async function persistToken(token: string) {
+async function persistSecret(key: string, value: string) {
   if (Platform.OS === "web") {
-    await AsyncStorage.setItem(TOKEN_KEY, token);
+    await AsyncStorage.setItem(key, value);
   } else {
-    await SecureStore.setItemAsync(TOKEN_KEY, token);
+    await SecureStore.setItemAsync(key, value);
+    await AsyncStorage.removeItem(key);
   }
-  await AsyncStorage.multiRemove([OLD_TOKEN_KEY, ...(Platform.OS === "web" ? [] : [TOKEN_KEY])]);
 }
 
-export async function saveAuthSession({ token }: AuthSessionResponse) {
-  await persistToken(token);
+export async function saveAuthSession({
+  token,
+  refreshToken,
+}: AuthSessionResponse) {
+  await Promise.all([
+    persistSecret(TOKEN_KEY, token),
+    persistSecret(REFRESH_TOKEN_KEY, refreshToken),
+    AsyncStorage.removeItem(OLD_TOKEN_KEY),
+  ]);
 }
 
 export async function getStoredToken() {
@@ -58,14 +67,36 @@ export async function getStoredToken() {
     (await AsyncStorage.getItem(OLD_TOKEN_KEY));
   if (!legacyToken) return null;
 
-  await persistToken(legacyToken);
+  await persistSecret(TOKEN_KEY, legacyToken);
   return legacyToken;
 }
 
+export async function getStoredRefreshToken() {
+  return Platform.OS === "web"
+    ? AsyncStorage.getItem(REFRESH_TOKEN_KEY)
+    : SecureStore.getItemAsync(REFRESH_TOKEN_KEY);
+}
+
+export async function refreshAuthSession(refreshToken: string) {
+  const { data } = await rawAxios.post<AuthSessionResponse>(
+    `${ipNR}/auth/refresh`,
+    { refreshToken },
+  );
+  await saveAuthSession(data);
+  return data;
+}
+
 export async function clearAuthSession() {
-  await AsyncStorage.multiRemove([TOKEN_KEY, OLD_TOKEN_KEY]);
+  await AsyncStorage.multiRemove([
+    TOKEN_KEY,
+    REFRESH_TOKEN_KEY,
+    OLD_TOKEN_KEY,
+  ]);
   if (Platform.OS !== "web") {
-    await SecureStore.deleteItemAsync(TOKEN_KEY);
+    await Promise.all([
+      SecureStore.deleteItemAsync(TOKEN_KEY),
+      SecureStore.deleteItemAsync(REFRESH_TOKEN_KEY),
+    ]);
   }
 }
 

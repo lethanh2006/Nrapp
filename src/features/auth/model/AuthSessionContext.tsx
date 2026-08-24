@@ -1,6 +1,8 @@
 import {
   clearAuthSession,
+  getStoredRefreshToken,
   getStoredToken,
+  refreshAuthSession,
 } from "@/src/services/auth/auth.service";
 import axios from "@/src/utils/axios";
 import { getUserProfile } from "@/src/services/user/user.service";
@@ -11,8 +13,10 @@ import React, {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from "react";
+import type { InternalAxiosRequestConfig } from "axios";
 
 export type { User } from "@/src/services/user/constant";
 interface AuthSessionContextValue {
@@ -33,6 +37,9 @@ export const AuthSessionProvider: React.FC<{ children: React.ReactNode }> = ({
   const [user, setUser] = useState<User | null>(null);
   const [isAuth, setIsAuth] = useState(false);
   const [loading, setLoading] = useState(true);
+  const refreshPromiseRef = useRef<ReturnType<typeof refreshAuthSession> | null>(
+    null,
+  );
 
   const getToken = useCallback(async () => {
     return getStoredToken();
@@ -74,21 +81,48 @@ export const AuthSessionProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   useEffect(() => {
-    fetchUser();
-  }, [fetchUser]);
-
-  useEffect(() => {
     const interceptorId = axios.interceptors.response.use(
       (response) => response,
       async (error) => {
-        if (error?.response?.status === 401) {
-          await logoutUser();
+        const config = error?.config as
+          | (InternalAxiosRequestConfig & { _retriedAfterRefresh?: boolean })
+          | undefined;
+        if (error?.response?.status !== 401 || !config) {
+          return Promise.reject(error);
         }
-        return Promise.reject(error);
+        if (config._retriedAfterRefresh) {
+          await logoutUser();
+          return Promise.reject(error);
+        }
+
+        config._retriedAfterRefresh = true;
+        try {
+          if (!refreshPromiseRef.current) {
+            refreshPromiseRef.current = (async () => {
+              const refreshToken = await getStoredRefreshToken();
+              if (!refreshToken) throw new Error("Missing refresh token");
+              return refreshAuthSession(refreshToken);
+            })().finally(() => {
+              refreshPromiseRef.current = null;
+            });
+          }
+          const session = await refreshPromiseRef.current;
+          setUser(normalizeUser(session.user));
+          setIsAuth(true);
+          config.headers.set("Authorization", `Bearer ${session.token}`);
+          return axios(config);
+        } catch (refreshError) {
+          await logoutUser();
+          return Promise.reject(refreshError);
+        }
       },
     );
     return () => axios.interceptors.response.eject(interceptorId);
   }, [logoutUser]);
+
+  useEffect(() => {
+    void fetchUser();
+  }, [fetchUser]);
 
   return (
     <AuthSessionContext.Provider
