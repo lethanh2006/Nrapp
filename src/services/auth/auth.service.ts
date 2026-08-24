@@ -12,6 +12,8 @@ import {
   type RegisterPayload,
   type VerifyOtpPayload,
 } from "@/src/services/auth/constant";
+import type { KnownAppRole } from "@/src/services/user/constant";
+import { getAuthHeader } from "@/src/utils/apiHelper";
 
 export async function registerUser(payload: RegisterPayload) {
   return axios.post<MessageResponse & { userId: string }>(
@@ -65,4 +67,38 @@ export async function clearAuthSession() {
   if (Platform.OS !== "web") {
     await SecureStore.deleteItemAsync(TOKEN_KEY);
   }
+}
+
+export async function updateMyEmail(token: string, email: string) {
+  return axios.patch<MessageResponse & { email: string }>(
+    `${ipNR}/auth/me/email`,
+    { email },
+    getAuthHeader(token),
+  );
+}
+
+export async function deleteMyAccount(token: string) {
+  return axios.delete<MessageResponse>(
+    `${ipNR}/auth/me`,
+    getAuthHeader(token),
+  );
+}
+
+export async function updateUserRoleByAdmin(
+  token: string,
+  userId: string,
+  role: KnownAppRole,
+) {
+  return axios.patch<MessageResponse & { userId: string; role: string }>(
+    `${ipNR}/auth/users/${encodeURIComponent(userId)}/role`,
+    { role },
+    getAuthHeader(token),
+  );
+}
+
+export async function deleteUserByAdmin(token: string, userId: string) {
+  return axios.delete<MessageResponse>(
+    `${ipNR}/auth/users/${encodeURIComponent(userId)}`,
+    getAuthHeader(token),
+  );
 }

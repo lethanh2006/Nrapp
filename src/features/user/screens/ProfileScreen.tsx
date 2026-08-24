@@ -1,16 +1,28 @@
-import type { AppArea } from "@/src/application/access/roles";
+import {
+  getRoleLabel,
+  type AppArea,
+} from "@/src/application/access/roles";
 import { APP_ROUTES } from "@/src/application/navigation/routes";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
+import { normalizeUser } from "@/src/features/user/model/normalize-user";
+import {
+  deleteMyAccount,
+  updateMyEmail,
+} from "@/src/services/auth/auth.service";
+import { updateMyDisplayName } from "@/src/services/user/user.service";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
+import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { StatusBar } from "expo-status-bar";
-import type { ComponentProps, ReactNode } from "react";
+import { useState, type ComponentProps, type ReactNode } from "react";
 import {
+  ActivityIndicator,
   ImageBackground,
   Pressable,
   ScrollView,
   Text,
+  TextInput,
   View,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -53,19 +65,91 @@ function InfoRow({
   );
 }
 
-const getRoleLabel = (role: string | undefined, area: AppArea) => {
-  if (role === "admin") return "Quản trị viên";
-  if (role === "manager") return "Quản lý";
-  if (role === "chef") return "Điều hành";
-  return area === "admin" ? "Khối quản trị" : "Nhân viên";
-};
-
 export default function ProfileScreen({ area }: ProfileScreenProps) {
   const insets = useSafeAreaInsets();
-  const { logoutUser, user } = useAuthSession();
+  const { getToken, logoutUser, setUser, user } = useAuthSession();
+  const [editing, setEditing] = useState(false);
+  const [draftName, setDraftName] = useState("");
+  const [draftEmail, setDraftEmail] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const displayName = user?.name?.trim() || "Người dùng";
   const initial = displayName.charAt(0).toUpperCase();
-  const roleLabel = getRoleLabel(user?.role, area);
+  const roleLabel = user
+    ? getRoleLabel(user.role)
+    : area === "admin"
+      ? "Khối quản trị"
+      : "Nhân viên";
+
+  const openEditor = () => {
+    setDraftName(displayName);
+    setDraftEmail(user?.email || "");
+    setEditing(true);
+  };
+
+  const cancelEditor = () => {
+    if (saving) return;
+    setEditing(false);
+  };
+
+  const saveProfile = async () => {
+    if (!user || saving) return;
+
+    const name = draftName.trim();
+    const email = draftEmail.trim().toLowerCase();
+    if (!name) {
+      Alert.alert("Thông báo", "Tên hiển thị không được để trống.");
+      return;
+    }
+    if (!/^\S+@\S+\.\S+$/.test(email)) {
+      Alert.alert("Thông báo", "Email chưa đúng định dạng.");
+      return;
+    }
+
+    const nameChanged = name !== displayName;
+    const emailChanged = email !== user.email.trim().toLowerCase();
+    if (!nameChanged && !emailChanged) {
+      setEditing(false);
+      return;
+    }
+
+    try {
+      setSaving(true);
+      const token = await getToken();
+      if (!token) {
+        Alert.alert("Lỗi", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+        return;
+      }
+
+      let nextUser = user;
+      if (nameChanged) {
+        const { data } = await updateMyDisplayName(token, name);
+        const updated = normalizeUser(data.user);
+        nextUser = {
+          ...nextUser,
+          name: updated.name || name,
+          username: updated.username || name,
+        };
+        setUser(nextUser);
+      }
+
+      if (emailChanged) {
+        const { data } = await updateMyEmail(token, email);
+        nextUser = { ...nextUser, email: data.email || email };
+        setUser(nextUser);
+      }
+
+      setEditing(false);
+      Alert.alert("Thành công", "Thông tin tài khoản đã được cập nhật.");
+    } catch (error) {
+      Alert.alert(
+        "Lỗi",
+        getApiErrorMessage(error, "Không cập nhật được thông tin tài khoản."),
+      );
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const logout = async () => {
     try {
@@ -82,6 +166,43 @@ export default function ProfileScreen({ area }: ProfileScreenProps) {
       [
         { text: "Ở lại", style: "cancel" },
         { text: "Đăng xuất", style: "destructive", onPress: logout },
+      ],
+    );
+  };
+
+  const removeAccount = async () => {
+    if (deleting) return;
+    try {
+      setDeleting(true);
+      const token = await getToken();
+      if (!token) {
+        Alert.alert("Lỗi", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+        return;
+      }
+      await deleteMyAccount(token);
+      await logoutUser();
+      router.replace(APP_ROUTES.auth.login);
+    } catch (error) {
+      Alert.alert(
+        "Lỗi",
+        getApiErrorMessage(error, "Không thể xóa tài khoản lúc này."),
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const confirmRemoveAccount = () => {
+    Alert.alert(
+      "Xóa tài khoản?",
+      "Tài khoản và quyền truy cập của bạn sẽ bị xóa vĩnh viễn. Hành động này không thể hoàn tác.",
+      [
+        { text: "Giữ tài khoản", style: "cancel" },
+        {
+          text: "Xóa vĩnh viễn",
+          style: "destructive",
+          onPress: removeAccount,
+        },
       ],
     );
   };
@@ -151,35 +272,101 @@ export default function ProfileScreen({ area }: ProfileScreenProps) {
             </View>
           </View>
 
-          <Text className="mb-3 ml-1 text-base font-black text-slate-800">
-            Thông tin tài khoản
-          </Text>
-          <View className="mb-4 rounded-3xl border border-slate-100 bg-white px-4">
-            <InfoRow
-              icon="mail-outline"
-              label="Email tài khoản"
-              value={user?.email || "Chưa cập nhật"}
-            />
-            {user?.username ? (
-              <InfoRow
-                icon="at-outline"
-                label="Tên đăng nhập"
-                value={user.username}
-              />
+          <View className="mb-3 ml-1 flex-row items-center justify-between">
+            <Text className="text-base font-black text-slate-800">
+              Thông tin tài khoản
+            </Text>
+            {!editing ? (
+              <Pressable
+                accessibilityLabel="Chỉnh sửa thông tin tài khoản"
+                className="flex-row items-center rounded-xl bg-blue-50 px-3 py-2 active:bg-blue-100"
+                disabled={deleting}
+                onPress={openEditor}
+              >
+                <Ionicons name="create-outline" size={16} color="#2563eb" />
+                <Text className="ml-1 text-xs font-black text-blue-600">Chỉnh sửa</Text>
+              </Pressable>
             ) : null}
-            <InfoRow
-              icon="id-card-outline"
-              label="Mã nhân viên"
-              value={user?._id || "Chưa cập nhật"}
-              last
-            />
           </View>
+
+          {editing ? (
+            <View className="mb-4 rounded-3xl border border-blue-100 bg-white p-4">
+              <Text className="mb-2 text-xs font-black uppercase tracking-wide text-slate-500">
+                Tên hiển thị
+              </Text>
+              <TextInput
+                autoCapitalize="words"
+                className="mb-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800"
+                editable={!saving}
+                maxLength={80}
+                onChangeText={setDraftName}
+                placeholder="Nhập tên hiển thị"
+                placeholderTextColor="#94a3b8"
+                value={draftName}
+              />
+              <Text className="mb-2 text-xs font-black uppercase tracking-wide text-slate-500">
+                Email tài khoản
+              </Text>
+              <TextInput
+                autoCapitalize="none"
+                autoCorrect={false}
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-semibold text-slate-800"
+                editable={!saving}
+                keyboardType="email-address"
+                maxLength={160}
+                onChangeText={setDraftEmail}
+                placeholder="ten@congty.vn"
+                placeholderTextColor="#94a3b8"
+                value={draftEmail}
+              />
+              <View className="mt-4 flex-row">
+                <Pressable
+                  className="mr-3 flex-1 items-center rounded-2xl bg-slate-100 py-3 active:bg-slate-200"
+                  disabled={saving}
+                  onPress={cancelEditor}
+                >
+                  <Text className="text-sm font-black text-slate-600">Hủy</Text>
+                </Pressable>
+                <Pressable
+                  className={`flex-1 flex-row items-center justify-center rounded-2xl py-3 ${
+                    saving ? "bg-blue-300" : "bg-blue-600 active:bg-blue-700"
+                  }`}
+                  disabled={saving}
+                  onPress={() => void saveProfile()}
+                >
+                  {saving ? <ActivityIndicator color="white" size="small" /> : null}
+                  <Text className={`${saving ? "ml-2" : ""} text-sm font-black text-white`}>
+                    {saving ? "Đang lưu" : "Lưu thay đổi"}
+                  </Text>
+                </Pressable>
+              </View>
+            </View>
+          ) : (
+            <View className="mb-4 rounded-3xl border border-slate-100 bg-white px-4">
+              <InfoRow
+                icon="person-outline"
+                label="Tên hiển thị"
+                value={displayName}
+              />
+              <InfoRow
+                icon="mail-outline"
+                label="Email tài khoản"
+                value={user?.email || "Chưa cập nhật"}
+              />
+              <InfoRow
+                icon="id-card-outline"
+                label="Mã nhân viên"
+                value={user?._id || "Chưa cập nhật"}
+                last
+              />
+            </View>
+          )}
 
           <View className="mb-5 flex-row items-start rounded-2xl bg-blue-50 p-4">
             <Ionicons name="information-circle" size={20} color="#2563eb" />
             <Text className="ml-2 flex-1 text-xs leading-5 text-blue-700">
-              Thông tin hồ sơ được đồng bộ từ hệ thống. Liên hệ quản trị viên nếu
-              bạn cần thay đổi dữ liệu tài khoản.
+              Tên hiển thị và email sẽ được đồng bộ với hệ thống sau khi bạn lưu.
+              Vai trò tài khoản chỉ quản trị viên mới có thể thay đổi.
             </Text>
           </View>
 
@@ -190,6 +377,26 @@ export default function ProfileScreen({ area }: ProfileScreenProps) {
             <Ionicons name="log-out-outline" size={21} color="#dc2626" />
             <Text className="ml-2 text-sm font-black text-red-600">
               Đăng xuất khỏi hệ thống
+            </Text>
+          </Pressable>
+
+          <Pressable
+            accessibilityLabel="Xóa tài khoản vĩnh viễn"
+            className={`mt-3 flex-row items-center justify-center rounded-2xl border py-4 ${
+              deleting
+                ? "border-slate-200 bg-slate-100"
+                : "border-slate-200 bg-white active:bg-red-50"
+            }`}
+            disabled={deleting || saving}
+            onPress={confirmRemoveAccount}
+          >
+            {deleting ? (
+              <ActivityIndicator color="#64748b" size="small" />
+            ) : (
+              <Ionicons name="trash-outline" size={20} color="#64748b" />
+            )}
+            <Text className="ml-2 text-sm font-black text-slate-500">
+              {deleting ? "Đang xóa tài khoản" : "Xóa tài khoản vĩnh viễn"}
             </Text>
           </Pressable>
         </View>
