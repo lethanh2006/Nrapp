@@ -17,7 +17,7 @@ export function AttendanceQR() {
         <View className="flex-1">
           <Text className="text-lg font-bold text-slate-900">QR chấm công</Text>
           <Text className="text-slate-500 mt-1">
-            Tạo token 30 giây cho nhân viên quét check-in.
+            Một mã dùng chung cho nhiều nhân viên trong 30 giây.
           </Text>
         </View>
         <Pressable
@@ -53,13 +53,16 @@ export function AttendanceQR() {
               />
             </View>
             <Text className="text-[11px] uppercase tracking-[2px] text-red-700 font-bold mb-1">
-              Token Check-in
+              Token chấm công
             </Text>
             <Text className="text-slate-900 font-bold text-lg mb-1">
               {generatedQr.token}
             </Text>
             <Text className="text-slate-500 text-sm">
               Hết hạn lúc: {formatDateTime(generatedQr.expires_at)}
+            </Text>
+            <Text className="mt-3 text-center text-xs leading-5 text-slate-500">
+              Hãy tạo một mã mới cho đợt check-in và một mã khác cho đợt check-out. Trong thời gian hiệu lực, cùng một mã có thể được nhiều nhân viên quét.
             </Text>
           </View>
         </View>

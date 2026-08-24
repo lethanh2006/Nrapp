@@ -14,6 +14,7 @@ import type {
   WorkPeriod,
 } from "@/src/services/workschedule/constant";
 import { canManageWorkSchedule } from "@/src/application/access/roles";
+import { toLocalDateKey } from "@/src/features/workschedule/utils/date";
 
 type RequestStatus = "all" | "pending" | "approved" | "rejected";
 type ReportRange = "7d" | "30d";
@@ -67,10 +68,15 @@ const getReportRange = (range: ReportRange) => {
   const from = new Date(to);
   from.setDate(from.getDate() - (range === "7d" ? 6 : 29));
   return {
-    from: from.toISOString(),
-    to: addDays(to, 1).toISOString(),
+    from: toLocalDateKey(from),
+    to: toLocalDateKey(to),
   };
 };
+
+const isPhysicalAttendance = (record: AdminAttendanceRecord) =>
+  record.source === "qr" &&
+  record.schedule_type === "office" &&
+  Boolean(record.check_in_at);
 
 const formatDateString = (dateVal: string | Date | undefined | null) => {
   if (!dateVal) return "";
@@ -142,7 +148,7 @@ export interface AdminContextValue {
   reportRange: ReportRange;
   setReportRange: React.Dispatch<React.SetStateAction<ReportRange>>;
   totalReportEmployees: number;
-  totalReportRemote: number;
+  totalReportCompleted: number;
   heatmapRows: AdminHeatmapRow[];
 
   // Actions
@@ -239,7 +245,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       approvedCurrentWeek.map((request) => getScheduleDetail(request._id, true))
     );
 
-    const todayKey = startOfDay(new Date()).toISOString().split("T")[0];
+    const todayKey = toLocalDateKey(new Date());
     const expected = approvedDetails.filter(Boolean).flatMap((request) => {
       const item = request as AdminScheduleRequest;
       const employeeId = String(item.employee?._id || item.employee?.id || item.employee_id || item._id);
@@ -265,8 +271,8 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     setPendingSchedules(pendingData);
     setAllSchedules(allData);
     setHeatmapRows(heatmapData);
-    setTodayAttendance(attendanceData);
-    setReportRows(reportData);
+    setTodayAttendance(attendanceData.filter(isPhysicalAttendance));
+    setReportRows(reportData.filter(isPhysicalAttendance));
     setTodayExpected(expected);
     setSelectedPendingIds((previous) =>
       previous.filter((id) => allData.some((request) => request._id === id && request.status === "pending")),
@@ -429,7 +435,10 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     setQrBusy(false);
     if (token) {
       setGeneratedQr(token);
-      Alert.alert("Đã tạo QR", "Token chấm công có hiệu lực trong 30 giây");
+      Alert.alert(
+        "Đã tạo QR",
+        "Mã dùng chung cho nhiều nhân viên và có hiệu lực trong 30 giây. Hãy tạo mã mới cho đợt check-in và một mã khác cho đợt check-out.",
+      );
     }
   };
 
@@ -441,7 +450,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const totalTodayCheckedIn = todayAttendance.length;
   const totalTodayMissing = missingToday.length;
   const totalReportEmployees = new Set(reportRows.map((item) => String(item.employee?._id || item.employee_id))).size;
-  const totalReportRemote = reportRows.filter((item) => item.schedule_type === "remote").length;
+  const totalReportCompleted = reportRows.filter((item) => item.check_out_at).length;
 
   const value: AdminContextValue = {
     appLoading, initialLoading, refreshing, user,
@@ -451,7 +460,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     handleApprove, handleBulkApprove, handleReject, rejectingRequestId, setRejectingRequestId, rejectReason, setRejectReason, busyRequestId, bulkBusy,
     qrBusy, generatedQr, qrRemaining, handleGenerateQr,
     todayAttendance, todayExpected, missingToday, checkedInMap, totalTodayExpected, totalTodayCheckedIn, totalTodayMissing,
-    reportRows, reportRange, setReportRange, totalReportEmployees, totalReportRemote, heatmapRows,
+    reportRows, reportRange, setReportRange, totalReportEmployees, totalReportCompleted, heatmapRows,
     loadAdminData, handleAdminUpdateEntries
   };
 

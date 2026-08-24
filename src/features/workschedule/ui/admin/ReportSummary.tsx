@@ -38,7 +38,7 @@ export function ReportSummary() {
     reportRange,
     setReportRange,
     totalReportEmployees,
-    totalReportRemote,
+    totalReportCompleted,
   } = useAdminData();
 
   return (
@@ -160,7 +160,7 @@ export function ReportSummary() {
               Báo cáo tổng hợp
             </Text>
             <Text className="text-slate-500 mt-1">
-              Thống kê theo {reportRange === "7d" ? "7 ngày" : "30 ngày"} gần nhất.
+              Chỉ tính lượt quét QR tại văn phòng trong {reportRange === "7d" ? "7 ngày" : "30 ngày"} gần nhất.
             </Text>
           </View>
           <View className="flex-row rounded-full bg-slate-100 p-1">
@@ -200,11 +200,11 @@ export function ReportSummary() {
             valueStyle="text-red-950"
           />
           <StatCard
-            title="Remote"
-            value={totalReportRemote}
-            containerStyle="bg-violet-50 border-violet-100"
-            titleStyle="text-violet-700"
-            valueStyle="text-violet-950"
+            title="Đủ check-out"
+            value={totalReportCompleted}
+            containerStyle="bg-emerald-50 border-emerald-100"
+            titleStyle="text-emerald-700"
+            valueStyle="text-emerald-950"
           />
         </View>
 
@@ -235,6 +235,9 @@ export function ReportSummary() {
                         Check-out: {formatDateTime(record.check_out_at)}
                       </Text>
                     )}
+                    <Text className="mt-1 text-[11px] font-bold text-emerald-700">
+                      Nguồn: Quét QR tại văn phòng
+                    </Text>
                   </View>
                   <View
                     className={`rounded-full px-3 py-1 ${record.schedule_type === "remote" ? "bg-violet-100" : "bg-slate-200"}`}
