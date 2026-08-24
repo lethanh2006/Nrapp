@@ -43,6 +43,23 @@ export interface MenuGroup {
   items: MenuItem[];
 }
 
+export interface AdminMenuCatalog {
+  categories: MenuCategory[];
+  items: MenuItem[];
+}
+
+export interface CreateMenuItemInput {
+  categoryId: string;
+  name: string;
+  description?: string;
+  price: number;
+  imageUrl?: string;
+  isAvailable?: boolean;
+  options?: MenuItemOption[];
+}
+
+export type UpdateMenuItemInput = Partial<CreateMenuItemInput>;
+
 export interface CreateOrderItemInput {
   menuItemId: string;
   quantity: number;

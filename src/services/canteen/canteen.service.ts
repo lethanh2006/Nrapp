@@ -1,10 +1,13 @@
 import type {
+  AdminMenuCatalog,
   CanteenOrder,
+  CreateMenuItemInput,
   CreateOrderInput,
   MenuGroup,
   MenuItem,
   OrderListQuery,
   PaginatedOrders,
+  UpdateMenuItemInput,
 } from "@/src/services/canteen/constant";
 import { getAuthHeader } from "@/src/utils/apiHelper";
 import axios from "@/src/utils/axios";
@@ -20,6 +23,68 @@ export async function searchCanteenMenu(query: string) {
     params: { q: query.trim() },
   });
   return Array.isArray(data) ? data : [];
+}
+
+export async function getAdminCanteenMenu(token: string) {
+  const { data } = await axios.get<AdminMenuCatalog>(
+    `${ipNR}/canteen/admin/menu`,
+    getAuthHeader(token),
+  );
+  return {
+    categories: Array.isArray(data.categories) ? data.categories : [],
+    items: Array.isArray(data.items) ? data.items : [],
+  };
+}
+
+export async function createCanteenMenuItem(
+  token: string,
+  payload: CreateMenuItemInput,
+) {
+  const { data } = await axios.post<MenuItem>(
+    `${ipNR}/canteen/admin/menu`,
+    payload,
+    getAuthHeader(token),
+  );
+  return data;
+}
+
+export async function updateCanteenMenuItem(
+  token: string,
+  itemId: string,
+  payload: UpdateMenuItemInput,
+) {
+  const { data } = await axios.put<MenuItem>(
+    `${ipNR}/canteen/admin/menu/${encodeURIComponent(itemId)}`,
+    payload,
+    getAuthHeader(token),
+  );
+  return data;
+}
+
+export async function deleteCanteenMenuItem(token: string, itemId: string) {
+  const { data } = await axios.delete<MenuItem>(
+    `${ipNR}/canteen/admin/menu/${encodeURIComponent(itemId)}`,
+    getAuthHeader(token),
+  );
+  return data;
+}
+
+export async function undoCanteenMenuChange(token: string) {
+  const { data } = await axios.post<unknown>(
+    `${ipNR}/canteen/admin/menu/undo`,
+    {},
+    getAuthHeader(token),
+  );
+  return data;
+}
+
+export async function redoCanteenMenuChange(token: string) {
+  const { data } = await axios.post<unknown>(
+    `${ipNR}/canteen/admin/menu/redo`,
+    {},
+    getAuthHeader(token),
+  );
+  return data;
 }
 
 export async function createCanteenOrder(
