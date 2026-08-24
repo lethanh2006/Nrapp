@@ -6,6 +6,7 @@ const createAreaRoutes = (area: AppArea) =>
     home: `/(main)/${area}/home` as Href,
     chat: `/(main)/${area}/chat` as Href,
     todo: `/(main)/${area}/todo` as Href,
+    canteen: `/(main)/${area}/canteen` as Href,
     workschedule: `/(main)/${area}/workschedule` as Href,
     utilities: `/(main)/${area}/utilities` as Href,
     directory: `/(main)/${area}/directory` as Href,

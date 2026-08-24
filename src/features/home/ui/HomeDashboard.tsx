@@ -387,6 +387,18 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
             </Pressable>
 
             <Pressable
+              onPress={() => router.push(areaRoutes.canteen)}
+              className="items-center justify-center flex-1 active:scale-95 active:opacity-80 transition-all"
+            >
+              <View className="w-14 h-14 bg-orange-50 rounded-2xl items-center justify-center shadow-xs">
+                <Ionicons name="restaurant" size={24} color="#f97316" />
+              </View>
+              <Text className="text-[11px] text-slate-700 font-extrabold text-center mt-2.5">
+                Căn tin
+              </Text>
+            </Pressable>
+
+            <Pressable
               onPress={() =>
                 router.push(areaRoutes.utilities)
               }
