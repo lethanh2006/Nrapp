@@ -38,7 +38,7 @@ export default function WorkscheduleUtilitiesScreen({ area }: { area: AppArea })
     },
     {
       title: "Lịch làm việc",
-      description: "Xem lịch tháng, trạng thái duyệt và chi tiết từng ngày",
+      description: "Xem lịch tháng, trạng thái duyệt và lịch sử chấm công",
       icon: "calendar-number-outline",
       color: "#0891b2",
       background: "bg-cyan-50",

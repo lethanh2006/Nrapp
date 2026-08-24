@@ -3,16 +3,48 @@ import { toLocalDateKey } from "@/src/features/workschedule/utils/date";
 import type {
   IMonthlyScheduleEntry,
   IMonthlyScheduleOverview,
+  PersonalAttendanceRecord,
 } from "@/src/services/workschedule/constant";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
 
 const WEEKDAYS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
 
 const monthKey = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+
+const monthRange = (date: Date) => ({
+  from: toLocalDateKey(new Date(date.getFullYear(), date.getMonth(), 1)),
+  to: toLocalDateKey(new Date(date.getFullYear(), date.getMonth() + 1, 0)),
+});
+
+const formatAttendanceDate = (value: string) => {
+  const dateKey = value.slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey)) return "Không rõ ngày";
+  const [year, month, day] = dateKey.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  return Number.isNaN(date.getTime())
+    ? "Không rõ ngày"
+    : date.toLocaleDateString("vi-VN", {
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+      });
+};
+
+const formatAttendanceTime = (value?: string) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "-"
+    : date.toLocaleTimeString("vi-VN", {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+};
 
 const periodMeta = (entry?: IMonthlyScheduleEntry) => {
   if (!entry) return { background: "bg-white", dot: "bg-transparent", label: "Trống" };
@@ -38,7 +70,7 @@ const statusLabel: Record<string, string> = {
 };
 
 export default function UserWorkCalendarScreen() {
-  const { getMonthlyOverview } = useWorkscheduleUser();
+  const { getMonthlyOverview, getMyAttendance } = useWorkscheduleUser();
   const [visibleMonth, setVisibleMonth] = useState(() => {
     const value = new Date();
     value.setDate(1);
@@ -46,19 +78,32 @@ export default function UserWorkCalendarScreen() {
     return value;
   });
   const [overview, setOverview] = useState<IMonthlyScheduleOverview | null>(null);
+  const [attendance, setAttendance] = useState<PersonalAttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
+  const loadRequestRef = useRef(0);
 
   const loadData = useCallback(async () => {
+    const requestId = ++loadRequestRef.current;
     setLoading(true);
-    const data = await getMonthlyOverview(monthKey(visibleMonth));
-    setOverview(data);
+    setAttendance([]);
+    const range = monthRange(visibleMonth);
+    const [scheduleData, attendanceData] = await Promise.all([
+      getMonthlyOverview(monthKey(visibleMonth)),
+      getMyAttendance(range.from, range.to),
+    ]);
+    if (requestId !== loadRequestRef.current) return;
+    setOverview(scheduleData);
+    setAttendance(attendanceData);
     setLoading(false);
-  }, [getMonthlyOverview, visibleMonth]);
+  }, [getMonthlyOverview, getMyAttendance, visibleMonth]);
 
   useFocusEffect(
     useCallback(() => {
       void loadData();
+      return () => {
+        loadRequestRef.current += 1;
+      };
     }, [loadData]),
   );
 
@@ -104,6 +149,10 @@ export default function UserWorkCalendarScreen() {
     { label: "Chờ duyệt", value: overview?.stats.pending_requests || 0 },
   ];
 
+  const physicalAttendance = attendance.filter(record => record.source === "qr");
+  const completedAttendance = physicalAttendance.filter(record => record.check_out_at);
+  const automaticAttendance = attendance.filter(record => record.source === "schedule");
+
   return (
     <View className="flex-1 bg-slate-50">
       <View className="flex-row items-center border-b border-slate-100 bg-white px-4 py-3">
@@ -115,7 +164,7 @@ export default function UserWorkCalendarScreen() {
         </Pressable>
         <View>
           <Text className="text-lg font-black text-slate-900">Lịch làm việc</Text>
-          <Text className="text-[11px] text-slate-500">Theo dõi lịch và trạng thái duyệt</Text>
+          <Text className="text-[11px] text-slate-500">Lịch làm, trạng thái duyệt và chấm công</Text>
         </View>
       </View>
 
@@ -225,6 +274,130 @@ export default function UserWorkCalendarScreen() {
             </View>
           ) : (
             <Text className="mt-3 text-sm text-slate-500">Không có lịch làm việc trong ngày này.</Text>
+          )}
+        </View>
+
+        <View className="mt-4 rounded-3xl border border-slate-200 bg-white p-4">
+          <View className="flex-row items-start">
+            <View className="h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50">
+              <Ionicons name="finger-print-outline" size={22} color="#059669" />
+            </View>
+            <View className="ml-3 flex-1">
+              <Text className="text-base font-black text-slate-900">
+                Lịch sử chấm công cá nhân
+              </Text>
+              <Text className="mt-1 text-xs leading-5 text-slate-500">
+                Tháng {visibleMonth.getMonth() + 1}/{visibleMonth.getFullYear()}
+              </Text>
+            </View>
+          </View>
+
+          <View className="mt-4 flex-row" style={{ gap: 8 }}>
+            {[
+              { label: "Quét QR", value: physicalAttendance.length },
+              { label: "Đủ vào/ra", value: completedAttendance.length },
+              { label: "Remote tự động", value: automaticAttendance.length },
+            ].map(item => (
+              <View className="flex-1 rounded-2xl bg-slate-50 px-2 py-3" key={item.label}>
+                <Text className="text-center text-lg font-black text-slate-900">
+                  {item.value}
+                </Text>
+                <Text className="mt-1 text-center text-[9px] font-bold leading-4 text-slate-500">
+                  {item.label}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          <View className="mt-3 flex-row items-start rounded-2xl bg-blue-50 p-3">
+            <Ionicons name="information-circle-outline" size={17} color="#2563eb" />
+            <Text className="ml-2 flex-1 text-[11px] leading-5 text-blue-700">
+              Nguồn QR là chấm công vật lý tại văn phòng. Ngày remote được hệ thống ghi nhận tự động từ lịch đã duyệt và không được tính là lượt quét QR.
+            </Text>
+          </View>
+
+          {attendance.length === 0 ? (
+            <View className="mt-4 items-center rounded-2xl border border-dashed border-slate-200 bg-slate-50 px-4 py-8">
+              <Ionicons name="time-outline" size={30} color="#94a3b8" />
+              <Text className="mt-2 text-center text-xs font-semibold text-slate-500">
+                Chưa có bản ghi chấm công trong tháng này.
+              </Text>
+            </View>
+          ) : (
+            <View className="mt-4" style={{ gap: 10 }}>
+              {attendance.map(record => {
+                const isPhysical = record.source === "qr";
+                const completed = Boolean(record.check_out_at);
+                return (
+                  <View
+                    className={`rounded-2xl border p-3 ${
+                      isPhysical
+                        ? "border-emerald-100 bg-emerald-50/60"
+                        : "border-violet-100 bg-violet-50/60"
+                    }`}
+                    key={record._id}
+                  >
+                    <View className="flex-row items-start justify-between">
+                      <View className="min-w-0 flex-1 pr-2">
+                        <Text className="text-sm font-black capitalize text-slate-800">
+                          {formatAttendanceDate(record.date)}
+                        </Text>
+                        <Text className="mt-1 text-[11px] font-semibold text-slate-500">
+                          {record.schedule_type === "remote"
+                            ? "Làm việc từ xa"
+                            : "Làm việc tại văn phòng"}
+                        </Text>
+                      </View>
+                      <View
+                        className={`rounded-full px-2.5 py-1 ${
+                          isPhysical ? "bg-emerald-100" : "bg-violet-100"
+                        }`}
+                      >
+                        <Text
+                          className={`text-[9px] font-black uppercase ${
+                            isPhysical ? "text-emerald-700" : "text-violet-700"
+                          }`}
+                        >
+                          {isPhysical ? "Quét QR" : "Theo lịch"}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {isPhysical ? (
+                      <View className="mt-3 flex-row rounded-xl bg-white/80 px-3 py-2.5">
+                        <View className="flex-1">
+                          <Text className="text-[9px] font-bold uppercase text-slate-400">
+                            Check-in
+                          </Text>
+                          <Text className="mt-1 text-xs font-black text-slate-700">
+                            {formatAttendanceTime(record.check_in_at)}
+                          </Text>
+                        </View>
+                        <View className="w-px bg-slate-100" />
+                        <View className="flex-1 pl-3">
+                          <Text className="text-[9px] font-bold uppercase text-slate-400">
+                            Check-out
+                          </Text>
+                          <Text
+                            className={`mt-1 text-xs font-black ${
+                              completed ? "text-slate-700" : "text-amber-600"
+                            }`}
+                          >
+                            {completed
+                              ? formatAttendanceTime(record.check_out_at)
+                              : "Chưa quét"}
+                          </Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <Text className="mt-3 rounded-xl bg-white/80 px-3 py-2.5 text-[11px] leading-5 text-violet-700">
+                        Khung giờ tự động: {formatAttendanceTime(record.check_in_at)} - {formatAttendanceTime(record.check_out_at)}
+                      </Text>
+                    )}
+                  </View>
+                );
+              })}
+            </View>
           )}
         </View>
       </ScrollView>
