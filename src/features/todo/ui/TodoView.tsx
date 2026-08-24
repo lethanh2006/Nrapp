@@ -1,12 +1,15 @@
 import TodoCreateTaskCard from "@/src/features/todo/ui/TodoCreateTaskCard";
 import TodoIntroCard from "@/src/features/todo/ui/TodoIntroCard";
+import TodoTaskFilters from "@/src/features/todo/ui/TodoTaskFilters";
 import TodoTaskListCard from "@/src/features/todo/ui/TodoTaskListCard";
 import type { AppArea } from "@/src/application/access/roles";
 import type {
   CreateTaskInput,
   TaskItem,
+  TaskPagination,
   TaskPriority,
   TaskStatus,
+  UpdateTaskInput,
 } from "@/src/services/todo/constant";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { normalizeUser } from "@/src/features/user/model/normalize-user";
@@ -16,12 +19,20 @@ import {
   deleteTodoTask,
   getAdminTasks,
   getMyTasks,
+  updateTodoTask,
   updateTodoStatus,
 } from "@/src/services/todo/todo.service";
+import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import { getAllUsers } from "@/src/services/user/user.service";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import type { User } from "@/src/services/user/constant";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import {
   ActivityIndicator,
   RefreshControl,
@@ -33,18 +44,40 @@ interface TodoViewProps {
   area: AppArea;
 }
 
+const TASK_PAGE_LIMIT = 10;
+
+const INITIAL_PAGINATION: TaskPagination = {
+  page: 1,
+  limit: TASK_PAGE_LIMIT,
+  total: 0,
+  totalPages: 0,
+};
+
 export default function TodoView({ area }: TodoViewProps) {
   const { loading: appLoading, isAuth, user, getToken } = useAuthSession();
   const isAdminArea = area === "admin";
   const [users, setUsers] = useState<User[]>([]);
 
   const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [pagination, setPagination] =
+    useState<TaskPagination>(INITIAL_PAGINATION);
   const [loading, setLoading] = useState(true);
+  const [tasksLoading, setTasksLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [creating, setCreating] = useState(false);
   const [assigningTaskId, setAssigningTaskId] = useState<string | null>(null);
   const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
+  const [savingTaskId, setSavingTaskId] = useState<string | null>(null);
   const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
+
+  const [statusFilter, setStatusFilter] = useState<TaskStatus | null>(null);
+  const [priorityFilter, setPriorityFilter] =
+    useState<TaskPriority | null>(null);
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const taskRequestRef = useRef(0);
+  const initializedRef = useRef(false);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -62,21 +95,53 @@ export default function TodoView({ area }: TodoViewProps) {
   const loadTasks = useCallback(async () => {
     if (!isAuth) return;
 
+    const requestNumber = ++taskRequestRef.current;
     try {
+      setTasksLoading(true);
       const token = await getToken();
       if (!token) return;
 
-      setTasks(
-        isAdminArea ? await getAdminTasks(token) : await getMyTasks(token),
-      );
-      if (isAdminArea) {
-        const { data } = await getAllUsers(token);
-        setUsers((data.users ?? []).map(normalizeUser));
-      }
-    } catch (error: any) {
+      const query = {
+        page,
+        limit: TASK_PAGE_LIMIT,
+        ...(statusFilter ? { status: statusFilter } : {}),
+        ...(priorityFilter ? { priority: priorityFilter } : {}),
+        ...(search ? { search } : {}),
+      };
+      const result = isAdminArea
+        ? await getAdminTasks(token, query)
+        : await getMyTasks(token, query);
+
+      if (requestNumber !== taskRequestRef.current) return;
+      setTasks(result.tasks);
+      setPagination(result.pagination);
+    } catch (error: unknown) {
+      if (requestNumber !== taskRequestRef.current) return;
+      Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được công việc"));
+    } finally {
+      if (requestNumber === taskRequestRef.current) setTasksLoading(false);
+    }
+  }, [
+    getToken,
+    isAdminArea,
+    isAuth,
+    page,
+    priorityFilter,
+    search,
+    statusFilter,
+  ]);
+
+  const loadUsers = useCallback(async () => {
+    if (!isAdminArea || !isAuth) return;
+    try {
+      const token = await getToken();
+      if (!token) return;
+      const { data } = await getAllUsers(token);
+      setUsers((data.users ?? []).map(normalizeUser));
+    } catch (error: unknown) {
       Alert.alert(
         "Lỗi",
-        error?.response?.data?.message || "Không tải được công việc",
+        getApiErrorMessage(error, "Không tải được danh sách nhân viên"),
       );
     }
   }, [getToken, isAdminArea, isAuth]);
@@ -84,19 +149,34 @@ export default function TodoView({ area }: TodoViewProps) {
   useEffect(() => {
     let mounted = true;
     (async () => {
-      setLoading(true);
       await loadTasks();
-      if (mounted) setLoading(false);
+      if (mounted && !initializedRef.current) {
+        initializedRef.current = true;
+        setLoading(false);
+      }
     })();
     return () => {
       mounted = false;
     };
   }, [loadTasks]);
 
+  useEffect(() => {
+    void loadUsers();
+  }, [loadUsers]);
+
+  useEffect(() => {
+    if (pagination.totalPages > 0 && page > pagination.totalPages) {
+      setPage(pagination.totalPages);
+    }
+  }, [page, pagination.totalPages]);
+
   const onRefresh = async () => {
     setRefreshing(true);
-    await loadTasks();
-    setRefreshing(false);
+    try {
+      await Promise.all([loadTasks(), loadUsers()]);
+    } finally {
+      setRefreshing(false);
+    }
   };
 
   const createTask = async () => {
@@ -129,13 +209,11 @@ export default function TodoView({ area }: TodoViewProps) {
       setPriority("medium");
       setDeadline(null);
       setCreateAssignee("");
-      await loadTasks();
+      if (page === 1) await loadTasks();
+      else setPage(1);
       Alert.alert("Thành công", "Đã tạo công việc");
-    } catch (error: any) {
-      Alert.alert(
-        "Lỗi",
-        error?.response?.data?.message || "Không tạo được công việc",
-      );
+    } catch (error: unknown) {
+      Alert.alert("Lỗi", getApiErrorMessage(error, "Không tạo được công việc"));
     } finally {
       setCreating(false);
     }
@@ -160,11 +238,8 @@ export default function TodoView({ area }: TodoViewProps) {
       await assignTodoTask(token, taskId, assignedTo);
       await loadTasks();
       Alert.alert("Thành công", "Đã giao công việc");
-    } catch (error: any) {
-      Alert.alert(
-        "Lỗi",
-        error?.response?.data?.message || "Không giao được công việc",
-      );
+    } catch (error: unknown) {
+      Alert.alert("Lỗi", getApiErrorMessage(error, "Không giao được công việc"));
     } finally {
       setAssigningTaskId(null);
     }
@@ -177,13 +252,36 @@ export default function TodoView({ area }: TodoViewProps) {
       if (!token) return;
       await updateTodoStatus(token, taskId, status);
       await loadTasks();
-    } catch (error: any) {
+    } catch (error: unknown) {
       Alert.alert(
         "Lỗi",
-        error?.response?.data?.message || "Không cập nhật được trạng thái",
+        getApiErrorMessage(error, "Không cập nhật được trạng thái"),
       );
     } finally {
       setUpdatingTaskId(null);
+    }
+  };
+
+  const updateTask = async (
+    taskId: string,
+    input: UpdateTaskInput,
+  ): Promise<boolean> => {
+    try {
+      setSavingTaskId(taskId);
+      const token = await getToken();
+      if (!token) return false;
+      await updateTodoTask(token, taskId, input);
+      await loadTasks();
+      Alert.alert("Thành công", "Đã cập nhật nội dung công việc");
+      return true;
+    } catch (error: unknown) {
+      Alert.alert(
+        "Lỗi",
+        getApiErrorMessage(error, "Không cập nhật được công việc"),
+      );
+      return false;
+    } finally {
+      setSavingTaskId(null);
     }
   };
 
@@ -195,11 +293,8 @@ export default function TodoView({ area }: TodoViewProps) {
       await deleteTodoTask(token, taskId);
       await loadTasks();
       Alert.alert("Thành công", "Đã xoá công việc");
-    } catch (error: any) {
-      Alert.alert(
-        "Lỗi",
-        error?.response?.data?.message || "Không xoá được công việc",
-      );
+    } catch (error: unknown) {
+      Alert.alert("Lỗi", getApiErrorMessage(error, "Không xoá được công việc"));
     } finally {
       setDeletingTaskId(null);
     }
@@ -241,14 +336,48 @@ export default function TodoView({ area }: TodoViewProps) {
         />
       ) : null}
 
+      <TodoTaskFilters
+        status={statusFilter}
+        priority={priorityFilter}
+        searchInput={searchInput}
+        appliedSearch={search}
+        page={page}
+        total={pagination.total}
+        totalPages={pagination.totalPages}
+        loading={tasksLoading}
+        onChangeStatus={(value) => {
+          setPage(1);
+          setStatusFilter(value);
+        }}
+        onChangePriority={(value) => {
+          setPage(1);
+          setPriorityFilter(value);
+        }}
+        onChangeSearchInput={setSearchInput}
+        onApplySearch={() => {
+          setPage(1);
+          setSearch(searchInput.trim());
+        }}
+        onReset={() => {
+          setPage(1);
+          setStatusFilter(null);
+          setPriorityFilter(null);
+          setSearchInput("");
+          setSearch("");
+        }}
+        onChangePage={setPage}
+      />
+
       <TodoTaskListCard
         area={area}
         tasks={tasks}
+        loading={tasksLoading}
         users={selectableUsers}
         currentUser={user}
         assignByTask={assignByTask}
         assigningTaskId={assigningTaskId}
         updatingTaskId={updatingTaskId}
+        savingTaskId={savingTaskId}
         deletingTaskId={deletingTaskId}
         onSelectAssignUser={(taskId, userId) =>
           setAssignByTask((prev) => ({
@@ -258,9 +387,9 @@ export default function TodoView({ area }: TodoViewProps) {
         }
         onAssignTask={assignTask}
         onUpdateStatus={updateStatus}
+        onUpdateTask={updateTask}
         onRemoveTask={removeTask}
       />
     </ScrollView>
-
   );
 }

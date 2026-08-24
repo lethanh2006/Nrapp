@@ -1,29 +1,41 @@
 import type { AppArea } from "@/src/application/access/roles";
+import TodoEditTaskForm from "@/src/features/todo/ui/TodoEditTaskForm";
 import type { User } from "@/src/services/user/constant";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
-import { Pressable, ScrollView, Text, View } from "react-native";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  View,
+} from "react-native";
+import {
+  ASSIGNEE_STATUS_TRANSITIONS,
+  MANAGEMENT_STATUS_TRANSITIONS,
   PRIORITY_MAP,
-  RelatedUser,
   STATUS_MAP,
-  STATUS_OPTIONS,
-  TaskItem,
-  TaskStatus,
+  type RelatedUser,
+  type TaskItem,
+  type TaskStatus,
+  type UpdateTaskInput,
 } from "@/src/services/todo/constant";
 
 type Props = {
   area: AppArea;
   tasks: TaskItem[];
+  loading: boolean;
   users: User[];
   currentUser?: User | null;
   assignByTask: Record<string, string>;
   assigningTaskId: string | null;
   updatingTaskId: string | null;
+  savingTaskId: string | null;
   deletingTaskId: string | null;
   onSelectAssignUser: (taskId: string, userId: string) => void;
   onAssignTask: (taskId: string) => void;
   onUpdateStatus: (taskId: string, status: TaskStatus) => void;
+  onUpdateTask: (taskId: string, input: UpdateTaskInput) => Promise<boolean>;
   onRemoveTask: (taskId: string) => void;
 };
 
@@ -49,18 +61,28 @@ const displayName = (
 export default function TodoTaskListCard({
   area,
   tasks,
+  loading,
   users,
   currentUser,
   assignByTask,
   assigningTaskId,
   updatingTaskId,
+  savingTaskId,
   deletingTaskId,
   onSelectAssignUser,
   onAssignTask,
   onUpdateStatus,
+  onUpdateTask,
   onRemoveTask,
 }: Props) {
   const isAdminArea = area === "admin";
+  const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (editingTaskId && !tasks.some((task) => task._id === editingTaskId)) {
+      setEditingTaskId(null);
+    }
+  }, [editingTaskId, tasks]);
 
   return (
     <View className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
@@ -80,7 +102,14 @@ export default function TodoTaskListCard({
         </View>
       </View>
 
-      {tasks.length === 0 ? (
+      {loading ? (
+        <View className="items-center justify-center py-10">
+          <ActivityIndicator size="small" color="#2563eb" />
+          <Text className="mt-2 text-xs font-medium text-slate-400">
+            Đang tải danh sách...
+          </Text>
+        </View>
+      ) : tasks.length === 0 ? (
         <View className="items-center justify-center py-8">
           <Ionicons name="file-tray-outline" size={40} color="#cbd5e1" />
           <Text className="text-slate-400 text-sm font-medium mt-2">
@@ -93,9 +122,15 @@ export default function TodoTaskListCard({
             const isOverdue =
               task.deadline &&
               new Date(task.deadline) < new Date() &&
-              task.status !== "done";
+              task.status !== "done" &&
+              task.status !== "cancelled";
             const priorityInfo = PRIORITY_MAP[task.priority];
             const statusInfo = STATUS_MAP[task.status];
+            const allowedStatuses = isAdminArea
+              ? MANAGEMENT_STATUS_TRANSITIONS[task.status]
+              : ASSIGNEE_STATUS_TRANSITIONS[task.status];
+            const canAssign =
+              task.status !== "done" && task.status !== "cancelled";
 
             return (
               <View
@@ -244,125 +279,169 @@ export default function TodoTaskListCard({
                 </View>
 
                 {/* Update Status Actions */}
-                <Text className="text-xs font-bold text-slate-700 mt-4 mb-2">
-                  Cập nhật trạng thái công việc
-                </Text>
-                <View className="flex-row flex-wrap" style={{ gap: 8 }}>
-                  {STATUS_OPTIONS.map((s) => {
-                    const isActive = task.status === s;
-                    const statusConfig = STATUS_MAP[s];
-
-                    return (
-                      <Pressable
-                        key={s}
-                        onPress={() => onUpdateStatus(task._id, s)}
-                        disabled={updatingTaskId === task._id}
-                        className={`px-3 py-2 rounded-xl border flex-row items-center ${
-                          isActive
-                            ? `${statusConfig.bgClass} ${statusConfig.borderClass}`
-                            : "bg-white border-slate-200"
-                        }`}
-                      >
-                        {isActive && (
-                          <Ionicons
-                            name={statusConfig.icon as any}
-                            size={12}
-                            color={
-                              s === "todo"
-                                ? "#2563eb"
-                                : s === "in_progress"
-                                ? "#d97706"
-                                : s === "done"
-                                ? "#16a34a"
-                                : "#6b7280"
+                {allowedStatuses.length > 0 ? (
+                  <>
+                    <Text className="mb-2 mt-4 text-xs font-bold text-slate-700">
+                      Chuyển sang trạng thái
+                    </Text>
+                    <View className="flex-row flex-wrap" style={{ gap: 8 }}>
+                      {allowedStatuses.map((nextStatus) => {
+                        const statusConfig = STATUS_MAP[nextStatus];
+                        return (
+                          <Pressable
+                            key={nextStatus}
+                            onPress={() =>
+                              onUpdateStatus(task._id, nextStatus)
                             }
-                            style={{ marginRight: 4 }}
-                          />
-                        )}
-                        <Text
-                          className={`text-xs font-semibold ${
-                            isActive
-                              ? statusConfig.textClass
-                              : "text-slate-600"
-                          }`}
-                        >
-                          {statusConfig.label}
-                        </Text>
-                      </Pressable>
-                    );
-                  })}
-                </View>
+                            disabled={updatingTaskId === task._id}
+                            className={`flex-row items-center rounded-xl border px-3 py-2 disabled:opacity-50 ${statusConfig.bgClass} ${statusConfig.borderClass}`}
+                          >
+                            <Ionicons
+                              name={statusConfig.icon as any}
+                              size={12}
+                              color={
+                                nextStatus === "todo"
+                                  ? "#2563eb"
+                                  : nextStatus === "in_progress"
+                                    ? "#d97706"
+                                    : nextStatus === "done"
+                                      ? "#16a34a"
+                                      : "#6b7280"
+                              }
+                              style={{ marginRight: 4 }}
+                            />
+                            <Text
+                              className={`text-xs font-semibold ${statusConfig.textClass}`}
+                            >
+                              {updatingTaskId === task._id
+                                ? "Đang cập nhật..."
+                                : statusConfig.label}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </>
+                ) : (
+                  <Text className="mt-3 text-xs font-medium text-slate-400">
+                    Công việc đã ở trạng thái kết thúc.
+                  </Text>
+                )}
 
                 {/* Admin Actions */}
                 {isAdminArea ? (
                   <View className="mt-4 pt-3 border-t border-slate-100">
-                    <Text className="text-xs font-bold text-slate-700 mb-2">
-                      Bàn giao công việc cho nhân viên khác
-                    </Text>
-                    <ScrollView
-                      horizontal
-                      showsHorizontalScrollIndicator={false}
-                    >
-                      <View className="flex-row py-0.5" style={{ gap: 8 }}>
-                        {users.map((u) => {
-                          const isSelected = assignByTask[task._id] === u._id;
-                          return (
-                            <Pressable
-                              key={`${task._id}_${u._id}`}
-                              onPress={() =>
-                                onSelectAssignUser(task._id, u._id)
-                              }
-                              className={`px-3 py-1.5 rounded-xl border flex-row items-center ${
-                                isSelected
-                                  ? "bg-slate-800 border-slate-800 shadow-sm"
-                                  : "bg-white border-slate-200"
-                              }`}
-                            >
-                              <Ionicons
-                                name="person-outline"
-                                size={12}
-                                color={isSelected ? "#ffffff" : "#64748b"}
-                                style={{ marginRight: 4 }}
-                              />
-                              <Text
-                                className={`text-xs font-semibold ${
-                                  isSelected ? "text-white" : "text-slate-600"
-                                }`}
-                              >
-                                {u.username || u.name}
-                              </Text>
-                            </Pressable>
-                          );
-                        })}
-                      </View>
-                    </ScrollView>
-
-                    <View className="flex-row mt-4" style={{ gap: 8 }}>
+                    {editingTaskId === task._id ? (
+                      <TodoEditTaskForm
+                        task={task}
+                        saving={savingTaskId === task._id}
+                        onCancel={() => setEditingTaskId(null)}
+                        onSave={async (input) => {
+                          const saved = await onUpdateTask(task._id, input);
+                          if (saved) setEditingTaskId(null);
+                          return saved;
+                        }}
+                      />
+                    ) : (
                       <Pressable
-                        onPress={() => onAssignTask(task._id)}
-                        disabled={assigningTaskId === task._id}
-                        className={`flex-1 rounded-xl py-3 items-center flex-row justify-center ${
-                          assigningTaskId === task._id
-                            ? "bg-emerald-300"
-                            : "bg-emerald-600 active:bg-emerald-700 shadow-sm"
-                        }`}
+                        onPress={() => setEditingTaskId(task._id)}
+                        className="mb-3 flex-row items-center justify-center rounded-xl border border-blue-100 bg-blue-50 py-2.5"
                       >
                         <Ionicons
-                          name="person-add-outline"
+                          name="create-outline"
                           size={14}
-                          color="#ffffff"
+                          color="#2563eb"
                           style={{ marginRight: 6 }}
                         />
-                        <Text className="text-white font-bold text-xs">
-                          {assigningTaskId === task._id
-                            ? "Đang giao..."
-                            : "Bàn giao"}
+                        <Text className="text-xs font-bold text-blue-600">
+                          Chỉnh sửa công việc
                         </Text>
                       </Pressable>
+                    )}
+
+                    {canAssign ? (
+                      <View>
+                        <Text className="mb-2 text-xs font-bold text-slate-700">
+                          Bàn giao cho nhân viên khác
+                        </Text>
+                        <ScrollView
+                          horizontal
+                          showsHorizontalScrollIndicator={false}
+                        >
+                          <View className="flex-row py-0.5" style={{ gap: 8 }}>
+                            {users.map((candidate) => {
+                              const isSelected =
+                                assignByTask[task._id] === candidate._id;
+                              return (
+                                <Pressable
+                                  key={`${task._id}_${candidate._id}`}
+                                  onPress={() =>
+                                    onSelectAssignUser(
+                                      task._id,
+                                      candidate._id,
+                                    )
+                                  }
+                                  className={`flex-row items-center rounded-xl border px-3 py-1.5 ${
+                                    isSelected
+                                      ? "border-slate-800 bg-slate-800 shadow-sm"
+                                      : "border-slate-200 bg-white"
+                                  }`}
+                                >
+                                  <Ionicons
+                                    name="person-outline"
+                                    size={12}
+                                    color={
+                                      isSelected ? "#ffffff" : "#64748b"
+                                    }
+                                    style={{ marginRight: 4 }}
+                                  />
+                                  <Text
+                                    className={`text-xs font-semibold ${
+                                      isSelected
+                                        ? "text-white"
+                                        : "text-slate-600"
+                                    }`}
+                                  >
+                                    {candidate.username || candidate.name}
+                                  </Text>
+                                </Pressable>
+                              );
+                            })}
+                          </View>
+                        </ScrollView>
+                        <Pressable
+                          onPress={() => onAssignTask(task._id)}
+                          disabled={assigningTaskId === task._id}
+                          className={`mt-3 flex-row items-center justify-center rounded-xl py-3 ${
+                            assigningTaskId === task._id
+                              ? "bg-emerald-300"
+                              : "bg-emerald-600 shadow-sm active:bg-emerald-700"
+                          }`}
+                        >
+                          <Ionicons
+                            name="person-add-outline"
+                            size={14}
+                            color="#ffffff"
+                            style={{ marginRight: 6 }}
+                          />
+                          <Text className="text-xs font-bold text-white">
+                            {assigningTaskId === task._id
+                              ? "Đang giao..."
+                              : "Bàn giao"}
+                          </Text>
+                        </Pressable>
+                      </View>
+                    ) : (
+                      <Text className="text-xs font-medium text-slate-400">
+                        Hãy mở lại công việc trước khi bàn giao cho người khác.
+                      </Text>
+                    )}
+
+                    <View className="mt-3">
                       <Pressable
                         onPress={() => onRemoveTask(task._id)}
                         disabled={deletingTaskId === task._id}
-                        className={`flex-1 rounded-xl py-3 items-center flex-row justify-center border border-rose-100 ${
+                        className={`items-center flex-row justify-center rounded-xl border border-rose-100 py-3 ${
                           deletingTaskId === task._id
                             ? "bg-rose-100"
                             : "bg-rose-50 active:bg-rose-100"
