@@ -1,12 +1,15 @@
 import axios from "@/src/utils/axios";
 import { getAuthHeader } from "@/src/utils/apiHelper";
 import { ipNR } from "@/src/utils/ip";
+import { isAxiosError } from "axios";
 import type {
   ChatImageUpload,
   ChatListItem,
   ChatUser,
   Message,
+  SupportedChatImageMimeType,
 } from "@/src/services/chat/constant";
+import { resolveChatImageMimeType } from "@/src/services/chat/constant";
 
 const IMAGE_UPLOAD_TIMEOUT_MS = 60_000;
 const API_PREFLIGHT_TIMEOUT_MS = 4_000;
@@ -63,12 +66,30 @@ async function waitForGateway() {
   );
 }
 
-function getImageFileName(image: ChatImageUpload) {
-  if (image.fileName?.trim()) return image.fileName.trim();
+function getImageExtension(mimeType: SupportedChatImageMimeType) {
+  if (mimeType === "image/png") return "png";
+  if (mimeType === "image/gif") return "gif";
+  return "jpg";
+}
 
-  const mimeExtension = image.mimeType?.split("/")[1]?.split("+")[0];
-  const extension = mimeExtension === "jpeg" ? "jpg" : mimeExtension || "jpg";
-  return `chat-image-${Date.now()}.${extension}`;
+function getImageFileName(
+  image: ChatImageUpload,
+  mimeType: SupportedChatImageMimeType,
+) {
+  const extension = getImageExtension(mimeType);
+  const originalName = image.fileName?.trim();
+  if (!originalName) return `chat-image-${Date.now()}.${extension}`;
+
+  const nameWithoutExtension = originalName.replace(/\.[^.]+$/, "");
+  return `${nameWithoutExtension || "chat-image"}.${extension}`;
+}
+
+function getSupportedImageMimeType(image: ChatImageUpload) {
+  const mimeType = resolveChatImageMimeType(image);
+  if (mimeType) return mimeType;
+  throw new ChatUploadError(
+    "Định dạng ảnh chưa được hỗ trợ. Vui lòng chọn ảnh JPG, PNG hoặc GIF.",
+  );
 }
 
 async function createImagePayload(
@@ -80,14 +101,25 @@ async function createImagePayload(
   form.append("chatId", chatId);
   if (text) form.append("text", text);
 
+  const mimeType = getSupportedImageMimeType(image);
+  const fileName = getImageFileName(image, mimeType);
+
   if (typeof document !== "undefined") {
     const blob = await (await fetch(image.uri)).blob();
-    form.append("image", blob, image.fileName || "chat-image.jpg");
+    const blobMimeType = blob.type
+      ? resolveChatImageMimeType({ mimeType: blob.type })
+      : mimeType;
+    if (!blobMimeType) {
+      throw new ChatUploadError(
+        "Định dạng ảnh chưa được hỗ trợ. Vui lòng chọn ảnh JPG, PNG hoặc GIF.",
+      );
+    }
+    form.append("image", blob, getImageFileName(image, blobMimeType));
   } else {
     form.append("image", {
       uri: image.uri,
-      name: getImageFileName(image),
-      type: image.mimeType || "image/jpeg",
+      name: fileName,
+      type: mimeType,
     } as unknown as Blob);
   }
 
@@ -123,43 +155,37 @@ export async function sendChatMessage(
     );
   }
 
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), IMAGE_UPLOAD_TIMEOUT_MS);
-
   try {
     await waitForGateway();
-    const response = await fetch(`${ipNR}/chat/message`, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        Authorization: `Bearer ${token}`,
+    return await axios.post<{ message: Message; sender: string }>(
+      `${ipNR}/chat/message`,
+      await createImagePayload(chatId, text, image),
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+        timeout: IMAGE_UPLOAD_TIMEOUT_MS,
       },
-      body: await createImagePayload(chatId, text, image),
-      signal: controller.signal,
-    });
-    const rawBody = await response.text();
-    let data: any = {};
-    try {
-      data = rawBody ? JSON.parse(rawBody) : {};
-    } catch {
-      if (!response.ok) {
-        throw new ChatUploadError(
-          `Gateway trả về lỗi HTTP ${response.status} khi gửi ảnh`,
-        );
-      }
-      throw new ChatUploadError("Phản hồi gửi ảnh từ Gateway không hợp lệ");
-    }
-
-    if (!response.ok) {
-      const responseMessage = Array.isArray(data?.message)
-        ? data.message.join("\n")
-        : data?.message;
-      throw new ChatUploadError(responseMessage || "Gửi ảnh không thành công");
-    }
-
-    return { data: data as { message: Message; sender: string } };
+    );
   } catch (error) {
     if (error instanceof ChatUploadError) throw error;
+
+    if (isAxiosError<{ message?: string | string[] }>(error)) {
+      if (error.code === "ECONNABORTED") {
+        throw new ChatUploadError(
+          "Gửi ảnh quá thời gian. Vui lòng kiểm tra kết nối và thử lại.",
+        );
+      }
+      const responseMessage = error.response?.data?.message;
+      if (error.response) {
+        throw new ChatUploadError(
+          (Array.isArray(responseMessage)
+            ? responseMessage.join("\n")
+            : responseMessage) || "Gửi ảnh không thành công",
+        );
+      }
+    }
+
     const detail = error instanceof Error ? error.message : String(error);
     console.error("[CHAT][UPLOAD_REQUEST_FAILED]", {
       endpoint: `${ipNR}/chat/message`,
@@ -167,16 +193,9 @@ export async function sendChatMessage(
       imageMimeType: image.mimeType || "image/jpeg",
       imageUriScheme: image.uri.split(":", 1)[0] || "unknown",
     });
-    if (controller.signal.aborted) {
-      throw new ChatUploadError(
-        "Gửi ảnh quá thời gian. Vui lòng kiểm tra kết nối và thử lại.",
-      );
-    }
     throw new ChatUploadError(
       "Không thể tải ảnh lên máy chủ. Vui lòng kiểm tra kết nối và thử lại.",
     );
-  } finally {
-    clearTimeout(timeout);
   }
 }
 

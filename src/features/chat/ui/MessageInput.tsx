@@ -1,7 +1,10 @@
-import type { ChatImageUpload } from "@/src/services/chat/constant";
+import {
+  resolveChatImageMimeType,
+  type ChatImageUpload,
+} from "@/src/services/chat/constant";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import * as ImagePicker from 'expo-image-picker';
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   ActivityIndicator,
   Image,
@@ -30,6 +33,7 @@ export default function MessageInput({
 }: MessageInputProps) {
   const [image, setImage] = useState<ImagePicker.ImagePickerAsset | null>(null);
   const [sending, setSending] = useState(false);
+  const sendingRef = useRef(false);
 
   const pickImage = async () => {
     try {
@@ -43,12 +47,21 @@ export default function MessageInput({
         mediaTypes: ['images'],
         quality: 0.8,
         selectionLimit: 1,
+        preferredAssetRepresentationMode:
+          ImagePicker.UIImagePickerPreferredAssetRepresentationMode.Compatible,
       });
       if (result.canceled) return;
 
       const selectedImage = result.assets[0];
       if (selectedImage.fileSize && selectedImage.fileSize > MAX_IMAGE_SIZE) {
         Alert.alert('Ảnh quá lớn', 'Vui lòng chọn ảnh không vượt quá 5 MB.');
+        return;
+      }
+      if (!resolveChatImageMimeType(selectedImage)) {
+        Alert.alert(
+          'Định dạng chưa hỗ trợ',
+          'Vui lòng chọn ảnh JPG, PNG hoặc GIF.',
+        );
         return;
       }
       setImage(selectedImage);
@@ -59,7 +72,8 @@ export default function MessageInput({
   };
 
   const handleSubmit = async () => {
-    if ((!message.trim() && !image) || sending) return;
+    if ((!message.trim() && !image) || sendingRef.current) return;
+    sendingRef.current = true;
     setSending(true);
     try {
       const sent = await handleMessageSend(
@@ -74,6 +88,7 @@ export default function MessageInput({
       );
       if (sent) setImage(null);
     } finally {
+      sendingRef.current = false;
       setSending(false);
     }
   };

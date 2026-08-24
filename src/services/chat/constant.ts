@@ -15,6 +15,56 @@ export interface ChatImageUpload {
   fileSize?: number | null;
 }
 
+export const SUPPORTED_CHAT_IMAGE_MIME_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/gif",
+] as const;
+
+export type SupportedChatImageMimeType =
+  (typeof SUPPORTED_CHAT_IMAGE_MIME_TYPES)[number];
+
+type ChatImageDescriptor = Pick<
+  ChatImageUpload,
+  "fileName" | "mimeType"
+> &
+  Partial<Pick<ChatImageUpload, "uri">>;
+
+const CHAT_IMAGE_MIME_TYPE_BY_EXTENSION: Record<
+  string,
+  SupportedChatImageMimeType
+> = {
+  gif: "image/gif",
+  jfif: "image/jpeg",
+  jpe: "image/jpeg",
+  jpeg: "image/jpeg",
+  jpg: "image/jpeg",
+  png: "image/png",
+};
+
+export function resolveChatImageMimeType(
+  image: ChatImageDescriptor,
+): SupportedChatImageMimeType | null {
+  const mimeType = image.mimeType?.split(";", 1)[0]?.trim().toLowerCase();
+  const normalizedMimeType = mimeType === "image/jpg" ? "image/jpeg" : mimeType;
+
+  if (
+    SUPPORTED_CHAT_IMAGE_MIME_TYPES.includes(
+      normalizedMimeType as SupportedChatImageMimeType,
+    )
+  ) {
+    return normalizedMimeType as SupportedChatImageMimeType;
+  }
+  if (normalizedMimeType) return null;
+
+  const sourceName = image.fileName?.trim() || image.uri?.split(/[?#]/, 1)[0];
+  const extension = sourceName
+    ?.trim()
+    .toLowerCase()
+    .match(/\.([a-z0-9]+)$/)?.[1];
+  return extension ? CHAT_IMAGE_MIME_TYPE_BY_EXTENSION[extension] ?? null : null;
+}
+
 export interface ChatRecord {
   _id: string;
   users: string[];
