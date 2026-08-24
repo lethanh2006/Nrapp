@@ -18,6 +18,7 @@ export interface TaskItem {
   assignedTo?: string | RelatedUser;
   deadline?: string;
   createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CreateTaskInput {
@@ -28,6 +29,38 @@ export interface CreateTaskInput {
   assignedTo?: string;
 }
 
+export interface UpdateTaskInput {
+  title?: string;
+  description?: string | null;
+  priority?: TaskPriority;
+  deadline?: string | null;
+}
+
+export interface MyTaskQuery {
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface AdminTaskQuery extends MyTaskQuery {
+  assignedTo?: string;
+  createdBy?: string;
+}
+
+export interface TaskPagination {
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+}
+
+export interface TaskPage {
+  tasks: TaskItem[];
+  pagination: TaskPagination;
+}
+
 export const STATUS_OPTIONS: TaskStatus[] = [
   "todo",
   "in_progress",
@@ -36,6 +69,24 @@ export const STATUS_OPTIONS: TaskStatus[] = [
 ];
 
 export const PRIORITY_OPTIONS: TaskPriority[] = ["low", "medium", "high"];
+
+export const ASSIGNEE_STATUS_TRANSITIONS: Readonly<
+  Record<TaskStatus, readonly TaskStatus[]>
+> = {
+  todo: ["in_progress"],
+  in_progress: ["done"],
+  done: [],
+  cancelled: [],
+};
+
+export const MANAGEMENT_STATUS_TRANSITIONS: Readonly<
+  Record<TaskStatus, readonly TaskStatus[]>
+> = {
+  todo: ["in_progress", "cancelled"],
+  in_progress: ["todo", "done", "cancelled"],
+  done: ["in_progress"],
+  cancelled: ["todo"],
+};
 
 export const STATUS_MAP: Record<
   TaskStatus,
