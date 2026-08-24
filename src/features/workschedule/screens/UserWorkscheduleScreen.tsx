@@ -62,7 +62,7 @@ const STATUS_CONFIG: Record<
     label: "Cần xem lại",
     box: "bg-rose-50",
     text: "text-rose-700",
-    description: "Lịch đã bị từ chối. Mở chi tiết để xem lý do.",
+    description: "Lịch đã bị từ chối. Xem lý do và chỉnh sửa khi cổng đăng ký mở.",
   },
 };
 
@@ -99,6 +99,7 @@ export default function UserWorkscheduleScreen({ area }: { area: AppArea }) {
   const {
     getMySchedules,
     sendScheduleRequest,
+    resubmitRejectedSchedule,
     getPolicy,
   } = useWorkscheduleUser();
   const [schedules, setSchedules] = useState<IScheduleRequest[]>([]);
@@ -110,7 +111,6 @@ export default function UserWorkscheduleScreen({ area }: { area: AppArea }) {
   const [submitting, setSubmitting] = useState(false);
   const [currentTime, setCurrentTime] = useState(Date.now());
   const scrollRef = useRef<ScrollView>(null);
-  const closedAlertShownRef = useRef(false);
 
   const allowedWeeksRange = useMemo(() => getAllowedWeekRange(), []);
   const allowedWeeks = useMemo(() => {
@@ -179,16 +179,6 @@ export default function UserWorkscheduleScreen({ area }: { area: AppArea }) {
     router.replace(getAreaRoutes(area).utilities);
   }, [area]);
 
-  useEffect(() => {
-    if (initialLoad || !policy || !registrationClosed || closedAlertShownRef.current) return;
-    closedAlertShownRef.current = true;
-    Alert.alert(
-      "Ngoài thời gian đăng ký",
-      "Hiện tại không nằm trong thời gian đăng ký lịch làm.",
-      [{ text: "Đồng ý", onPress: returnToUtilities }],
-    );
-  }, [initialLoad, policy, registrationClosed, returnToUtilities]);
-
   const countdown = useMemo(() => {
     const endTime = policy ? new Date(policy.registration_end).getTime() : currentTime;
     const totalSeconds = Math.max(0, Math.floor((endTime - currentTime) / 1000));
@@ -252,9 +242,6 @@ export default function UserWorkscheduleScreen({ area }: { area: AppArea }) {
     }
     if (requestStatus === "approved") {
       return "Lịch đã được duyệt nên không thể chỉnh sửa.";
-    }
-    if (requestStatus === "rejected") {
-      return "Lịch bị từ chối. Hãy mở chi tiết để xem lý do.";
     }
     return null;
   }, [registrationClosed, requestStatus]);
@@ -362,24 +349,35 @@ export default function UserWorkscheduleScreen({ area }: { area: AppArea }) {
     }
     if (!ensureHasWorkDay()) return;
 
+    const isResubmission = requestStatus === "rejected" && selectedRequest;
     Alert.alert(
-      "Gửi lịch để duyệt?",
-      `Bạn đang đăng ký ${selectedWorkDays} ngày làm. Sau khi gửi, lịch sẽ chờ quản lý phản hồi.`,
+      isResubmission ? "Gửi lại lịch để duyệt?" : "Gửi lịch để duyệt?",
+      `Bạn đang đăng ký ${selectedWorkDays} ngày làm. ${
+        isResubmission
+          ? "Lịch cũ sẽ được thay bằng nội dung đã chỉnh sửa và chuyển lại về chờ duyệt."
+          : "Sau khi gửi, lịch sẽ chờ quản lý phản hồi."
+      }`,
       [
         { text: "Kiểm tra lại", style: "cancel" },
         {
-          text: "Gửi duyệt",
+          text: isResubmission ? "Gửi lại" : "Gửi duyệt",
           onPress: async () => {
-            setSubmitting(true);
-            const submitted = await sendScheduleRequest(
-              toLocalDateKey(selectedWeekStart),
-              buildEntries(),
-            );
-            if (submitted) {
-              clearSelectedWeekChanges();
-              await loadData();
+            try {
+              setSubmitting(true);
+              const entries = buildEntries();
+              const submitted = isResubmission
+                ? await resubmitRejectedSchedule(selectedRequest._id, entries)
+                : await sendScheduleRequest(
+                    toLocalDateKey(selectedWeekStart),
+                    entries,
+                  );
+              if (submitted) {
+                clearSelectedWeekChanges();
+                await loadData();
+              }
+            } finally {
+              setSubmitting(false);
             }
-            setSubmitting(false);
           },
         },
       ],
@@ -400,14 +398,6 @@ export default function UserWorkscheduleScreen({ area }: { area: AppArea }) {
     );
   }
 
-  if (policy && registrationClosed) {
-    return (
-      <View className="flex-1 bg-slate-50">
-        <RegistrationHeader onBack={returnToUtilities} />
-      </View>
-    );
-  }
-
   return (
     <View className="flex-1 bg-slate-50">
       <RegistrationHeader onBack={returnToUtilities} />
@@ -419,17 +409,31 @@ export default function UserWorkscheduleScreen({ area }: { area: AppArea }) {
         showsVerticalScrollIndicator={false}
       >
         {policy ? (
-          <View className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
-            <View className="flex-row items-center justify-center">
-              <Ionicons name="time-outline" size={17} color="#dc2626" />
-              <Text className="ml-2 text-sm font-black text-red-600">
-                Thời gian còn lại: {padCountdownValue(countdown.days)} :{" "}
-                {padCountdownValue(countdown.hours)} :{" "}
-                {padCountdownValue(countdown.minutes)} :{" "}
-                {padCountdownValue(countdown.seconds)}
-              </Text>
+          registrationClosed ? (
+            <View className="mb-4 flex-row items-start rounded-2xl border border-amber-100 bg-amber-50 px-4 py-3">
+              <Ionicons name="lock-closed-outline" size={18} color="#d97706" />
+              <View className="ml-2 flex-1">
+                <Text className="text-sm font-black text-amber-800">
+                  Ngoài thời gian đăng ký
+                </Text>
+                <Text className="mt-1 text-xs leading-5 text-amber-700">
+                  Bạn vẫn có thể xem lịch và lý do từ chối, nhưng chỉ chỉnh sửa hoặc gửi lại khi cổng đăng ký mở.
+                </Text>
+              </View>
             </View>
-          </View>
+          ) : (
+            <View className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
+              <View className="flex-row items-center justify-center">
+                <Ionicons name="time-outline" size={17} color="#dc2626" />
+                <Text className="ml-2 text-sm font-black text-red-600">
+                  Thời gian còn lại: {padCountdownValue(countdown.days)} :{" "}
+                  {padCountdownValue(countdown.hours)} :{" "}
+                  {padCountdownValue(countdown.minutes)} :{" "}
+                  {padCountdownValue(countdown.seconds)}
+                </Text>
+              </View>
+            </View>
+          )
         ) : null}
 
         <View className="mb-4 flex-row items-center rounded-2xl border border-blue-100 bg-blue-50 p-3">
@@ -458,6 +462,30 @@ export default function UserWorkscheduleScreen({ area }: { area: AppArea }) {
           onPrevious={() => changeSelectedWeek(selectedWeekIndex - 1)}
           onNext={() => changeSelectedWeek(selectedWeekIndex + 1)}
         />
+
+        {requestStatus === "rejected" ? (
+          <View className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 p-4">
+            <View className="flex-row items-start">
+              <View className="h-9 w-9 items-center justify-center rounded-xl bg-rose-100">
+                <Ionicons name="chatbox-ellipses-outline" size={18} color="#be123c" />
+              </View>
+              <View className="ml-3 flex-1">
+                <Text className="text-xs font-black uppercase tracking-wide text-rose-700">
+                  Lý do quản lý từ chối
+                </Text>
+                <Text className="mt-1.5 text-sm font-semibold leading-6 text-rose-950">
+                  {selectedRequest?.reject_reason?.trim() ||
+                    "Quản lý chưa cung cấp lý do cụ thể."}
+                </Text>
+                <Text className="mt-2 text-xs leading-5 text-rose-700">
+                  {registrationClosed
+                    ? "Hãy quay lại chỉnh sửa khi cổng đăng ký mở."
+                    : "Bạn có thể chỉnh trực tiếp các ngày bên dưới rồi bấm Gửi lại lịch."}
+                </Text>
+              </View>
+            </View>
+          </View>
+        ) : null}
 
         <View className="mt-4 rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm">
           <View className="flex-row items-center">
@@ -590,7 +618,11 @@ export default function UserWorkscheduleScreen({ area }: { area: AppArea }) {
                 onPress={submitForApproval}
               >
                 <Text className="mr-1.5 text-sm font-black text-white">
-                  {submitting ? "Đang gửi..." : "Gửi lịch để duyệt"}
+                  {submitting
+                    ? "Đang gửi..."
+                    : requestStatus === "rejected"
+                      ? "Gửi lại lịch"
+                      : "Gửi lịch để duyệt"}
                 </Text>
                 <Ionicons name="paper-plane" size={16} color="white" />
               </Pressable>
