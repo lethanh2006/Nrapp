@@ -154,6 +154,9 @@ export default function ChatSideBar({
           const unread = existingChat?.chat.unseenCount ?? 0;
           const online = onlineUsers.includes(item._id);
           const opening = openingUserId === item._id;
+          const latestIsMine =
+            Boolean(loggedInUser?._id) &&
+            String(latest?.sender) === String(loggedInUser?._id);
           return (
             <Pressable
               style={({ pressed }) => [styles.row, pressed && styles.rowPressed]}
@@ -178,7 +181,7 @@ export default function ChatSideBar({
                     {opening
                       ? "Đang mở cuộc trò chuyện..."
                       : latest
-                        ? `${latest.sender === loggedInUser?._id ? "Bạn: " : ""}${latest.text}`
+                        ? `${latestIsMine ? "Bạn: " : ""}${latest.text}`
                         : item.email || "Nhấn để bắt đầu trò chuyện"}
                   </Text>
                   {unread > 0 && (

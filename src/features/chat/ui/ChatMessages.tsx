@@ -26,8 +26,9 @@ export default function ChatMessages({
     if (!messages) return [];
     const seen = new Set<string>();
     return messages.filter((m) => {
-      if (seen.has(m._id)) return false;
-      seen.add(m._id);
+      const messageId = String(m._id);
+      if (seen.has(messageId)) return false;
+      seen.add(messageId);
       return true;
     });
   }, [messages]);
@@ -54,7 +55,9 @@ export default function ChatMessages({
       onContentSizeChange={() => scrollRef.current?.scrollToEnd({ animated: true })}
     >
       {uniqueMessages.map((msg) => {
-        const isMe = msg.sender === loggedInUser?._id;
+        const isMe =
+          Boolean(loggedInUser?._id) &&
+          String(msg.sender) === String(loggedInUser?._id);
         return (
           <View key={msg._id} style={[styles.msgWrap, isMe ? styles.msgRight : styles.msgLeft]}>
             <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleOther]}>
@@ -62,9 +65,15 @@ export default function ChatMessages({
                 <Image
                   source={{ uri: msg.image.url }}
                   style={styles.img}
+                  contentFit="cover"
+                  accessibilityLabel="Ảnh trong tin nhắn"
                 />
               )}
-              {msg.text ? <Text style={styles.msgText}>{msg.text}</Text> : null}
+              {msg.text ? (
+                <Text style={[styles.msgText, isMe && styles.msgTextMe]}>
+                  {msg.text}
+                </Text>
+              ) : null}
             </View>
             <Text style={[styles.time, isMe && styles.timeRight]}>
               {formatTime(msg.createdAt)}
@@ -122,6 +131,9 @@ const styles = StyleSheet.create({
   msgText: {
     color: '#000000',
     fontSize: 15,
+  },
+  msgTextMe: {
+    color: '#ffffff',
   },
   img: {
     width: 200,
