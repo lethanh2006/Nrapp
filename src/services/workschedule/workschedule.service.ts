@@ -6,10 +6,12 @@ import type {
   AdminHeatmapRow,
   AdminScheduleRequest,
   AttendanceScanResponse,
+  AttendanceHistoryQuery,
   IScheduleEntry,
   IScheduleRequest,
   IMonthlyScheduleOverview,
   IWorkPolicy,
+  PersonalAttendanceRecord,
   WorkscheduleQuery,
   CreateWorkRequestPayload,
   IWorkRequest,
@@ -112,6 +114,28 @@ export async function createScheduleRequest(
     `${ipNR}/workschedule/schedule/requests`,
     { week_start: weekStart, entries },
     getAuthHeader(token),
+  );
+}
+
+export async function resubmitScheduleRequest(
+  token: string,
+  id: string,
+  entries: IScheduleEntry[],
+) {
+  return axios.post<{ data: IScheduleRequest }>(
+    `${ipNR}/workschedule/schedule/requests/${encodeURIComponent(id)}/resubmit`,
+    { entries },
+    getAuthHeader(token),
+  );
+}
+
+export async function getMyAttendance(
+  token: string,
+  params: AttendanceHistoryQuery = {},
+) {
+  return axios.get<{ data: PersonalAttendanceRecord[]; count?: number }>(
+    `${ipNR}/workschedule/attendance/my`,
+    { ...getAuthHeader(token), params },
   );
 }
 

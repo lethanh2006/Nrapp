@@ -148,6 +148,13 @@ export interface AdminAttendanceRecord {
   employee?: AdminEmployeeProfile | null;
 }
 
+export type PersonalAttendanceRecord = AdminAttendanceRecord;
+
+export interface AttendanceHistoryQuery {
+  from?: string;
+  to?: string;
+}
+
 export interface AdminHeatmapRow {
   _id: string;
   stats: {
