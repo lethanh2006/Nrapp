@@ -116,10 +116,14 @@ export default function UserDirectoryScreen({ area }: UserDirectoryScreenProps) 
         const searchable = [
           candidate.name,
           candidate.username,
-          candidate.email,
           candidate._id,
-          getRoleLabel(candidate.role),
-          String(candidate.role),
+          ...(hasAccountPermission
+            ? [
+                candidate.email,
+                getRoleLabel(candidate.role),
+                String(candidate.role),
+              ]
+            : []),
         ]
           .filter(Boolean)
           .map((value) => normalizeSearchText(String(value)))
@@ -127,7 +131,7 @@ export default function UserDirectoryScreen({ area }: UserDirectoryScreenProps) 
         return searchable.includes(normalizedQuery);
       })
       .sort((left, right) => left.name.localeCompare(right.name, "vi"));
-  }, [query, users]);
+  }, [hasAccountPermission, query, users]);
 
   const openRoleEditor = (target: User) => {
     if (!hasAccountPermission || target._id === currentUser?._id) return;
@@ -271,14 +275,20 @@ export default function UserDirectoryScreen({ area }: UserDirectoryScreenProps) 
               ) : null}
             </View>
             <Text className="mt-1 text-xs text-slate-500" numberOfLines={1}>
-              {item.email || "Chưa có email công khai"}
+              {hasAccountPermission
+                ? item.email || "Chưa có email"
+                : `Mã nhân sự: ${item._id}`}
             </Text>
           </View>
-          <View className={`ml-2 rounded-full px-2.5 py-1.5 ${roleBadge.background}`}>
-            <Text className={`text-[10px] font-black ${roleBadge.text}`}>
-              {getRoleLabel(role)}
-            </Text>
-          </View>
+          {hasAccountPermission ? (
+            <View
+              className={`ml-2 rounded-full px-2.5 py-1.5 ${roleBadge.background}`}
+            >
+              <Text className={`text-[10px] font-black ${roleBadge.text}`}>
+                {getRoleLabel(role)}
+              </Text>
+            </View>
+          ) : null}
         </View>
 
         {hasAccountPermission && !isSelf ? (
@@ -456,7 +466,11 @@ export default function UserDirectoryScreen({ area }: UserDirectoryScreenProps) 
               autoCorrect={false}
               className="ml-2 flex-1 py-3.5 text-sm font-semibold text-slate-800"
               onChangeText={setQuery}
-              placeholder="Tìm theo tên, email hoặc vai trò"
+              placeholder={
+                hasAccountPermission
+                  ? "Tìm theo tên, email hoặc vai trò"
+                  : "Tìm theo tên hoặc mã nhân sự"
+              }
               placeholderTextColor="#94a3b8"
               returnKeyType="search"
               value={query}
