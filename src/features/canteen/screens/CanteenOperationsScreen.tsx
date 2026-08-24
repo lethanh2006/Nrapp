@@ -1,6 +1,7 @@
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { getCanteenErrorMessage } from "@/src/features/canteen/model/presentation";
 import OrderSummaryCard from "@/src/features/canteen/ui/OrderSummaryCard";
+import AdminMenuCatalog from "@/src/features/canteen/ui/AdminMenuCatalog";
 import {
   cancelCanteenOrder,
   completeCanteenOrder,
@@ -33,21 +34,24 @@ import {
   View,
 } from "react-native";
 
-type OperationsTab = "orders" | "kitchen";
+type OperationsTab = "orders" | "kitchen" | "catalog";
 type StatusFilter = OrderStatus | "ALL";
 type PaymentFilter = OrderPaymentStatus | "ALL";
 type OrderAction = "confirm" | "complete" | "cancel";
 
 const OPERATOR_ROLES = ["admin", "manager", "cashier", "waiter"];
 const KITCHEN_ROLES = ["admin", "manager", "chef"];
+const CATALOG_ROLES = ["admin", "manager"];
 
 export default function CanteenOperationsScreen() {
   const { user, getToken } = useAuthSession();
   const role = normalizeAppRole(user?.role);
   const canOperateOrders = OPERATOR_ROLES.includes(role);
   const canUseKitchen = KITCHEN_ROLES.includes(role);
+  const canManageCatalog = CATALOG_ROLES.includes(role);
 
   const [tab, setTab] = useState<OperationsTab>("orders");
+  const [catalogRefreshKey, setCatalogRefreshKey] = useState(0);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("ALL");
   const [page, setPage] = useState(1);
@@ -210,9 +214,18 @@ export default function CanteenOperationsScreen() {
   const onRefresh = async () => {
     setRefreshing(true);
     if (tab === "orders") await loadOrders(false);
-    else await loadKitchen(false);
+    else if (tab === "kitchen") await loadKitchen(false);
+    else setCatalogRefreshKey((current) => current + 1);
     setRefreshing(false);
   };
+
+  const operationTabs: { value: OperationsTab; label: string }[] = [
+    { value: "orders", label: "Đơn hàng" },
+    { value: "kitchen", label: "Nhà bếp" },
+  ];
+  if (canManageCatalog) {
+    operationTabs.push({ value: "catalog", label: "Thực đơn" });
+  }
 
   const renderOrderActions = (order: CanteenOrder) => {
     if (!canOperateOrders) {
@@ -308,12 +321,7 @@ export default function CanteenOperationsScreen() {
         </View>
 
         <View className="mt-4 flex-row rounded-2xl bg-slate-100 p-1">
-          {(
-            [
-              ["orders", "Đơn hàng"],
-              ["kitchen", "Nhà bếp"],
-            ] as const
-          ).map(([value, label]) => (
+          {operationTabs.map(({ value, label }) => (
             <Pressable
               key={value}
               className={`flex-1 items-center rounded-xl py-2.5 ${
@@ -464,6 +472,8 @@ export default function CanteenOperationsScreen() {
               </View>
             ) : null}
           </>
+        ) : tab === "catalog" ? (
+          <AdminMenuCatalog refreshKey={catalogRefreshKey} />
         ) : !canUseKitchen ? (
           <View className="items-center rounded-3xl border border-slate-100 bg-white px-6 py-14">
             <Ionicons name="lock-closed-outline" size={42} color="#94a3b8" />
