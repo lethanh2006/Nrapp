@@ -8,6 +8,7 @@ const createAreaRoutes = (area: AppArea) =>
     todo: `/(main)/${area}/todo` as Href,
     workschedule: `/(main)/${area}/workschedule` as Href,
     utilities: `/(main)/${area}/utilities` as Href,
+    directory: `/(main)/${area}/directory` as Href,
     profile: `/(main)/${area}/profile` as Href,
   }) as const;
 

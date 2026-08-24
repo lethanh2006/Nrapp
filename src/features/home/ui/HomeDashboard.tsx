@@ -17,13 +17,16 @@ import type {
   IScheduleEntry,
   IScheduleRequest,
 } from "@/src/services/workschedule/constant";
-import type { AppArea } from "@/src/application/access/roles";
+import {
+  canManageWorkSchedule,
+  type AppArea,
+} from "@/src/application/access/roles";
 import { getAreaRoutes } from "@/src/application/navigation/routes";
 
 export default function HomeDashboard({ area }: { area: AppArea }) {
   const insets = useSafeAreaInsets();
   const { user } = useAuthSession();
-  const isAdmin = area === "admin";
+  const managesSchedule = canManageWorkSchedule(user?.role);
   const areaRoutes = getAreaRoutes(area);
   const [todayDate, setTodayDate] = useState(new Date());
 
@@ -57,7 +60,7 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
 
   useFocusEffect(
     useCallback(() => {
-      if (isAdmin) {
+      if (managesSchedule) {
         setHasLoaded(true);
         return;
       }
@@ -80,7 +83,7 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
       return () => {
         isActive = false;
       };
-    }, [getMySchedules, isAdmin])
+    }, [getMySchedules, managesSchedule])
   );
 
   const getVietnameseDayName = (date: Date) => {
@@ -242,12 +245,8 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
 
           <View className="flex-row items-center space-x-2">
             <Pressable
-              onPress={() =>
-                Alert.alert(
-                  "Tìm kiếm nhanh",
-                  "Tính năng tìm kiếm nhanh nhân viên và dự án sắp ra mắt!"
-                )
-              }
+              accessibilityLabel="Mở danh bạ nhân sự"
+              onPress={() => router.push(areaRoutes.directory)}
               className="w-10 h-10 rounded-full bg-white/15 items-center justify-center active:scale-95"
             >
               <Ionicons name="search" size={20} color="white" />
@@ -265,7 +264,7 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
         </View>
       </ImageBackground>
 
-      {!isAdmin && !currentWeekSchedule && hasLoaded ? (
+      {!managesSchedule && !currentWeekSchedule && hasLoaded ? (
         <View
           className="mx-4 bg-white rounded-3xl p-5 -mt-8 shadow-md border border-slate-100 items-center justify-center min-h-[110px]"
           style={{
@@ -300,7 +299,7 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
             elevation: 4,
           }}
         >
-          {loading && !hasLoaded && !isAdmin ? (
+          {loading && !hasLoaded && !managesSchedule ? (
             <View className="flex-1 items-center justify-center py-4">
               <ActivityIndicator size="small" color="#3b82f6" />
             </View>
@@ -313,7 +312,7 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
                 <Text className="text-slate-800 text-4xl font-black tracking-tighter mb-3">
                   {todayDate.getDate()}
                 </Text>
-                {isAdmin ? (
+                {managesSchedule ? (
                   <View className="bg-rose-50/70 border-l-4 border-rose-500 rounded-r-xl p-2">
                     <Text className="text-rose-900 text-[11px] font-extrabold leading-tight">
                       Lịch trình Admin
@@ -333,7 +332,7 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
                 <Text className="text-slate-400 text-[10px] font-extrabold uppercase tracking-wider mb-2">
                   {getVietnameseFullDate(tomorrow)}
                 </Text>
-                {isAdmin ? (
+                {managesSchedule ? (
                   <View className="bg-rose-50/70 border-l-4 border-rose-500 rounded-r-xl p-2">
                     <Text className="text-rose-900 text-[11px] font-extrabold leading-tight">
                       Lịch trình Admin
