@@ -1,4 +1,6 @@
 import { useWorkscheduleUser } from "@/src/features/workschedule/hooks/useWorkscheduleUser";
+import type { AppArea } from "@/src/application/access/roles";
+import { getAreaRoutes } from "@/src/application/navigation/routes";
 import {
   getAllowedWeekRange,
   getWeekStartMonday,
@@ -93,7 +95,7 @@ function RegistrationHeader({ onBack }: { onBack: () => void }) {
   );
 }
 
-export default function UserWorkscheduleScreen() {
+export default function UserWorkscheduleScreen({ area }: { area: AppArea }) {
   const {
     getMySchedules,
     sendScheduleRequest,
@@ -174,8 +176,8 @@ export default function UserWorkscheduleScreen() {
   }, [policy]);
 
   const returnToUtilities = useCallback(() => {
-    router.replace("/(main)/user/utilities");
-  }, []);
+    router.replace(getAreaRoutes(area).utilities);
+  }, [area]);
 
   useEffect(() => {
     if (initialLoad || !policy || !registrationClosed || closedAlertShownRef.current) return;

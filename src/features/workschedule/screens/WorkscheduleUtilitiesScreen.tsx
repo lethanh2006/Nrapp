@@ -1,6 +1,10 @@
 import { Ionicons } from "@expo/vector-icons";
-import type { AppArea } from "@/src/application/access/roles";
+import {
+  canManageWorkSchedule,
+  type AppArea,
+} from "@/src/application/access/roles";
 import { getAreaRoutes } from "@/src/application/navigation/routes";
+import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { router, type Href } from "expo-router";
 import type { ComponentProps } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -17,12 +21,14 @@ type UtilityItem = {
 };
 
 export default function WorkscheduleUtilitiesScreen({ area }: { area: AppArea }) {
+  const { user } = useAuthSession();
   const areaRoutes = getAreaRoutes(area);
+  const managesSchedule = canManageWorkSchedule(user?.role);
   const utilities: UtilityItem[] = [
     {
-      title: area === "admin" ? "Quản lý lịch làm" : "Đăng ký lịch làm",
+      title: managesSchedule ? "Quản lý lịch làm" : "Đăng ký lịch làm",
       description:
-        area === "admin"
+        managesSchedule
           ? "Phân ca và theo dõi đăng ký lịch của nhân viên"
           : "Chọn nơi làm và ca sáng, chiều hoặc cả ngày",
       icon: "calendar-outline",
