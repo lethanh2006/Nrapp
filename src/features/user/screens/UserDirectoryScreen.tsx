@@ -378,7 +378,7 @@ export default function UserDirectoryScreen({ area }: UserDirectoryScreenProps) 
   return (
     <FlatList
       className="flex-1 bg-slate-50"
-      contentContainerStyle={{ padding: 16, paddingBottom: 110 }}
+      contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
       data={filteredUsers}
       keyExtractor={(item) => item._id}
       keyboardShouldPersistTaps="handled"

@@ -202,7 +202,7 @@ export function PolicySection() {
             {policyDraft.locked ? (
               <Pressable
                 onPress={() => setPolicyDraft(prev => ({ ...prev, locked: false }))}
-                className="flex-1 min-w-[150px] bg-red-600 active:scale-95 rounded-2xl py-3.5 flex-row items-center justify-center space-x-2"
+                className="min-w-[150px] flex-1 flex-row items-center justify-center rounded-2xl bg-red-600 py-3.5 active:scale-95"
               >
                 <Ionicons name="create-outline" size={16} color="white" />
                 <Text className="text-white font-extrabold text-center ml-1">
@@ -214,7 +214,7 @@ export function PolicySection() {
                 <Pressable
                   onPress={handleSavePolicy}
                   disabled={savingPolicy}
-                  className={`flex-1 min-w-[150px] rounded-2xl py-3.5 flex-row items-center justify-center space-x-2 ${savingPolicy ? "bg-red-200" : "bg-red-600 active:scale-95"}`}
+                  className={`min-w-[150px] flex-1 flex-row items-center justify-center rounded-2xl py-3.5 ${savingPolicy ? "bg-red-200" : "bg-red-600 active:scale-95"}`}
                 >
                   <Ionicons name="save-outline" size={16} color="white" />
                   <Text className="text-white font-semibold text-center ml-1">
@@ -225,7 +225,7 @@ export function PolicySection() {
                 <Pressable
                   onPress={handleLockPolicy}
                   disabled={savingPolicy}
-                  className={`flex-1 min-w-[150px] rounded-2xl py-3.5 flex-row items-center justify-center space-x-2 ${savingPolicy ? "bg-slate-200" : "bg-slate-700 active:scale-95"}`}
+                  className={`min-w-[150px] flex-1 flex-row items-center justify-center rounded-2xl py-3.5 ${savingPolicy ? "bg-slate-200" : "bg-slate-700 active:scale-95"}`}
                 >
                   <Ionicons name="pause-circle-outline" size={16} color="white" />
                   <Text className="text-white font-semibold text-center ml-1">

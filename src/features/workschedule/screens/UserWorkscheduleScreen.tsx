@@ -17,6 +17,7 @@ import type {
   WorkPeriod,
 } from "@/src/services/workschedule/constant";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
+import { ScreenHeader } from "@/src/shared/ui/ScreenHeader";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect } from "expo-router";
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -77,23 +78,6 @@ const isSameWeek = (date: string | Date, weekStart: Date) =>
   toLocalDateKey(getWeekStartMonday(new Date(date))) === toLocalDateKey(weekStart);
 
 const padCountdownValue = (value: number) => String(value).padStart(2, "0");
-
-function RegistrationHeader({ onBack }: { onBack: () => void }) {
-  return (
-    <View className="flex-row items-center border-b border-slate-100 bg-white px-4 py-3">
-      <Pressable
-        className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-slate-100"
-        onPress={onBack}
-      >
-        <Ionicons name="arrow-back" size={20} color="#334155" />
-      </Pressable>
-      <View>
-        <Text className="text-lg font-black text-slate-900">Đăng ký lịch làm</Text>
-        <Text className="text-[11px] text-slate-500">Chọn lịch và gửi quản lý duyệt</Text>
-      </View>
-    </View>
-  );
-}
 
 export default function UserWorkscheduleScreen({ area }: { area: AppArea }) {
   const {
@@ -387,7 +371,11 @@ export default function UserWorkscheduleScreen({ area }: { area: AppArea }) {
   if (initialLoad) {
     return (
       <View className="flex-1 bg-slate-50">
-        <RegistrationHeader onBack={returnToUtilities} />
+        <ScreenHeader
+          onBack={returnToUtilities}
+          subtitle="Chọn lịch và gửi quản lý duyệt"
+          title="Đăng ký lịch làm"
+        />
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#dc2626" />
           <Text className="mt-3 text-sm font-semibold text-slate-400">
@@ -400,11 +388,15 @@ export default function UserWorkscheduleScreen({ area }: { area: AppArea }) {
 
   return (
     <View className="flex-1 bg-slate-50">
-      <RegistrationHeader onBack={returnToUtilities} />
+      <ScreenHeader
+        onBack={returnToUtilities}
+        subtitle="Chọn lịch và gửi quản lý duyệt"
+        title="Đăng ký lịch làm"
+      />
 
       <ScrollView
         className="flex-1"
-        contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
+        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
       >

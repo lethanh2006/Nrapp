@@ -5,6 +5,7 @@ import type {
   IWorkRequestStats,
 } from "@/src/services/workschedule/constant";
 import { Ionicons } from "@expo/vector-icons";
+import { ScreenHeader } from "@/src/shared/ui/ScreenHeader";
 import { router, useFocusEffect } from "expo-router";
 import type { ComponentProps } from "react";
 import { useCallback, useState } from "react";
@@ -102,20 +103,13 @@ export default function UserMonthlyOverviewScreen() {
 
   return (
     <View className="flex-1 bg-slate-50">
-      <View className="flex-row items-center border-b border-slate-100 bg-white px-4 py-3">
-        <Pressable
-          className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-slate-100"
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={20} color="#334155" />
-        </Pressable>
-        <View className="flex-1">
-          <Text className="text-lg font-black text-slate-900">Thống kê tháng</Text>
-          <Text className="text-[11px] text-slate-500">Lịch làm và đơn từ đã được xử lý</Text>
-        </View>
-      </View>
+      <ScreenHeader
+        onBack={() => router.back()}
+        subtitle="Lịch làm và đơn từ đã được xử lý"
+        title="Thống kê tháng"
+      />
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
         <View className="mb-4 flex-row items-center justify-between rounded-2xl border border-slate-200 bg-white p-2">
           <Pressable className="h-10 w-10 items-center justify-center" onPress={() => changeMonth(-1)}>
             <Ionicons name="chevron-back" size={20} color="#475569" />

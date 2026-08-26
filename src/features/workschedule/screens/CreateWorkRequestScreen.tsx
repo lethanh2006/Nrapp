@@ -6,6 +6,7 @@ import type {
   WorkRequestType,
 } from "@/src/services/workschedule/constant";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
+import { ScreenHeader } from "@/src/shared/ui/ScreenHeader";
 import DateTimePicker from "@react-native-community/datetimepicker";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useLocalSearchParams } from "expo-router";
@@ -164,20 +165,13 @@ export default function CreateWorkRequestScreen() {
 
   return (
     <View className="flex-1 bg-slate-50">
-      <View className="flex-row items-center border-b border-slate-100 bg-white px-4 py-3">
-        <Pressable
-          className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-slate-100"
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={20} color="#334155" />
-        </Pressable>
-        <View className="flex-1">
-          <Text className="text-lg font-black text-slate-900">{config.title}</Text>
-          <Text className="text-[11px] text-slate-500">Điền đủ thông tin có dấu *</Text>
-        </View>
-      </View>
+      <ScreenHeader
+        onBack={() => router.back()}
+        subtitle="Điền đầy đủ các trường có dấu *"
+        title={config.title}
+      />
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }} keyboardShouldPersistTaps="handled">
         <View className="mb-4 flex-row items-center rounded-3xl border border-slate-200 bg-white p-4">
           <View className={`h-12 w-12 items-center justify-center rounded-2xl ${config.background}`}>
             <Ionicons name={config.icon} size={23} color={config.color} />

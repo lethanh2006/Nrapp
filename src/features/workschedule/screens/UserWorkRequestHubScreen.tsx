@@ -8,6 +8,7 @@ import type {
   WorkRequestStatus,
 } from "@/src/services/workschedule/constant";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
+import { ScreenHeader } from "@/src/shared/ui/ScreenHeader";
 import { Ionicons } from "@expo/vector-icons";
 import type { AppArea } from "@/src/application/access/roles";
 import { router, useFocusEffect } from "expo-router";
@@ -65,18 +66,11 @@ export default function UserWorkRequestHubScreen({ area = "user" }: { area?: App
 
   return (
     <View className="flex-1 bg-slate-50">
-      <View className="flex-row items-center border-b border-slate-100 bg-white px-4 py-3">
-        <Pressable
-          className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-slate-100"
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={20} color="#334155" />
-        </Pressable>
-        <View className="flex-1">
-          <Text className="text-lg font-black text-slate-900">Đơn từ</Text>
-          <Text className="text-[11px] text-slate-500">Tạo đơn và theo dõi lịch sử xử lý</Text>
-        </View>
-      </View>
+      <ScreenHeader
+        onBack={() => router.back()}
+        subtitle="Tạo đơn và theo dõi lịch sử xử lý"
+        title="Đơn từ"
+      />
 
       <View className="flex-row border-b border-slate-200 bg-white px-4">
         {[
@@ -101,7 +95,7 @@ export default function UserWorkRequestHubScreen({ area = "user" }: { area?: App
         ))}
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
         {activeTab === "types" ? (
           <View className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
             {WORK_REQUEST_TYPES.map((type, index) => {

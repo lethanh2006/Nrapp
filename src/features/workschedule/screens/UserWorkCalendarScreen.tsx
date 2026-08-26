@@ -6,6 +6,7 @@ import type {
   PersonalAttendanceRecord,
 } from "@/src/services/workschedule/constant";
 import { Ionicons } from "@expo/vector-icons";
+import { ScreenHeader } from "@/src/shared/ui/ScreenHeader";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
@@ -155,20 +156,13 @@ export default function UserWorkCalendarScreen() {
 
   return (
     <View className="flex-1 bg-slate-50">
-      <View className="flex-row items-center border-b border-slate-100 bg-white px-4 py-3">
-        <Pressable
-          className="mr-3 h-10 w-10 items-center justify-center rounded-xl bg-slate-100"
-          onPress={() => router.back()}
-        >
-          <Ionicons name="arrow-back" size={20} color="#334155" />
-        </Pressable>
-        <View>
-          <Text className="text-lg font-black text-slate-900">Lịch làm việc</Text>
-          <Text className="text-[11px] text-slate-500">Lịch làm, trạng thái duyệt và chấm công</Text>
-        </View>
-      </View>
+      <ScreenHeader
+        onBack={() => router.back()}
+        subtitle="Lịch làm, trạng thái duyệt và chấm công"
+        title="Lịch làm việc"
+      />
 
-      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 100 }}>
+      <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
         <View className="rounded-3xl border border-slate-200 bg-white p-4">
           <View className="mb-4 flex-row items-center justify-between">
             <Pressable

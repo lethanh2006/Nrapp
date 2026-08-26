@@ -5,6 +5,7 @@ import {
 } from "@/src/application/access/roles";
 import { getAreaRoutes } from "@/src/application/navigation/routes";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
+import { ScreenHeader } from "@/src/shared/ui/ScreenHeader";
 import { router, type Href } from "expo-router";
 import type { ComponentProps } from "react";
 import { Pressable, ScrollView, Text, View } from "react-native";
@@ -63,34 +64,40 @@ export default function WorkscheduleUtilitiesScreen({ area }: { area: AppArea })
   ];
 
   return (
-    <ScrollView
-      className="flex-1 bg-slate-50"
-      contentContainerStyle={{ padding: 16, paddingBottom: 100 }}
-      showsVerticalScrollIndicator={false}
-    >
-
-      <View className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
-        {utilities.map((item, index) => (
-          <Pressable
-            className={`flex-row items-center p-4 active:bg-slate-50 ${
-              index < utilities.length - 1 ? "border-b border-slate-100" : ""
-            }`}
-            key={item.title}
-            onPress={() => router.push(item.route)}
-          >
-            <View className={`h-12 w-12 items-center justify-center rounded-2xl ${item.background}`}>
-              <Ionicons name={item.icon} size={23} color={item.color} />
-            </View>
-            <View className="ml-3 flex-1 pr-2">
-              <Text className="text-sm font-black text-slate-800">{item.title}</Text>
-              <Text className="mt-1 text-[11px] leading-4 text-slate-500">
-                {item.description}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
-          </Pressable>
-        ))}
-      </View>
-    </ScrollView>
+    <View className="flex-1 bg-slate-50">
+      <ScreenHeader
+        onBack={() => router.back()}
+        subtitle="Lịch làm, đơn từ và báo cáo cá nhân"
+        title="Tiện ích nhân sự"
+      />
+      <ScrollView
+        className="flex-1"
+        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <View className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
+          {utilities.map((item, index) => (
+            <Pressable
+              className={`flex-row items-center p-4 active:bg-slate-50 ${
+                index < utilities.length - 1 ? "border-b border-slate-100" : ""
+              }`}
+              key={item.title}
+              onPress={() => router.push(item.route)}
+            >
+              <View className={`h-12 w-12 items-center justify-center rounded-2xl ${item.background}`}>
+                <Ionicons name={item.icon} size={23} color={item.color} />
+              </View>
+              <View className="ml-3 flex-1 pr-2">
+                <Text className="text-sm font-black text-slate-800">{item.title}</Text>
+                <Text className="mt-1 text-[11px] leading-4 text-slate-500">
+                  {item.description}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
+            </Pressable>
+          ))}
+        </View>
+      </ScrollView>
+    </View>
   );
 }
