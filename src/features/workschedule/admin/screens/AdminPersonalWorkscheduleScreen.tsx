@@ -1,14 +1,13 @@
 import { usePersonalWorkschedule } from "@/src/features/workschedule/shared/hooks/usePersonalWorkschedule";
-import type { AppArea } from "@/src/application/access/roles";
-import { getAreaRoutes } from "@/src/application/navigation/routes";
+import { APP_ROUTES } from "@/src/application/navigation/routes";
 import {
   getAllowedWeekRange,
   getWeekStartMonday,
   isRegistrationClosed,
   toLocalDateKey,
 } from "@/src/features/workschedule/shared/utils/date";
-import { DayScheduleEditor } from "@/src/features/workschedule/shared/ui/DayScheduleEditor";
-import { WeekPicker } from "@/src/features/workschedule/shared/ui/WeekPicker";
+import { AdminDayScheduleEditor } from "@/src/features/workschedule/admin/ui/AdminDayScheduleEditor";
+import { AdminWeekPicker } from "@/src/features/workschedule/admin/ui/AdminWeekPicker";
 import type {
   EntryType,
   IScheduleEntry,
@@ -79,7 +78,7 @@ const isSameWeek = (date: string | Date, weekStart: Date) =>
 
 const padCountdownValue = (value: number) => String(value).padStart(2, "0");
 
-export default function PersonalWorkscheduleScreen({ area }: { area: AppArea }) {
+export default function AdminPersonalWorkscheduleScreen() {
   const {
     getMySchedules,
     sendScheduleRequest,
@@ -160,8 +159,8 @@ export default function PersonalWorkscheduleScreen({ area }: { area: AppArea }) 
   }, [policy]);
 
   const returnToUtilities = useCallback(() => {
-    router.replace(getAreaRoutes(area).utilities);
-  }, [area]);
+    router.replace(APP_ROUTES.admin.utilities);
+  }, []);
 
   const countdown = useMemo(() => {
     const endTime = policy ? new Date(policy.registration_end).getTime() : currentTime;
@@ -373,8 +372,8 @@ export default function PersonalWorkscheduleScreen({ area }: { area: AppArea }) 
       <View className="flex-1 bg-slate-50">
         <ScreenHeader
           onBack={returnToUtilities}
-          subtitle="Chọn lịch và gửi quản lý duyệt"
-          title="Đăng ký lịch làm"
+          subtitle="Lịch cá nhân trong khu quản trị"
+          title="Lịch làm của tôi"
         />
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color="#dc2626" />
@@ -390,8 +389,8 @@ export default function PersonalWorkscheduleScreen({ area }: { area: AppArea }) 
     <View className="flex-1 bg-slate-50">
       <ScreenHeader
         onBack={returnToUtilities}
-        subtitle="Chọn lịch và gửi quản lý duyệt"
-        title="Đăng ký lịch làm"
+        subtitle="Lịch cá nhân trong khu quản trị"
+        title="Lịch làm của tôi"
       />
 
       <ScrollView
@@ -444,7 +443,7 @@ export default function PersonalWorkscheduleScreen({ area }: { area: AppArea }) 
           ))}
         </View>
 
-        <WeekPicker
+        <AdminWeekPicker
           weekStart={selectedWeekStart}
           index={selectedWeekIndex}
           total={allowedWeeks.length}
@@ -591,7 +590,7 @@ export default function PersonalWorkscheduleScreen({ area }: { area: AppArea }) 
             })}
           </View>
 
-          <DayScheduleEditor
+          <AdminDayScheduleEditor
             date={selectedDate}
             entry={selectedEntry}
             readOnly={Boolean(selectedDayReadOnlyReason)}

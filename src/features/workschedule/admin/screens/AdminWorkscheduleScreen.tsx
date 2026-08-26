@@ -10,7 +10,7 @@ import { ReportSummary } from "@/src/features/workschedule/admin/ui/ReportSummar
 import { RequestManager } from "@/src/features/workschedule/admin/ui/RequestManager";
 import { StatCard } from "@/src/features/workschedule/admin/ui/StatCard";
 import { WorkRequestManager } from "@/src/features/workschedule/admin/ui/WorkRequestManager";
-import PersonalWorkscheduleScreen from "@/src/features/workschedule/shared/screens/PersonalWorkscheduleScreen";
+import AdminPersonalWorkscheduleScreen from "@/src/features/workschedule/admin/screens/AdminPersonalWorkscheduleScreen";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import React, { useState } from "react";
@@ -174,7 +174,7 @@ export default function AdminWorkscheduleScreen() {
   const { user } = useAuthSession();
 
   if (!canManageWorkSchedule(user?.role)) {
-    return <PersonalWorkscheduleScreen area="admin" />;
+    return <AdminPersonalWorkscheduleScreen />;
   }
 
   return (

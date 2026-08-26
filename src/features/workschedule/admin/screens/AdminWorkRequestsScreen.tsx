@@ -1,5 +1,22 @@
-import WorkRequestHubScreen from "@/src/features/workschedule/shared/screens/WorkRequestHubScreen";
+import { WorkRequestManager } from "@/src/features/workschedule/admin/ui/WorkRequestManager";
+import { ScreenHeader } from "@/src/shared/ui/ScreenHeader";
+import { router } from "expo-router";
+import { ScrollView, View } from "react-native";
 
 export default function AdminWorkRequestsScreen() {
-  return <WorkRequestHubScreen area="admin" />;
+  return (
+    <View className="flex-1 bg-slate-950">
+      <ScreenHeader
+        onBack={() => router.back()}
+        subtitle="Phê duyệt và theo dõi đơn của toàn bộ nhân sự"
+        title="Duyệt đơn nhân sự"
+      />
+      <ScrollView
+        contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
+        showsVerticalScrollIndicator={false}
+      >
+        <WorkRequestManager />
+      </ScrollView>
+    </View>
+  );
 }
