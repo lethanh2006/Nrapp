@@ -4,7 +4,7 @@ import {
   formatMoney,
   getCanteenErrorMessage,
 } from "@/src/features/canteen/shared/model/presentation";
-import OrderSummaryCard from "@/src/features/canteen/shared/ui/OrderSummaryCard";
+import UserOrderSummaryCard from "@/src/features/canteen/user/ui/UserOrderSummaryCard";
 import PaymentQrModal from "@/src/features/canteen/user/ui/PaymentQrModal";
 import {
   cancelCanteenOrder,
@@ -685,7 +685,7 @@ export default function UserCanteenScreen() {
               </View>
             ) : (
               orders.map((order) => (
-                <OrderSummaryCard
+                <UserOrderSummaryCard
                   key={order._id}
                   order={order}
                   footer={

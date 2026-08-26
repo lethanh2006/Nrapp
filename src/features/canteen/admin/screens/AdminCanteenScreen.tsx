@@ -5,7 +5,7 @@ import AdminInventoryManager from "@/src/features/canteen/admin/ui/AdminInventor
 import AdminMenuCatalog from "@/src/features/canteen/admin/ui/AdminMenuCatalog";
 import AdminTableManager from "@/src/features/canteen/admin/ui/AdminTableManager";
 import { getCanteenErrorMessage } from "@/src/features/canteen/shared/model/presentation";
-import OrderSummaryCard from "@/src/features/canteen/shared/ui/OrderSummaryCard";
+import AdminOrderSummaryCard from "@/src/features/canteen/admin/ui/AdminOrderSummaryCard";
 import {
   cancelCanteenOrder,
   completeCanteenOrder,
@@ -489,7 +489,7 @@ export default function AdminCanteenScreen() {
               </View>
             ) : (
               orders.map((order) => (
-                <OrderSummaryCard
+                <AdminOrderSummaryCard
                   footer={renderOrderActions(order)}
                   key={order._id}
                   order={order}
@@ -586,7 +586,7 @@ export default function AdminCanteenScreen() {
               </View>
             ) : (
               queue.map((order) => (
-                <OrderSummaryCard
+                <AdminOrderSummaryCard
                   key={order._id}
                   order={order}
                   showOwner
@@ -625,7 +625,7 @@ export default function AdminCanteenScreen() {
               </View>
             ) : (
               cookingOrders.map((order) => (
-                <OrderSummaryCard
+                <AdminOrderSummaryCard
                   key={order._id}
                   order={order}
                   showOwner

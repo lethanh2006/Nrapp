@@ -15,17 +15,17 @@ import { Ionicons } from "@expo/vector-icons";
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
 
-type OrderSummaryCardProps = {
+type AdminOrderSummaryCardProps = {
   order: CanteenOrder;
   showOwner?: boolean;
   footer?: ReactNode;
 };
 
-export default function OrderSummaryCard({
+export default function AdminOrderSummaryCard({
   order,
   showOwner = false,
   footer,
-}: OrderSummaryCardProps) {
+}: AdminOrderSummaryCardProps) {
   const statusColors = ORDER_STATUS_COLORS[order.status];
   const paymentColors = PAYMENT_STATUS_COLORS[order.paymentStatus];
 
