@@ -100,14 +100,26 @@ export default function MessageInput({
       {image && (
         <View style={styles.previewWrap}>
           <Image source={{ uri: image.uri }} style={styles.previewImage} />
-          <Pressable style={styles.removeImage} onPress={() => setImage(null)}>
+          <Pressable
+            accessibilityLabel="Bỏ ảnh đã chọn"
+            accessibilityRole="button"
+            hitSlop={8}
+            style={styles.removeImage}
+            onPress={() => setImage(null)}
+          >
             <Ionicons name="close" size={18} color="#fff" />
           </Pressable>
         </View>
       )}
       <View style={styles.row}>
-        <Pressable style={styles.attachButton} onPress={pickImage} disabled={sending}>
-          <Ionicons name="image-outline" size={22} color="#0084FF" />
+        <Pressable
+          accessibilityLabel="Chọn ảnh để gửi"
+          accessibilityRole="button"
+          style={styles.attachButton}
+          onPress={pickImage}
+          disabled={sending}
+        >
+          <Ionicons name="image-outline" size={21} color="#2563eb" />
         </Pressable>
         <TextInput
           style={styles.input}
@@ -120,6 +132,8 @@ export default function MessageInput({
         />
 
         <Pressable
+          accessibilityLabel="Gửi tin nhắn"
+          accessibilityRole="button"
           style={[
             styles.sendBtn,
             (!message.trim() && !image) && styles.sendDisabled,
@@ -140,10 +154,11 @@ export default function MessageInput({
 
 const styles = StyleSheet.create({
   container: {
-    borderTopWidth: 1,
-    borderTopColor: '#e5e5ea',
-    paddingTop: 12,
-    paddingBottom: 4,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
+    borderRadius: 20,
+    padding: 10,
+    backgroundColor: '#ffffff',
   },
   row: {
     flexDirection: 'row',
@@ -157,7 +172,9 @@ const styles = StyleSheet.create({
   previewImage: {
     width: 88,
     height: 88,
-    borderRadius: 10,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   removeImage: {
     position: 'absolute',
@@ -169,23 +186,30 @@ const styles = StyleSheet.create({
   },
   attachButton: {
     padding: 10,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: 14,
     backgroundColor: '#eff6ff',
   },
   input: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
-    borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    fontSize: 16,
-    color: '#000000',
-    maxHeight: 100,
+    minHeight: 44,
+    maxHeight: 112,
+    borderWidth: 1,
+    borderColor: '#f1f5f9',
+    backgroundColor: '#f8fafc',
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: '#0f172a',
   },
   sendBtn: {
     padding: 12,
-    backgroundColor: '#0084FF',
-    borderRadius: 12,
+    backgroundColor: '#2563eb',
+    borderRadius: 14,
     minWidth: 44,
     minHeight: 44,
     alignItems: 'center',

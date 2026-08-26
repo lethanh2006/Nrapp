@@ -1,8 +1,15 @@
 import type { Message } from "@/src/services/chat/constant";
 import type { User } from "@/src/services/user/constant";
-import { Image } from 'expo-image';
-import React, { useEffect, useMemo, useRef } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import React, { useEffect, useMemo, useRef } from "react";
+import {
+  ScrollView,
+  StyleSheet,
+  Text,
+  useWindowDimensions,
+  View,
+} from "react-native";
 
 interface ChatMessagesProps {
   selectedUser: string | null;
@@ -12,7 +19,9 @@ interface ChatMessagesProps {
 
 function formatTime(dateStr: string) {
   const d = new Date(dateStr);
-  return d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+  return Number.isNaN(d.getTime())
+    ? ""
+    : d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
 }
 
 export default function ChatMessages({
@@ -21,6 +30,8 @@ export default function ChatMessages({
   loggedInUser,
 }: ChatMessagesProps) {
   const scrollRef = useRef<ScrollView>(null);
+  const { width } = useWindowDimensions();
+  const imageSize = Math.min(240, Math.max(120, width * 0.56));
 
   const uniqueMessages = useMemo(() => {
     if (!messages) return [];
@@ -45,6 +56,18 @@ export default function ChatMessages({
     );
   }
 
+  if (uniqueMessages.length === 0) {
+    return (
+      <View style={styles.empty}>
+        <View style={styles.emptyIcon}>
+          <Ionicons name="chatbubble-ellipses-outline" size={28} color="#2563eb" />
+        </View>
+        <Text style={styles.emptyTitle}>Bắt đầu cuộc trò chuyện</Text>
+        <Text style={styles.emptyText}>Gửi lời chào hoặc chia sẻ một hình ảnh.</Text>
+      </View>
+    );
+  }
+
   return (
     <ScrollView
       ref={scrollRef}
@@ -64,7 +87,7 @@ export default function ChatMessages({
               {msg.messageType === 'image' && msg.image && (
                 <Image
                   source={{ uri: msg.image.url }}
-                  style={styles.img}
+                  style={[styles.img, { width: imageSize, height: imageSize }]}
                   contentFit="cover"
                   accessibilityLabel="Ảnh trong tin nhắn"
                 />
@@ -92,20 +115,37 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingVertical: 8,
-    paddingBottom: 24,
+    paddingBottom: 16,
   },
   empty: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    paddingHorizontal: 28,
+  },
+  emptyIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#eff6ff',
+  },
+  emptyTitle: {
+    marginTop: 14,
+    color: '#334155',
+    fontSize: 14,
+    fontWeight: '800',
   },
   emptyText: {
-    color: '#999999',
-    fontSize: 16,
+    marginTop: 4,
+    color: '#94a3b8',
+    fontSize: 12,
+    textAlign: 'center',
   },
   msgWrap: {
     marginVertical: 4,
-    maxWidth: '80%',
+    maxWidth: '82%',
   },
   msgRight: {
     alignSelf: 'flex-end',
@@ -116,34 +156,36 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   bubble: {
-    padding: 12,
-    borderRadius: 16,
+    paddingHorizontal: 13,
+    paddingVertical: 10,
+    borderRadius: 18,
     maxWidth: '100%',
   },
   bubbleMe: {
-    backgroundColor: '#0084FF',
-    borderBottomRightRadius: 4,
+    backgroundColor: '#2563eb',
+    borderBottomRightRadius: 6,
   },
   bubbleOther: {
-    backgroundColor: '#e5e5ea',
-    borderBottomLeftRadius: 4,
+    backgroundColor: '#ffffff',
+    borderBottomLeftRadius: 6,
+    borderWidth: 1,
+    borderColor: '#e2e8f0',
   },
   msgText: {
-    color: '#000000',
-    fontSize: 15,
+    color: '#0f172a',
+    fontSize: 14,
+    lineHeight: 20,
   },
   msgTextMe: {
     color: '#ffffff',
   },
   img: {
-    width: 200,
-    height: 200,
-    borderRadius: 8,
-    marginBottom: 4,
+    borderRadius: 12,
+    marginBottom: 6,
   },
   time: {
     fontSize: 11,
-    color: '#999999',
+    color: '#94a3b8',
     marginTop: 4,
     marginHorizontal: 4,
   },

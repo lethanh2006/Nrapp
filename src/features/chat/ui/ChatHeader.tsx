@@ -1,6 +1,6 @@
-import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons } from "@expo/vector-icons";
+import React from "react";
+import { Pressable, StyleSheet, Text, View } from "react-native";
 
 interface ChatHeaderProps {
   user: any;
@@ -27,12 +27,18 @@ export default function ChatHeader({
     normalizedUser?.name ||
     normalizedUser?.username ||
     normalizedUser?.email ||
-    "Unknown user";
+    "Người dùng";
 
   return (
     <View style={styles.header}>
-      <Pressable style={styles.backBtn} onPress={onBack}>
-        <Ionicons name="arrow-back" size={24} color="#2563eb" />
+      <Pressable
+        accessibilityLabel="Quay lại danh sách trò chuyện"
+        accessibilityRole="button"
+        hitSlop={8}
+        style={styles.backBtn}
+        onPress={onBack}
+      >
+        <Ionicons name="arrow-back" size={20} color="#334155" />
       </Pressable>
 
       <View style={styles.userInfo}>
@@ -81,12 +87,12 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 10,
     backgroundColor: '#ffffff',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 20,
+    padding: 12,
     borderWidth: 1,
-    borderColor: '#e5e5ea',
+    borderColor: '#e2e8f0',
   },
   backBtn: {
     width: 40,
@@ -94,21 +100,23 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 8,
+    borderRadius: 12,
+    backgroundColor: '#f1f5f9',
   },
   userInfo: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   avatarWrap: {
     position: 'relative',
   },
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    backgroundColor: '#f0f0f0',
+    width: 44,
+    height: 44,
+    borderRadius: 15,
+    backgroundColor: '#eff6ff',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -128,19 +136,19 @@ const styles = StyleSheet.create({
     minWidth: 0,
   },
   name: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    color: '#000000',
+    fontSize: 16,
+    fontWeight: '800',
+    color: '#0f172a',
   },
   typing: {
     fontSize: 14,
-    color: '#0084FF',
+    color: '#2563eb',
     fontStyle: 'italic',
     marginTop: 2,
   },
   presence: {
     fontSize: 13,
-    color: '#6b7280',
+    color: '#64748b',
     marginTop: 2,
   },
   placeholder: {

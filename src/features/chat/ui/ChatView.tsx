@@ -556,6 +556,6 @@ const styles = StyleSheet.create({
   chatArea: {
     flex: 1,
     padding: CHAT_AREA_PADDING,
-    backgroundColor: "#ffffff",
+    backgroundColor: "#f8fafc",
   },
 });
