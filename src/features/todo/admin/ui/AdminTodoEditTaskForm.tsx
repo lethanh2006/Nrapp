@@ -17,7 +17,7 @@ type Props = {
   onSave: (input: UpdateTaskInput) => Promise<boolean>;
 };
 
-export default function TodoEditTaskForm({
+export default function AdminTodoEditTaskForm({
   task,
   saving,
   onCancel,

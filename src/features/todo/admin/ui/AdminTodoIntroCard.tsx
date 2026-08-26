@@ -7,7 +7,7 @@ type Props = {
   area: AppArea;
 };
 
-export default function TodoIntroCard({ area }: Props) {
+export default function AdminTodoIntroCard({ area }: Props) {
   return (
     <View className="bg-blue-50/50 rounded-2xl p-4 border border-blue-100/60 flex-row items-center">
       <View className="bg-blue-500/10 p-2.5 rounded-xl mr-3">

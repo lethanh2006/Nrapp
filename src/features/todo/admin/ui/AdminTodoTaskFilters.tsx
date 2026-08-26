@@ -27,7 +27,7 @@ type Props = {
   onChangePage: (page: number) => void;
 };
 
-export default function TodoTaskFilters({
+export default function AdminTodoTaskFilters({
   status,
   priority,
   searchInput,

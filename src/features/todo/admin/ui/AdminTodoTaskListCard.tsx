@@ -1,5 +1,5 @@
 import type { AppArea } from "@/src/application/access/roles";
-import TodoEditTaskForm from "@/src/features/todo/shared/ui/TodoEditTaskForm";
+import AdminTodoEditTaskForm from "@/src/features/todo/admin/ui/AdminTodoEditTaskForm";
 import type { User } from "@/src/services/user/constant";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";
@@ -58,7 +58,7 @@ const displayName = (
   return value.username || value.name || value.email || value._id;
 };
 
-export default function TodoTaskListCard({
+export default function AdminTodoTaskListCard({
   area,
   tasks,
   loading,
@@ -332,7 +332,7 @@ export default function TodoTaskListCard({
                 {isAdminArea ? (
                   <View className="mt-4 pt-3 border-t border-slate-100">
                     {editingTaskId === task._id ? (
-                      <TodoEditTaskForm
+                      <AdminTodoEditTaskForm
                         task={task}
                         saving={savingTaskId === task._id}
                         onCancel={() => setEditingTaskId(null)}

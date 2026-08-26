@@ -12,7 +12,7 @@ interface ChatHeaderProps {
   hasRealtimeError?: boolean;
 }
 
-export default function ChatHeader({
+export default function UserChatHeader({
   user,
   onBack,
   isTyping,

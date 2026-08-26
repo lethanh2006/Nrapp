@@ -34,7 +34,7 @@ const formatRelativeTime = (value?: string) => {
   return date.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit" });
 };
 
-export default function ChatSideBar({
+export default function UserChatSideBar({
   users,
   loggedInUser,
   chats,

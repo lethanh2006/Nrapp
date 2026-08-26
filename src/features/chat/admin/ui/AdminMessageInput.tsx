@@ -25,7 +25,7 @@ interface MessageInputProps {
   handleMessageSend: (image?: ChatImageUpload) => Promise<boolean>;
 }
 
-export default function MessageInput({
+export default function AdminMessageInput({
   selectedUser,
   message,
   setMessage,
@@ -119,7 +119,7 @@ export default function MessageInput({
           onPress={pickImage}
           disabled={sending}
         >
-          <Ionicons name="image-outline" size={21} color="#2563eb" />
+          <Ionicons name="image-outline" size={21} color="#dc2626" />
         </Pressable>
         <TextInput
           style={styles.input}
@@ -155,10 +155,10 @@ export default function MessageInput({
 const styles = StyleSheet.create({
   container: {
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#334155',
     borderRadius: 20,
     padding: 10,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#1e293b',
   },
   row: {
     flexDirection: 'row',
@@ -191,24 +191,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     borderRadius: 14,
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#fee2e2',
   },
   input: {
     flex: 1,
     minHeight: 44,
     maxHeight: 112,
     borderWidth: 1,
-    borderColor: '#f1f5f9',
-    backgroundColor: '#f8fafc',
+    borderColor: '#334155',
+    backgroundColor: '#0f172a',
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
-    color: '#0f172a',
+    color: '#f8fafc',
   },
   sendBtn: {
     padding: 12,
-    backgroundColor: '#2563eb',
+    backgroundColor: '#dc2626',
     borderRadius: 14,
     minWidth: 44,
     minHeight: 44,

@@ -32,7 +32,7 @@ type Props = {
   onCreateTask: () => void;
 };
 
-export default function TodoCreateTaskCard({
+export default function AdminTodoCreateTaskCard({
   title,
   description,
   deadline,

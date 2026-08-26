@@ -24,7 +24,7 @@ function formatTime(dateStr: string) {
     : d.toLocaleTimeString("vi-VN", { hour: "2-digit", minute: "2-digit" });
 }
 
-export default function ChatMessages({
+export default function AdminChatMessages({
   selectedUser,
   messages,
   loggedInUser,
@@ -60,7 +60,7 @@ export default function ChatMessages({
     return (
       <View style={styles.empty}>
         <View style={styles.emptyIcon}>
-          <Ionicons name="chatbubble-ellipses-outline" size={28} color="#2563eb" />
+          <Ionicons name="chatbubble-ellipses-outline" size={28} color="#dc2626" />
         </View>
         <Text style={styles.emptyTitle}>Bắt đầu cuộc trò chuyện</Text>
         <Text style={styles.emptyText}>Gửi lời chào hoặc chia sẻ một hình ảnh.</Text>
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#eff6ff',
+    backgroundColor: '#fee2e2',
   },
   emptyTitle: {
     marginTop: 14,
@@ -162,17 +162,17 @@ const styles = StyleSheet.create({
     maxWidth: '100%',
   },
   bubbleMe: {
-    backgroundColor: '#2563eb',
+    backgroundColor: '#dc2626',
     borderBottomRightRadius: 6,
   },
   bubbleOther: {
-    backgroundColor: '#ffffff',
+    backgroundColor: '#1e293b',
     borderBottomLeftRadius: 6,
     borderWidth: 1,
-    borderColor: '#e2e8f0',
+    borderColor: '#334155',
   },
   msgText: {
-    color: '#0f172a',
+    color: '#f1f5f9',
     fontSize: 14,
     lineHeight: 20,
   },
