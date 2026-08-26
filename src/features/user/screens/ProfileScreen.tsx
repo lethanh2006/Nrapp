@@ -73,6 +73,8 @@ export default function ProfileScreen({ area }: ProfileScreenProps) {
   const [draftEmail, setDraftEmail] = useState("");
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const isAdminArea = area === "admin";
+  const accentColor = isAdminArea ? "#dc2626" : "#2563eb";
   const displayName = user?.name?.trim() || "Người dùng";
   const initial = displayName.charAt(0).toUpperCase();
   const roleLabel = user
@@ -220,7 +222,11 @@ export default function ProfileScreen({ area }: ProfileScreenProps) {
           resizeMode="cover"
           style={{ paddingTop: insets.top + 14, paddingBottom: 58 }}
         >
-          <View className="absolute inset-0 bg-red-950/75" />
+          <View
+            className={`absolute inset-0 ${
+              isAdminArea ? "bg-red-950/75" : "bg-blue-950/75"
+            }`}
+          />
 
           <View className="mb-7 px-5">
             <View>
@@ -235,7 +241,11 @@ export default function ProfileScreen({ area }: ProfileScreenProps) {
 
           <View className="items-center px-5">
             <View className="relative">
-              <View className="h-28 w-28 items-center justify-center rounded-full border-4 border-white bg-red-600 shadow-lg">
+              <View
+                className={`h-28 w-28 items-center justify-center rounded-full border-4 border-white shadow-lg ${
+                  isAdminArea ? "bg-red-600" : "bg-blue-600"
+                }`}
+              >
                 <Text className="text-5xl font-black text-white">{initial}</Text>
               </View>
               <View className="absolute bottom-1 right-1 h-7 w-7 items-center justify-center rounded-full border-[3px] border-white bg-emerald-500">
@@ -246,8 +256,16 @@ export default function ProfileScreen({ area }: ProfileScreenProps) {
               {displayName}
             </Text>
             <View className="mt-2 flex-row items-center rounded-full border border-white/15 bg-white/10 px-3 py-1.5">
-              <Ionicons name="briefcase-outline" size={13} color="#fecaca" />
-              <Text className="ml-1.5 text-xs font-bold text-red-100">
+              <Ionicons
+                name="briefcase-outline"
+                size={13}
+                color={isAdminArea ? "#fecaca" : "#bfdbfe"}
+              />
+              <Text
+                className={`ml-1.5 text-xs font-bold ${
+                  isAdminArea ? "text-red-100" : "text-blue-100"
+                }`}
+              >
                 {roleLabel}
               </Text>
             </View>
@@ -279,18 +297,32 @@ export default function ProfileScreen({ area }: ProfileScreenProps) {
             {!editing ? (
               <Pressable
                 accessibilityLabel="Chỉnh sửa thông tin tài khoản"
-                className="flex-row items-center rounded-xl bg-blue-50 px-3 py-2 active:bg-blue-100"
+                className={`flex-row items-center rounded-xl px-3 py-2 ${
+                  isAdminArea
+                    ? "bg-red-50 active:bg-red-100"
+                    : "bg-blue-50 active:bg-blue-100"
+                }`}
                 disabled={deleting}
                 onPress={openEditor}
               >
-                <Ionicons name="create-outline" size={16} color="#2563eb" />
-                <Text className="ml-1 text-xs font-black text-blue-600">Chỉnh sửa</Text>
+                <Ionicons name="create-outline" size={16} color={accentColor} />
+                <Text
+                  className={`ml-1 text-xs font-black ${
+                    isAdminArea ? "text-red-600" : "text-blue-600"
+                  }`}
+                >
+                  Chỉnh sửa
+                </Text>
               </Pressable>
             ) : null}
           </View>
 
           {editing ? (
-            <View className="mb-4 rounded-3xl border border-blue-100 bg-white p-4">
+            <View
+              className={`mb-4 rounded-3xl border bg-white p-4 ${
+                isAdminArea ? "border-red-100" : "border-blue-100"
+              }`}
+            >
               <Text className="mb-2 text-xs font-black uppercase tracking-wide text-slate-500">
                 Tên hiển thị
               </Text>
@@ -329,7 +361,13 @@ export default function ProfileScreen({ area }: ProfileScreenProps) {
                 </Pressable>
                 <Pressable
                   className={`flex-1 flex-row items-center justify-center rounded-2xl py-3 ${
-                    saving ? "bg-blue-300" : "bg-blue-600 active:bg-blue-700"
+                    saving
+                      ? isAdminArea
+                        ? "bg-red-300"
+                        : "bg-blue-300"
+                      : isAdminArea
+                        ? "bg-red-600 active:bg-red-700"
+                        : "bg-blue-600 active:bg-blue-700"
                   }`}
                   disabled={saving}
                   onPress={() => void saveProfile()}

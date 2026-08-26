@@ -5,7 +5,7 @@ import { MainBottomBar } from "@/src/components/layout/MainBottomBar";
 import { AttendanceScannerModal } from "@/src/features/workschedule/ui/AttendanceScannerModal";
 import { Stack, router, usePathname } from "expo-router";
 import { useEffect, useState } from "react";
-import { Keyboard, Platform, Text, View } from "react-native";
+import { Keyboard, Platform, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 export default function MainLayout() {
@@ -42,20 +42,12 @@ export default function MainLayout() {
 
   return (
     <View className="flex-1 bg-white">
-      {!homeActive && !profileActive && (
+      {!homeActive && !profileActive ? (
         <View
-          className="border-b border-gray-100 bg-white px-4"
-          style={{
-            paddingTop: insets.top + 8,
-            paddingBottom: 8,
-            minHeight: 56 + insets.top,
-          }}
-        >
-          <Text className="text-xl font-extrabold tracking-tight text-slate-800">
-            Work<Text className="text-blue-600">Space</Text>
-          </Text>
-        </View>
-      )}
+          className="bg-white"
+          style={{ height: insets.top }}
+        />
+      ) : null}
 
       <View className="flex-1">
         <Stack screenOptions={{ headerShown: false }}>

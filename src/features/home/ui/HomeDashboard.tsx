@@ -26,6 +26,7 @@ import { getAreaRoutes } from "@/src/application/navigation/routes";
 export default function HomeDashboard({ area }: { area: AppArea }) {
   const insets = useSafeAreaInsets();
   const { user } = useAuthSession();
+  const isAdminArea = area === "admin";
   const managesSchedule = canManageWorkSchedule(user?.role);
   const areaRoutes = getAreaRoutes(area);
   const [todayDate, setTodayDate] = useState(new Date());
@@ -206,6 +207,7 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
   return (
     <ScrollView
       className="flex-1 bg-slate-50"
+      contentContainerStyle={{ paddingBottom: 20 }}
       showsVerticalScrollIndicator={false}
     >
       <ImageBackground
@@ -217,14 +219,22 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
         }}
         resizeMode="cover"
       >
-        <View className="absolute inset-0 bg-red-950/20" />
+        <View
+          className={`absolute inset-0 ${
+            isAdminArea ? "bg-red-950/30" : "bg-blue-950/30"
+          }`}
+        />
 
         <View className="flex-row items-center justify-between px-4 z-10">
           <Pressable
             onPress={() => router.push(areaRoutes.profile)}
             className="mr-3 flex-1 flex-row items-center active:opacity-80"
           >
-            <View className="h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-white bg-red-700/80">
+            <View
+              className={`h-12 w-12 items-center justify-center overflow-hidden rounded-full border-2 border-white ${
+                isAdminArea ? "bg-red-700/80" : "bg-blue-700/80"
+              }`}
+            >
               <Text className="text-white text-xl font-black">
                 {user?.name ? user.name.charAt(0).toUpperCase() : "H"}
               </Text>
@@ -243,11 +253,11 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
             </View>
           </Pressable>
 
-          <View className="flex-row items-center space-x-2">
+          <View className="flex-row items-center" style={{ gap: 8 }}>
             <Pressable
               accessibilityLabel="Mở danh bạ nhân sự"
               onPress={() => router.push(areaRoutes.directory)}
-              className="w-10 h-10 rounded-full bg-white/15 items-center justify-center active:scale-95"
+              className="h-10 w-10 items-center justify-center rounded-full bg-white/15 active:opacity-80"
             >
               <Ionicons name="search" size={20} color="white" />
             </Pressable>
@@ -256,7 +266,8 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
               onPress={() =>
                 router.push(areaRoutes.utilities)
               }
-              className="w-10 h-10 rounded-full bg-white/15 items-center justify-center active:scale-95"
+              accessibilityLabel="Mở tiện ích lịch làm"
+              className="h-10 w-10 items-center justify-center rounded-full bg-white/15 active:opacity-80"
             >
               <Ionicons name="calendar" size={20} color="white" />
             </Pressable>
@@ -276,10 +287,8 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
             Bạn không có lịch trong tuần này
           </Text>
           <Pressable
-            onPress={() =>
-              router.push("/(main)/user/workschedule")
-            }
-            className="mt-2 bg-blue-50 px-4 py-1.5 rounded-full active:scale-95 flex-row items-center space-x-1"
+            onPress={() => router.push(areaRoutes.workschedule)}
+            className="mt-2 flex-row items-center rounded-full bg-blue-50 px-4 py-1.5 active:opacity-80"
           >
             <Ionicons name="add-circle" size={14} color="#2563eb" />
             <Text className="text-blue-600 text-[10px] font-extrabold uppercase tracking-wider ml-0.5">
@@ -353,7 +362,7 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
         </Pressable>
       )}
 
-      <View className="p-4 space-y-5">
+      <View className="p-4" style={{ gap: 20 }}>
         <View className="mt-2">
           <View className="flex-row items-center justify-between mb-3.5">
             <Text className="text-base font-black text-slate-800 tracking-tight">
@@ -361,12 +370,12 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
             </Text>
           </View>
 
-          <View className="flex-row justify-between items-center bg-white p-4 rounded-3xl border border-slate-100/80 shadow-xs">
+          <View className="flex-row items-center justify-between rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
             <Pressable
               onPress={() => router.push(areaRoutes.chat)}
-              className="items-center justify-center flex-1 active:scale-95 active:opacity-80 transition-all"
+              className="flex-1 items-center justify-center active:opacity-70"
             >
-              <View className="w-14 h-14 bg-blue-50 rounded-2xl items-center justify-center shadow-xs">
+              <View className="h-14 w-14 items-center justify-center rounded-2xl bg-blue-50">
                 <Ionicons name="chatbubbles" size={24} color="#3b82f6" />
               </View>
               <Text className="text-[11px] text-slate-700 font-extrabold text-center mt-2.5">
@@ -376,9 +385,9 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
 
             <Pressable
               onPress={() => router.push(areaRoutes.todo)}
-              className="items-center justify-center flex-1 active:scale-95 active:opacity-80 transition-all"
+              className="flex-1 items-center justify-center active:opacity-70"
             >
-              <View className="w-14 h-14 bg-emerald-50 rounded-2xl items-center justify-center shadow-xs">
+              <View className="h-14 w-14 items-center justify-center rounded-2xl bg-emerald-50">
                 <Ionicons name="checkbox" size={24} color="#10b981" />
               </View>
               <Text className="text-[11px] text-slate-700 font-extrabold text-center mt-2.5">
@@ -388,9 +397,9 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
 
             <Pressable
               onPress={() => router.push(areaRoutes.canteen)}
-              className="items-center justify-center flex-1 active:scale-95 active:opacity-80 transition-all"
+              className="flex-1 items-center justify-center active:opacity-70"
             >
-              <View className="w-14 h-14 bg-orange-50 rounded-2xl items-center justify-center shadow-xs">
+              <View className="h-14 w-14 items-center justify-center rounded-2xl bg-orange-50">
                 <Ionicons name="restaurant" size={24} color="#f97316" />
               </View>
               <Text className="text-[11px] text-slate-700 font-extrabold text-center mt-2.5">
@@ -402,9 +411,9 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
               onPress={() =>
                 router.push(areaRoutes.utilities)
               }
-              className="items-center justify-center flex-1 active:scale-95 active:opacity-80 transition-all"
+              className="flex-1 items-center justify-center active:opacity-70"
             >
-              <View className="w-14 h-14 bg-purple-50 rounded-2xl items-center justify-center shadow-xs">
+              <View className="h-14 w-14 items-center justify-center rounded-2xl bg-purple-50">
                 <Ionicons name="calendar-sharp" size={24} color="#a855f7" />
               </View>
               <Text className="text-[11px] text-slate-700 font-extrabold text-center mt-2.5">
@@ -421,7 +430,7 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
             </Text>
           </View>
 
-          <View className="space-y-3">
+          <View style={{ gap: 12 }}>
             <Pressable
               onPress={() =>
                 Alert.alert(
@@ -429,9 +438,9 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
                   "Dự án game nhập vai 'Thần Thoại Việt' sử dụng công nghệ đồ họa Unreal Engine 5 đỉnh cao đã chính thức công bố thử nghiệm bản Alpha Test cho nhân viên nội bộ trải nghiệm. Hãy cùng tải game và đóng góp ý kiến để hoàn thiện siêu phẩm nhé!"
                 )
               }
-              className="flex-row bg-white rounded-3xl p-3 border border-slate-100/80 shadow-xs items-center active:scale-[0.98]"
+              className="flex-row items-center rounded-3xl border border-slate-100 bg-white p-3 shadow-sm active:opacity-80"
             >
-              <View className="w-18 h-18 bg-rose-500 rounded-2xl items-center justify-center overflow-hidden">
+              <View className="h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-rose-500">
                 <Ionicons name="game-controller" size={32} color="white" />
               </View>
 
@@ -458,9 +467,9 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
                   "Chào hè rực rỡ, HDG Studio tổ chức chuyến teambuilding 4 ngày 3 đêm hoành tráng tại Nha Trang cho toàn thể anh em nhân viên từ ngày 15/06 - 18/06. Vui lòng đăng ký tham gia với phòng Nhân sự trước thứ Sáu để ban tổ chức chuẩn bị xe và phòng khách sạn chu đáo nhất!"
                 )
               }
-              className="flex-row bg-white rounded-3xl p-3 border border-slate-100/80 shadow-xs items-center active:scale-[0.98]"
+              className="flex-row items-center rounded-3xl border border-slate-100 bg-white p-3 shadow-sm active:opacity-80"
             >
-              <View className="w-18 h-18 bg-cyan-500 rounded-2xl items-center justify-center overflow-hidden">
+              <View className="h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-cyan-500">
                 <Ionicons name="sunny" size={32} color="white" />
               </View>
 
@@ -487,9 +496,9 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
                   "Phát động giải chạy bộ HDG Marathon 2026 cự ly 5km - 10km - 21km dành cho tất cả thành viên công ty. Hoạt động nhằm cổ vũ lối sống lành mạnh, rèn luyện sức bền bỉ kiên trì. Cơ cấu giải thưởng siêu lớn với huy chương thiết kế độc quyền từ HDG!"
                 )
               }
-              className="flex-row bg-white rounded-3xl p-3 border border-slate-100/80 shadow-xs items-center active:scale-[0.98]"
+              className="flex-row items-center rounded-3xl border border-slate-100 bg-white p-3 shadow-sm active:opacity-80"
             >
-              <View className="w-18 h-18 bg-amber-500 rounded-2xl items-center justify-center overflow-hidden">
+              <View className="h-16 w-16 items-center justify-center overflow-hidden rounded-2xl bg-amber-500">
                 <Ionicons name="footsteps" size={32} color="white" />
               </View>
 
