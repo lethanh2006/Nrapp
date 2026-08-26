@@ -2,6 +2,10 @@ import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { getCanteenErrorMessage } from "@/src/features/canteen/model/presentation";
 import OrderSummaryCard from "@/src/features/canteen/ui/OrderSummaryCard";
 import AdminMenuCatalog from "@/src/features/canteen/ui/AdminMenuCatalog";
+import AdminCategoryManager from "@/src/features/canteen/ui/AdminCategoryManager";
+import AdminTableManager from "@/src/features/canteen/ui/AdminTableManager";
+import AdminInventoryManager from "@/src/features/canteen/ui/AdminInventoryManager";
+import AdminCanteenAnalytics from "@/src/features/canteen/ui/AdminCanteenAnalytics";
 import {
   cancelCanteenOrder,
   completeCanteenOrder,
@@ -34,7 +38,14 @@ import {
   View,
 } from "react-native";
 
-type OperationsTab = "orders" | "kitchen" | "catalog";
+type OperationsTab =
+  | "orders"
+  | "kitchen"
+  | "catalog"
+  | "categories"
+  | "tables"
+  | "inventory"
+  | "analytics";
 type StatusFilter = OrderStatus | "ALL";
 type PaymentFilter = OrderPaymentStatus | "ALL";
 type OrderAction = "confirm" | "complete" | "cancel";
@@ -42,6 +53,8 @@ type OrderAction = "confirm" | "complete" | "cancel";
 const OPERATOR_ROLES = ["admin", "manager", "cashier", "waiter"];
 const KITCHEN_ROLES = ["admin", "manager", "chef"];
 const CATALOG_ROLES = ["admin", "manager"];
+const TABLE_ROLES = ["admin", "manager", "waiter"];
+const INVENTORY_ROLES = ["admin", "manager", "chef"];
 
 export default function CanteenOperationsScreen() {
   const { user, getToken } = useAuthSession();
@@ -49,9 +62,11 @@ export default function CanteenOperationsScreen() {
   const canOperateOrders = OPERATOR_ROLES.includes(role);
   const canUseKitchen = KITCHEN_ROLES.includes(role);
   const canManageCatalog = CATALOG_ROLES.includes(role);
+  const canUseTables = TABLE_ROLES.includes(role);
+  const canUseInventory = INVENTORY_ROLES.includes(role);
 
   const [tab, setTab] = useState<OperationsTab>("orders");
-  const [catalogRefreshKey, setCatalogRefreshKey] = useState(0);
+  const [resourceRefreshKey, setResourceRefreshKey] = useState(0);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("ALL");
   const [page, setPage] = useState(1);
@@ -215,7 +230,7 @@ export default function CanteenOperationsScreen() {
     setRefreshing(true);
     if (tab === "orders") await loadOrders(false);
     else if (tab === "kitchen") await loadKitchen(false);
-    else setCatalogRefreshKey((current) => current + 1);
+    else setResourceRefreshKey((current) => current + 1);
     setRefreshing(false);
   };
 
@@ -225,6 +240,16 @@ export default function CanteenOperationsScreen() {
   ];
   if (canManageCatalog) {
     operationTabs.push({ value: "catalog", label: "Thực đơn" });
+    operationTabs.push({ value: "categories", label: "Danh mục" });
+  }
+  if (canUseTables) {
+    operationTabs.push({ value: "tables", label: "Bàn ăn" });
+  }
+  if (canUseInventory) {
+    operationTabs.push({ value: "inventory", label: "Kho" });
+  }
+  if (canManageCatalog) {
+    operationTabs.push({ value: "analytics", label: "Thống kê" });
   }
 
   const renderOrderActions = (order: CanteenOrder) => {
@@ -236,13 +261,28 @@ export default function CanteenOperationsScreen() {
       );
     }
 
-    const canConfirm = order.status === "CREATED";
+    const canConfirm =
+      order.status === "CREATED" &&
+      (order.paymentMethod !== "VIETQR" || order.paymentStatus === "PAID");
     const canComplete = order.status === "READY";
-    const canCancel = order.status === "CREATED" || order.status === "CONFIRMED";
-    if (!canConfirm && !canComplete && !canCancel) return null;
+    const canCancel =
+      order.paymentStatus !== "PAID" &&
+      (order.status === "CREATED" || order.status === "CONFIRMED");
+    const waitingForVietQr =
+      order.status === "CREATED" &&
+      order.paymentMethod === "VIETQR" &&
+      order.paymentStatus !== "PAID";
+    if (!canConfirm && !canComplete && !canCancel && !waitingForVietQr) {
+      return null;
+    }
 
     return (
       <View>
+        {waitingForVietQr ? (
+          <Text className="mb-2 text-center text-xs font-bold text-amber-600">
+            Chờ VietQR báo thanh toán trước khi xác nhận đơn.
+          </Text>
+        ) : null}
         {canCancel ? (
           <TextInput
             className="mb-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-700"
@@ -315,30 +355,37 @@ export default function CanteenOperationsScreen() {
               Vận hành căn tin
             </Text>
             <Text className="text-xs font-semibold text-slate-400">
-              Quản lý đơn và hàng đợi nhà bếp
+              Quản lý đơn, nhà bếp và tài nguyên căn tin
             </Text>
           </View>
         </View>
 
-        <View className="mt-4 flex-row rounded-2xl bg-slate-100 p-1">
-          {operationTabs.map(({ value, label }) => (
-            <Pressable
-              key={value}
-              className={`flex-1 items-center rounded-xl py-2.5 ${
-                tab === value ? "bg-white shadow-sm" : ""
-              }`}
-              onPress={() => setTab(value)}
-            >
-              <Text
-                className={`text-xs font-black ${
-                  tab === value ? "text-orange-600" : "text-slate-500"
+        <ScrollView
+          className="-mx-4 mt-4"
+          contentContainerStyle={{ paddingHorizontal: 16 }}
+          horizontal
+          showsHorizontalScrollIndicator={false}
+        >
+          <View className="flex-row rounded-2xl bg-slate-100 p-1">
+            {operationTabs.map(({ value, label }) => (
+              <Pressable
+                key={value}
+                className={`items-center rounded-xl px-4 py-2.5 ${
+                  tab === value ? "bg-white shadow-sm" : ""
                 }`}
+                onPress={() => setTab(value)}
               >
-                {label}
-              </Text>
-            </Pressable>
-          ))}
-        </View>
+                <Text
+                  className={`text-xs font-black ${
+                    tab === value ? "text-orange-600" : "text-slate-500"
+                  }`}
+                >
+                  {label}
+                </Text>
+              </Pressable>
+            ))}
+          </View>
+        </ScrollView>
       </View>
 
       <ScrollView
@@ -472,8 +519,22 @@ export default function CanteenOperationsScreen() {
               </View>
             ) : null}
           </>
-        ) : tab === "catalog" ? (
-          <AdminMenuCatalog refreshKey={catalogRefreshKey} />
+        ) : tab === "catalog" && canManageCatalog ? (
+          <AdminMenuCatalog refreshKey={resourceRefreshKey} />
+        ) : tab === "categories" && canManageCatalog ? (
+          <AdminCategoryManager refreshKey={resourceRefreshKey} />
+        ) : tab === "tables" && canUseTables ? (
+          <AdminTableManager
+            canManageStructure={canManageCatalog}
+            refreshKey={resourceRefreshKey}
+          />
+        ) : tab === "inventory" && canUseInventory ? (
+          <AdminInventoryManager
+            canManageResources={canManageCatalog}
+            refreshKey={resourceRefreshKey}
+          />
+        ) : tab === "analytics" && canManageCatalog ? (
+          <AdminCanteenAnalytics refreshKey={resourceRefreshKey} />
         ) : !canUseKitchen ? (
           <View className="items-center rounded-3xl border border-slate-100 bg-white px-6 py-14">
             <Ionicons name="lock-closed-outline" size={42} color="#94a3b8" />

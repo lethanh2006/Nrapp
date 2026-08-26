@@ -270,6 +270,13 @@ export default function UserCanteenScreen() {
   };
 
   const performCancel = async (order: CanteenOrder) => {
+    if (order.paymentStatus === "PAID") {
+      Alert.alert(
+        "Không thể hủy",
+        "Đơn đã thanh toán không thể hủy từ ứng dụng.",
+      );
+      return;
+    }
     try {
       setCancellingId(order._id);
       const token = await getToken();
@@ -288,6 +295,13 @@ export default function UserCanteenScreen() {
   };
 
   const confirmCancel = (order: CanteenOrder) => {
+    if (order.paymentStatus === "PAID") {
+      Alert.alert(
+        "Không thể hủy",
+        "Đơn đã thanh toán không thể hủy từ ứng dụng.",
+      );
+      return;
+    }
     Alert.alert(
       "Xác nhận hủy đơn",
       `Bạn có chắc muốn hủy đơn ${order.orderNumber}?`,
@@ -675,7 +689,8 @@ export default function UserCanteenScreen() {
                   key={order._id}
                   order={order}
                   footer={
-                    order.status === "CREATED" ||
+                    (order.status === "CREATED" &&
+                      order.paymentStatus !== "PAID") ||
                     (order.paymentMethod === "VIETQR" &&
                       order.paymentStatus !== "PAID" &&
                       order.status !== "CANCELLED") ? (
@@ -710,8 +725,7 @@ export default function UserCanteenScreen() {
                             </Pressable>
                           </View>
                         ) : null}
-                        {order.paymentMethod === "VIETQR" &&
-                        order.paymentStatus !== "PAID" ? (
+                        {order.paymentMethod === "VIETQR" ? (
                           <Pressable
                             className="flex-row items-center justify-center rounded-2xl bg-blue-600 py-3 active:bg-blue-700"
                             onPress={() => openPayment(order)}
