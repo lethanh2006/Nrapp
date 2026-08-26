@@ -1,9 +1,9 @@
-import ChatHeader from "@/src/features/chat/ui/ChatHeader";
-import ChatMessages from "@/src/features/chat/ui/ChatMessages";
-import ChatSideBar from "@/src/features/chat/ui/ChatSideBar";
-import MessageInput from "@/src/features/chat/ui/MessageInput";
+import ChatHeader from "@/src/features/chat/shared/ui/ChatHeader";
+import ChatMessages from "@/src/features/chat/shared/ui/ChatMessages";
+import ChatSideBar from "@/src/features/chat/shared/ui/ChatSideBar";
+import MessageInput from "@/src/features/chat/shared/ui/MessageInput";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
-import { useChatSocket } from "@/src/features/chat/model/ChatSocketContext";
+import { useChatSocket } from "@/src/features/chat/shared/model/ChatSocketContext";
 import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import { normalizeUser } from "@/src/features/user/model/normalize-user";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";

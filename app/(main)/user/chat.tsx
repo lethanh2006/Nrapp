@@ -1,5 +1,5 @@
-import ChatView from "@/src/features/chat/ui/ChatView";
+import UserChatScreen from "@/src/features/chat/user/screens/UserChatScreen";
 
 export default function UserChatRoute() {
-  return <ChatView />;
+  return <UserChatScreen />;
 }

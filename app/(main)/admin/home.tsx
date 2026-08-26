@@ -1,5 +1,5 @@
-import HomeDashboard from "@/src/features/home/ui/HomeDashboard";
+import AdminHomeScreen from "@/src/features/home/admin/screens/AdminHomeScreen";
 
 export default function AdminHomeRoute() {
-  return <HomeDashboard area="admin" />;
+  return <AdminHomeScreen />;
 }

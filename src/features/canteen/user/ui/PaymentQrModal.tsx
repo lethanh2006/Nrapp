@@ -1,4 +1,7 @@
-import { formatDateTime, formatMoney } from "@/src/features/canteen/model/presentation";
+import {
+  formatDateTime,
+  formatMoney,
+} from "@/src/features/canteen/shared/model/presentation";
 import {
   PAYMENT_STATUS_LABELS,
   type PaymentRecord,

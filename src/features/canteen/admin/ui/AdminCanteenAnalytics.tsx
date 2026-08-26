@@ -2,7 +2,7 @@ import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import {
   formatMoney,
   getCanteenErrorMessage,
-} from "@/src/features/canteen/model/presentation";
+} from "@/src/features/canteen/shared/model/presentation";
 import {
   getCanteenTopDishes,
   type CanteenDishSalesSummary,

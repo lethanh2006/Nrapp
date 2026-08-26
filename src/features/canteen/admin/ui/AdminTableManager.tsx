@@ -1,5 +1,5 @@
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
-import { getCanteenErrorMessage } from "@/src/features/canteen/model/presentation";
+import { getCanteenErrorMessage } from "@/src/features/canteen/shared/model/presentation";
 import {
   allocateCanteenTables,
   createCanteenTable,

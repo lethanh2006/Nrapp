@@ -3,7 +3,7 @@ import {
   formatDateTime,
   formatMoney,
   getCanteenErrorMessage,
-} from "@/src/features/canteen/model/presentation";
+} from "@/src/features/canteen/shared/model/presentation";
 import {
   consumeCanteenIngredient,
   createCanteenIngredient,

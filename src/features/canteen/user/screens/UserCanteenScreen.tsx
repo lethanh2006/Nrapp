@@ -3,9 +3,9 @@ import {
   formatDateTime,
   formatMoney,
   getCanteenErrorMessage,
-} from "@/src/features/canteen/model/presentation";
-import OrderSummaryCard from "@/src/features/canteen/ui/OrderSummaryCard";
-import PaymentQrModal from "@/src/features/canteen/ui/PaymentQrModal";
+} from "@/src/features/canteen/shared/model/presentation";
+import OrderSummaryCard from "@/src/features/canteen/shared/ui/OrderSummaryCard";
+import PaymentQrModal from "@/src/features/canteen/user/ui/PaymentQrModal";
 import {
   cancelCanteenOrder,
   createCanteenOrder,

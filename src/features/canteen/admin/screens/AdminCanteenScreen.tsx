@@ -1,11 +1,11 @@
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
-import { getCanteenErrorMessage } from "@/src/features/canteen/model/presentation";
-import OrderSummaryCard from "@/src/features/canteen/ui/OrderSummaryCard";
-import AdminMenuCatalog from "@/src/features/canteen/ui/AdminMenuCatalog";
-import AdminCategoryManager from "@/src/features/canteen/ui/AdminCategoryManager";
-import AdminTableManager from "@/src/features/canteen/ui/AdminTableManager";
-import AdminInventoryManager from "@/src/features/canteen/ui/AdminInventoryManager";
-import AdminCanteenAnalytics from "@/src/features/canteen/ui/AdminCanteenAnalytics";
+import AdminCanteenAnalytics from "@/src/features/canteen/admin/ui/AdminCanteenAnalytics";
+import AdminCategoryManager from "@/src/features/canteen/admin/ui/AdminCategoryManager";
+import AdminInventoryManager from "@/src/features/canteen/admin/ui/AdminInventoryManager";
+import AdminMenuCatalog from "@/src/features/canteen/admin/ui/AdminMenuCatalog";
+import AdminTableManager from "@/src/features/canteen/admin/ui/AdminTableManager";
+import { getCanteenErrorMessage } from "@/src/features/canteen/shared/model/presentation";
+import OrderSummaryCard from "@/src/features/canteen/shared/ui/OrderSummaryCard";
 import {
   cancelCanteenOrder,
   completeCanteenOrder,
@@ -56,7 +56,7 @@ const CATALOG_ROLES = ["admin", "manager"];
 const TABLE_ROLES = ["admin", "manager", "waiter"];
 const INVENTORY_ROLES = ["admin", "manager", "chef"];
 
-export default function CanteenOperationsScreen() {
+export default function AdminCanteenScreen() {
   const { user, getToken } = useAuthSession();
   const role = normalizeAppRole(user?.role);
   const canOperateOrders = OPERATOR_ROLES.includes(role);

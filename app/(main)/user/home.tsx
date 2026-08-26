@@ -1,5 +1,5 @@
-import HomeDashboard from "@/src/features/home/ui/HomeDashboard";
+import UserHomeScreen from "@/src/features/home/user/screens/UserHomeScreen";
 
 export default function UserHomeRoute() {
-  return <HomeDashboard area="user" />;
+  return <UserHomeScreen />;
 }

@@ -10,7 +10,7 @@ import {
   ORDER_STATUS_COLORS,
   PAYMENT_STATUS_COLORS,
   shortId,
-} from "@/src/features/canteen/model/presentation";
+} from "@/src/features/canteen/shared/model/presentation";
 import { Ionicons } from "@expo/vector-icons";
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";

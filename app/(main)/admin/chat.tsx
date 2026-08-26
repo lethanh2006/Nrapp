@@ -1,5 +1,5 @@
-import ChatView from "@/src/features/chat/ui/ChatView";
+import AdminChatScreen from "@/src/features/chat/admin/screens/AdminChatScreen";
 
 export default function AdminChatRoute() {
-  return <ChatView />;
+  return <AdminChatScreen />;
 }
