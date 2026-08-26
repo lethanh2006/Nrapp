@@ -1,5 +1,5 @@
-import CreateWorkRequestScreen from "@/src/features/workschedule/screens/CreateWorkRequestScreen";
+import UserCreateWorkRequestScreen from "@/src/features/workschedule/user/screens/UserCreateWorkRequestScreen";
 
 export default function CreateWorkRequestRoute() {
-  return <CreateWorkRequestScreen />;
+  return <UserCreateWorkRequestScreen />;
 }

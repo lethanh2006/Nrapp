@@ -1,8 +1,8 @@
-import { useWorkscheduleAdmin } from "@/src/features/workschedule/hooks/useWorkscheduleAdmin";
+import { useWorkscheduleAdmin } from "@/src/features/workschedule/admin/hooks/useWorkscheduleAdmin";
 import {
   WORK_REQUEST_CONFIG,
   WORK_REQUEST_TYPES,
-} from "@/src/features/workschedule/ui/user/workRequestConfig";
+} from "@/src/features/workschedule/shared/ui/workRequestConfig";
 import type {
   IWorkRequest,
   WorkRequestStatus,

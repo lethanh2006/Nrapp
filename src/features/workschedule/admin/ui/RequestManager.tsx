@@ -1,7 +1,7 @@
-import { useAdminData } from "@/src/features/workschedule/model/AdminWorkscheduleContext";
-import { useWorkscheduleAdmin } from "@/src/features/workschedule/hooks/useWorkscheduleAdmin";
-import type { AdminScheduleRequest } from "@/src/features/workschedule/hooks/useWorkscheduleAdmin";
-import ScheduleForm from "@/src/features/workschedule/ui/common/ScheduleForm";
+import { useWorkscheduleAdmin } from "@/src/features/workschedule/admin/hooks/useWorkscheduleAdmin";
+import type { AdminScheduleRequest } from "@/src/features/workschedule/admin/hooks/useWorkscheduleAdmin";
+import { useAdminData } from "@/src/features/workschedule/admin/model/AdminWorkscheduleContext";
+import ScheduleForm from "@/src/features/workschedule/admin/ui/ScheduleForm";
 import type { EntryType, IScheduleEntry, WorkPeriod } from "@/src/services/workschedule/constant";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import { Ionicons } from "@expo/vector-icons";

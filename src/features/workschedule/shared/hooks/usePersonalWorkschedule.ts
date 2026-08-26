@@ -18,7 +18,7 @@ import type {
 import { useCallback, useState } from "react";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 
-export function useWorkscheduleUser() {
+export function usePersonalWorkschedule() {
   const { getToken } = useAuthSession();
   const [loading, setLoading] = useState(false);
 

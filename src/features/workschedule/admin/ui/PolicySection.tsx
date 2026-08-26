@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, Pressable, Platform } from "react-native";
-import { useAdminData } from "@/src/features/workschedule/model/AdminWorkscheduleContext";
+import { useAdminData } from "@/src/features/workschedule/admin/model/AdminWorkscheduleContext";
 import { Ionicons } from "@expo/vector-icons";
 import DateTimePicker, { DateTimePickerAndroid } from "@react-native-community/datetimepicker";
 

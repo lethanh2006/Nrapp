@@ -1,5 +1,5 @@
-import WorkscheduleUtilitiesScreen from "@/src/features/workschedule/screens/WorkscheduleUtilitiesScreen";
+import AdminWorkscheduleUtilitiesScreen from "@/src/features/workschedule/admin/screens/AdminWorkscheduleUtilitiesScreen";
 
 export default function AdminUtilitiesRoute() {
-  return <WorkscheduleUtilitiesScreen area="admin" />;
+  return <AdminWorkscheduleUtilitiesScreen />;
 }

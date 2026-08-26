@@ -2,7 +2,7 @@ import { getAreaForRole } from "@/src/application/access/roles";
 import { APP_ROUTES } from "@/src/application/navigation/routes";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { MainBottomBar } from "@/src/components/layout/MainBottomBar";
-import { AttendanceScannerModal } from "@/src/features/workschedule/ui/AttendanceScannerModal";
+import { AttendanceScannerModal } from "@/src/features/workschedule/shared/ui/AttendanceScannerModal";
 import { Stack, router, usePathname } from "expo-router";
 import { useEffect, useState } from "react";
 import { Keyboard, Platform, View } from "react-native";

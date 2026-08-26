@@ -1,8 +1,8 @@
-import { useWorkRequests } from "@/src/features/workschedule/hooks/useWorkRequests";
+import { useWorkRequests } from "@/src/features/workschedule/shared/hooks/useWorkRequests";
 import {
   WORK_REQUEST_CONFIG,
   WORK_REQUEST_TYPES,
-} from "@/src/features/workschedule/ui/user/workRequestConfig";
+} from "@/src/features/workschedule/shared/ui/workRequestConfig";
 import type {
   IWorkRequest,
   WorkRequestStatus,
@@ -27,7 +27,7 @@ const statusMeta: Record<
 
 const periodLabel = { full_day: "Cả ngày", morning: "Buổi sáng", afternoon: "Buổi chiều" };
 
-export default function UserWorkRequestHubScreen({ area = "user" }: { area?: AppArea }) {
+export default function WorkRequestHubScreen({ area = "user" }: { area?: AppArea }) {
   const { getRequests, cancelRequest, loading } = useWorkRequests();
   const [activeTab, setActiveTab] = useState<"types" | "history">("types");
   const [statusFilter, setStatusFilter] = useState<WorkRequestStatus | "all">("all");

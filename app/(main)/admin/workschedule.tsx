@@ -1,13 +1,5 @@
-import { canManageWorkSchedule } from "@/src/application/access/roles";
-import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
-import WorkscheduleScreen from "@/src/features/workschedule/screens/WorkscheduleScreen";
+import AdminWorkscheduleScreen from "@/src/features/workschedule/admin/screens/AdminWorkscheduleScreen";
 
 export default function AdminWorkscheduleRoute() {
-  const { user } = useAuthSession();
-  return (
-    <WorkscheduleScreen
-      area="admin"
-      managementMode={canManageWorkSchedule(user?.role)}
-    />
-  );
+  return <AdminWorkscheduleScreen />;
 }

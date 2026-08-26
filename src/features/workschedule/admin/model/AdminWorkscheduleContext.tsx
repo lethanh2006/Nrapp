@@ -7,14 +7,14 @@ import {
   AdminHeatmapRow,
   AdminScheduleRequest,
   useWorkscheduleAdmin,
-} from "@/src/features/workschedule/hooks/useWorkscheduleAdmin";
+} from "@/src/features/workschedule/admin/hooks/useWorkscheduleAdmin";
 import type {
   EntryType,
   IWorkPolicy,
   WorkPeriod,
 } from "@/src/services/workschedule/constant";
 import { canManageWorkSchedule } from "@/src/application/access/roles";
-import { toLocalDateKey } from "@/src/features/workschedule/utils/date";
+import { toLocalDateKey } from "@/src/features/workschedule/shared/utils/date";
 
 type RequestStatus = "all" | "pending" | "approved" | "rejected";
 type ReportRange = "7d" | "30d";

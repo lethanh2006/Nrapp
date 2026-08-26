@@ -1,5 +1,5 @@
-import WorkscheduleScreen from "@/src/features/workschedule/screens/WorkscheduleScreen";
+import UserWorkscheduleScreen from "@/src/features/workschedule/user/screens/UserWorkscheduleScreen";
 
 export default function UserWorkscheduleRoute() {
-  return <WorkscheduleScreen area="user" />;
+  return <UserWorkscheduleScreen />;
 }

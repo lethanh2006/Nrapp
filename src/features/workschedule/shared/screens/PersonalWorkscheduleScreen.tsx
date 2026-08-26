@@ -1,4 +1,4 @@
-import { useWorkscheduleUser } from "@/src/features/workschedule/hooks/useWorkscheduleUser";
+import { usePersonalWorkschedule } from "@/src/features/workschedule/shared/hooks/usePersonalWorkschedule";
 import type { AppArea } from "@/src/application/access/roles";
 import { getAreaRoutes } from "@/src/application/navigation/routes";
 import {
@@ -6,9 +6,9 @@ import {
   getWeekStartMonday,
   isRegistrationClosed,
   toLocalDateKey,
-} from "@/src/features/workschedule/utils/date";
-import { DayScheduleEditor } from "@/src/features/workschedule/ui/user/DayScheduleEditor";
-import { WeekPicker } from "@/src/features/workschedule/ui/user/WeekPicker";
+} from "@/src/features/workschedule/shared/utils/date";
+import { DayScheduleEditor } from "@/src/features/workschedule/shared/ui/DayScheduleEditor";
+import { WeekPicker } from "@/src/features/workschedule/shared/ui/WeekPicker";
 import type {
   EntryType,
   IScheduleEntry,
@@ -79,13 +79,13 @@ const isSameWeek = (date: string | Date, weekStart: Date) =>
 
 const padCountdownValue = (value: number) => String(value).padStart(2, "0");
 
-export default function UserWorkscheduleScreen({ area }: { area: AppArea }) {
+export default function PersonalWorkscheduleScreen({ area }: { area: AppArea }) {
   const {
     getMySchedules,
     sendScheduleRequest,
     resubmitRejectedSchedule,
     getPolicy,
-  } = useWorkscheduleUser();
+  } = usePersonalWorkschedule();
   const [schedules, setSchedules] = useState<IScheduleRequest[]>([]);
   const [policy, setPolicy] = useState<IWorkPolicy | null>(null);
   const [initialLoad, setInitialLoad] = useState(true);

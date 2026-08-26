@@ -1,5 +1,5 @@
-import { useWorkscheduleUser } from "@/src/features/workschedule/hooks/useWorkscheduleUser";
-import { toLocalDateKey } from "@/src/features/workschedule/utils/date";
+import { usePersonalWorkschedule } from "@/src/features/workschedule/shared/hooks/usePersonalWorkschedule";
+import { toLocalDateKey } from "@/src/features/workschedule/shared/utils/date";
 import type {
   IMonthlyScheduleEntry,
   IMonthlyScheduleOverview,
@@ -70,8 +70,8 @@ const statusLabel: Record<string, string> = {
   rejected: "Từ chối",
 };
 
-export default function UserWorkCalendarScreen() {
-  const { getMonthlyOverview, getMyAttendance } = useWorkscheduleUser();
+export default function WorkCalendarScreen() {
+  const { getMonthlyOverview, getMyAttendance } = usePersonalWorkschedule();
   const [visibleMonth, setVisibleMonth] = useState(() => {
     const value = new Date();
     value.setDate(1);

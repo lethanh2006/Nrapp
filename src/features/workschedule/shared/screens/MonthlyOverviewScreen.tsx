@@ -1,5 +1,5 @@
-import { useWorkRequests } from "@/src/features/workschedule/hooks/useWorkRequests";
-import { useWorkscheduleUser } from "@/src/features/workschedule/hooks/useWorkscheduleUser";
+import { usePersonalWorkschedule } from "@/src/features/workschedule/shared/hooks/usePersonalWorkschedule";
+import { useWorkRequests } from "@/src/features/workschedule/shared/hooks/useWorkRequests";
 import type {
   IMonthlyScheduleOverview,
   IWorkRequestStats,
@@ -16,8 +16,8 @@ type IconName = ComponentProps<typeof Ionicons>["name"];
 const getMonthKey = (date: Date) =>
   `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
 
-export default function UserMonthlyOverviewScreen() {
-  const { getMonthlyOverview } = useWorkscheduleUser();
+export default function MonthlyOverviewScreen() {
+  const { getMonthlyOverview } = usePersonalWorkschedule();
   const { getStats } = useWorkRequests();
   const [month, setMonth] = useState(() => new Date(new Date().getFullYear(), new Date().getMonth(), 1));
   const [schedule, setSchedule] = useState<IMonthlyScheduleOverview | null>(null);

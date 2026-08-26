@@ -1,5 +1,5 @@
-import UserWorkRequestHubScreen from "@/src/features/workschedule/screens/UserWorkRequestHubScreen";
+import AdminWorkRequestsScreen from "@/src/features/workschedule/admin/screens/AdminWorkRequestsScreen";
 
 export default function AdminWorkRequestsRoute() {
-  return <UserWorkRequestHubScreen area="admin" />;
+  return <AdminWorkRequestsScreen />;
 }

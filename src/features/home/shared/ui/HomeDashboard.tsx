@@ -12,7 +12,7 @@ import {
   ActivityIndicator,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useWorkscheduleUser } from "@/src/features/workschedule/hooks/useWorkscheduleUser";
+import { usePersonalWorkschedule } from "@/src/features/workschedule/shared/hooks/usePersonalWorkschedule";
 import type {
   IScheduleEntry,
   IScheduleRequest,
@@ -31,7 +31,7 @@ export default function HomeDashboard({ area }: { area: AppArea }) {
   const areaRoutes = getAreaRoutes(area);
   const [todayDate, setTodayDate] = useState(new Date());
 
-  const { getMySchedules, loading } = useWorkscheduleUser();
+  const { getMySchedules, loading } = usePersonalWorkschedule();
   const [currentWeekSchedule, setCurrentWeekSchedule] = useState<IScheduleRequest | null>(null);
   const [hasLoaded, setHasLoaded] = useState(false);
 

@@ -1,6 +1,6 @@
 import React from "react";
 import { View, Text, Pressable } from "react-native";
-import { useAdminData } from "@/src/features/workschedule/model/AdminWorkscheduleContext";
+import { useAdminData } from "@/src/features/workschedule/admin/model/AdminWorkscheduleContext";
 import { StatCard } from "./StatCard";
 
 const entryLabels: Record<string, string> = {

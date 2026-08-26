@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, Pressable } from "react-native";
 import QRCode from "react-native-qrcode-svg";
-import { useAdminData } from "@/src/features/workschedule/model/AdminWorkscheduleContext";
+import { useAdminData } from "@/src/features/workschedule/admin/model/AdminWorkscheduleContext";
 
 export function AttendanceQR() {
   const { qrBusy, generatedQr, qrRemaining, handleGenerateQr } = useAdminData();

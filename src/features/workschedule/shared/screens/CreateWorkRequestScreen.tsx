@@ -1,5 +1,5 @@
-import { useWorkRequests } from "@/src/features/workschedule/hooks/useWorkRequests";
-import { WORK_REQUEST_CONFIG } from "@/src/features/workschedule/ui/user/workRequestConfig";
+import { useWorkRequests } from "@/src/features/workschedule/shared/hooks/useWorkRequests";
+import { WORK_REQUEST_CONFIG } from "@/src/features/workschedule/shared/ui/workRequestConfig";
 import type {
   CreateWorkRequestPayload,
   WorkPeriod,

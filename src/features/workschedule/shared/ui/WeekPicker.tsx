@@ -1,4 +1,4 @@
-import { formatDateVi } from "@/src/features/workschedule/utils/date";
+import { formatDateVi } from "@/src/features/workschedule/shared/utils/date";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 

@@ -1,10 +1,16 @@
-import { AdminProvider, useAdminData } from "@/src/features/workschedule/model/AdminWorkscheduleContext";
-import { AttendanceQR } from "@/src/features/workschedule/ui/admin/AttendanceQR";
-import { PolicySection } from "@/src/features/workschedule/ui/admin/PolicySection";
-import { ReportSummary } from "@/src/features/workschedule/ui/admin/ReportSummary";
-import { RequestManager } from "@/src/features/workschedule/ui/admin/RequestManager";
-import { StatCard } from "@/src/features/workschedule/ui/admin/StatCard";
-import { WorkRequestManager } from "@/src/features/workschedule/ui/admin/WorkRequestManager";
+import { canManageWorkSchedule } from "@/src/application/access/roles";
+import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
+import {
+  AdminProvider,
+  useAdminData,
+} from "@/src/features/workschedule/admin/model/AdminWorkscheduleContext";
+import { AttendanceQR } from "@/src/features/workschedule/admin/ui/AttendanceQR";
+import { PolicySection } from "@/src/features/workschedule/admin/ui/PolicySection";
+import { ReportSummary } from "@/src/features/workschedule/admin/ui/ReportSummary";
+import { RequestManager } from "@/src/features/workschedule/admin/ui/RequestManager";
+import { StatCard } from "@/src/features/workschedule/admin/ui/StatCard";
+import { WorkRequestManager } from "@/src/features/workschedule/admin/ui/WorkRequestManager";
+import PersonalWorkscheduleScreen from "@/src/features/workschedule/shared/screens/PersonalWorkscheduleScreen";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
 import React, { useState } from "react";
@@ -165,6 +171,12 @@ function AdminDashboardContent() {
 }
 
 export default function AdminWorkscheduleScreen() {
+  const { user } = useAuthSession();
+
+  if (!canManageWorkSchedule(user?.role)) {
+    return <PersonalWorkscheduleScreen area="admin" />;
+  }
+
   return (
     <AdminProvider>
       <AdminDashboardContent />

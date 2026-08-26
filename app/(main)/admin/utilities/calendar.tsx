@@ -1,5 +1,5 @@
-import UserWorkCalendarScreen from "@/src/features/workschedule/screens/UserWorkCalendarScreen";
+import AdminWorkCalendarScreen from "@/src/features/workschedule/admin/screens/AdminWorkCalendarScreen";
 
 export default function AdminWorkCalendarRoute() {
-  return <UserWorkCalendarScreen />;
+  return <AdminWorkCalendarScreen />;
 }

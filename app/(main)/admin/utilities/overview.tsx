@@ -1,5 +1,5 @@
-import UserMonthlyOverviewScreen from "@/src/features/workschedule/screens/UserMonthlyOverviewScreen";
+import AdminMonthlyOverviewScreen from "@/src/features/workschedule/admin/screens/AdminMonthlyOverviewScreen";
 
 export default function AdminMonthlyOverviewRoute() {
-  return <UserMonthlyOverviewScreen />;
+  return <AdminMonthlyOverviewScreen />;
 }
