@@ -276,7 +276,7 @@ khung messages hiện tại không append
 vẫn phải refresh chat list để cập nhật latest/unseen trên sidebar
 Timeout trong typing dùng để debounce sự kiện typingStop, tránh spam event và đảm bảo trạng thái đang nhập không bị treo mãi. Bỏ timeout có thể gây quá nhiều emit hoặc trạng thái typing sai.
 
-Image flow chưa hoàn chỉnh end-to-end. UI đã chọn ảnh và giữ imageUri, nhưng payload gửi API hiện mới append chatId và text, chưa append file ảnh đúng chuẩn FormData cho mobile.
+Image flow đã hoàn chỉnh end-to-end. UI kiểm tra loại và dung lượng ảnh, còn service chuẩn hóa `FormData` riêng cho web và mobile, gửi trường `image` cùng `chatId`, `text`, đồng thời chuyển lỗi upload thành thông báo dễ hiểu cho người dùng.
 
 Cần normalize sớm để mọi component nhận data shape ổn định, tránh fallback rải rác, giảm bug ẩn và giảm công sửa khi backend đổi nhẹ response.
 
