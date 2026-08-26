@@ -1,5 +1,5 @@
-import TodoView from "@/src/features/todo/ui/TodoView";
+import UserTodoScreen from "@/src/features/todo/user/screens/UserTodoScreen";
 
 export default function UserTodoRoute() {
-  return <TodoView area="user" />;
+  return <UserTodoScreen />;
 }

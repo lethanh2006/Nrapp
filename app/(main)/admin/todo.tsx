@@ -1,8 +1,5 @@
-import { canManageTasks } from "@/src/application/access/roles";
-import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
-import TodoView from "@/src/features/todo/ui/TodoView";
+import AdminTodoScreen from "@/src/features/todo/admin/screens/AdminTodoScreen";
 
 export default function AdminTodoRoute() {
-  const { user } = useAuthSession();
-  return <TodoView area={canManageTasks(user?.role) ? "admin" : "user"} />;
+  return <AdminTodoScreen />;
 }

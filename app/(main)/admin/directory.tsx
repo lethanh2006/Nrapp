@@ -1,5 +1,5 @@
-import UserDirectoryScreen from "@/src/features/user/screens/UserDirectoryScreen";
+import AdminDirectoryScreen from "@/src/features/directory/admin/screens/AdminDirectoryScreen";
 
 export default function AdminDirectoryRoute() {
-  return <UserDirectoryScreen area="admin" />;
+  return <AdminDirectoryScreen />;
 }

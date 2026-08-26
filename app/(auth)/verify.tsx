@@ -5,7 +5,7 @@ import {
   AuthPrimaryButton,
   AuthScreen,
 } from "@/src/features/auth/ui/AuthForm";
-import { normalizeUser } from "@/src/features/user/model/normalize-user";
+import { normalizeUser } from "@/src/shared/model/normalize-user";
 import {
   saveAuthSession,
   verifyOtp,

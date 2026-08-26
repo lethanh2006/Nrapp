@@ -1,5 +1,5 @@
 import type { AppArea } from "@/src/application/access/roles";
-import TodoEditTaskForm from "@/src/features/todo/ui/TodoEditTaskForm";
+import TodoEditTaskForm from "@/src/features/todo/shared/ui/TodoEditTaskForm";
 import type { User } from "@/src/services/user/constant";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useEffect, useState } from "react";

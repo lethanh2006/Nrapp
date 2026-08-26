@@ -6,7 +6,7 @@ import {
 } from "@/src/services/auth/auth.service";
 import axios from "@/src/utils/axios";
 import { getUserProfile } from "@/src/services/user/user.service";
-import { normalizeUser } from "@/src/features/user/model/normalize-user";
+import { normalizeUser } from "@/src/shared/model/normalize-user";
 import type { User } from "@/src/services/user/constant";
 import React, {
   createContext,

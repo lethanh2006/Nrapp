@@ -1,5 +1,5 @@
-import ProfileScreen from "@/src/features/user/screens/ProfileScreen";
+import UserProfileScreen from "@/src/features/profile/user/screens/UserProfileScreen";
 
 export default function UserProfileRoute() {
-  return <ProfileScreen area="user" />;
+  return <UserProfileScreen />;
 }

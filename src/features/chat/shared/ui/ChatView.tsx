@@ -5,7 +5,7 @@ import MessageInput from "@/src/features/chat/shared/ui/MessageInput";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { useChatSocket } from "@/src/features/chat/shared/model/ChatSocketContext";
 import { getApiErrorMessage } from "@/src/utils/apiHelper";
-import { normalizeUser } from "@/src/features/user/model/normalize-user";
+import { normalizeUser } from "@/src/shared/model/normalize-user";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import type {
   ChatImageUpload,

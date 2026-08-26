@@ -4,7 +4,7 @@ import {
 } from "@/src/application/access/roles";
 import { APP_ROUTES } from "@/src/application/navigation/routes";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
-import { normalizeUser } from "@/src/features/user/model/normalize-user";
+import { normalizeUser } from "@/src/shared/model/normalize-user";
 import {
   deleteMyAccount,
   updateMyEmail,

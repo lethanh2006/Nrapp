@@ -1,5 +1,5 @@
-import ProfileScreen from "@/src/features/user/screens/ProfileScreen";
+import AdminProfileScreen from "@/src/features/profile/admin/screens/AdminProfileScreen";
 
 export default function AdminProfileRoute() {
-  return <ProfileScreen area="admin" />;
+  return <AdminProfileScreen />;
 }

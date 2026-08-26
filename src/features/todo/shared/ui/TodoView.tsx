@@ -1,7 +1,7 @@
-import TodoCreateTaskCard from "@/src/features/todo/ui/TodoCreateTaskCard";
-import TodoIntroCard from "@/src/features/todo/ui/TodoIntroCard";
-import TodoTaskFilters from "@/src/features/todo/ui/TodoTaskFilters";
-import TodoTaskListCard from "@/src/features/todo/ui/TodoTaskListCard";
+import TodoCreateTaskCard from "@/src/features/todo/shared/ui/TodoCreateTaskCard";
+import TodoIntroCard from "@/src/features/todo/shared/ui/TodoIntroCard";
+import TodoTaskFilters from "@/src/features/todo/shared/ui/TodoTaskFilters";
+import TodoTaskListCard from "@/src/features/todo/shared/ui/TodoTaskListCard";
 import type { AppArea } from "@/src/application/access/roles";
 import type {
   CreateTaskInput,
@@ -12,7 +12,7 @@ import type {
   UpdateTaskInput,
 } from "@/src/services/todo/constant";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
-import { normalizeUser } from "@/src/features/user/model/normalize-user";
+import { normalizeUser } from "@/src/shared/model/normalize-user";
 import {
   assignTodoTask,
   createTodoTask,
