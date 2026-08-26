@@ -121,6 +121,7 @@ export interface AdminContextValue {
   handleApprove: (id: string) => Promise<void>;
   handleBulkApprove: () => Promise<void>;
   handleReject: (id: string) => Promise<void>;
+  handleDelete: (id: string) => Promise<boolean>;
   rejectingRequestId: string | null;
   setRejectingRequestId: React.Dispatch<React.SetStateAction<string | null>>;
   rejectReason: string;
@@ -176,7 +177,8 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     getTodayAttendance,
     getReport,
     updatePolicy,
-    adminUpdateEntries
+    adminUpdateEntries,
+    deleteRequest,
   } = useWorkscheduleAdmin();
 
   const currentWeek = useMemo(() => getIsoWeekString(new Date()), []);
@@ -429,6 +431,20 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     return success;
   };
 
+  const handleDelete = async (id: string) => {
+    setBusyRequestId(id);
+    const success = await deleteRequest(id);
+    setBusyRequestId(null);
+    if (success) {
+      setSelectedPendingIds((previous) =>
+        previous.filter((requestId) => requestId !== id),
+      );
+      await loadAdminData();
+      Alert.alert("Đã xóa", "Yêu cầu lịch làm việc đã được xóa khỏi hệ thống.");
+    }
+    return success;
+  };
+
   const handleGenerateQr = async () => {
     setQrBusy(true);
     const token = await generateQrToken();
@@ -457,7 +473,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     policy, policyDraft, setPolicyDraft, savingPolicy, handleSavePolicy, handleLockPolicy,
     currentWeek, selectedWeekOffset, setSelectedWeekOffset, selectedWeek, selectedWeekLabel,
     pendingSchedules, allSchedules, requestFilter, setRequestFilter, selectedPendingIds, togglePendingSelection,
-    handleApprove, handleBulkApprove, handleReject, rejectingRequestId, setRejectingRequestId, rejectReason, setRejectReason, busyRequestId, bulkBusy,
+    handleApprove, handleBulkApprove, handleReject, handleDelete, rejectingRequestId, setRejectingRequestId, rejectReason, setRejectReason, busyRequestId, bulkBusy,
     qrBusy, generatedQr, qrRemaining, handleGenerateQr,
     todayAttendance, todayExpected, missingToday, checkedInMap, totalTodayExpected, totalTodayCheckedIn, totalTodayMissing,
     reportRows, reportRange, setReportRange, totalReportEmployees, totalReportCompleted, heatmapRows,

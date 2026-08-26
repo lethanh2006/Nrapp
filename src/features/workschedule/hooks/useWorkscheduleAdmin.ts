@@ -3,6 +3,7 @@ import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import {
   approveManySchedules,
   approveSchedule,
+  deleteScheduleRequest,
   generateAttendanceQr,
   getAdminSchedule as fetchAdminSchedule,
   getAllSchedules as fetchAllSchedules,
@@ -300,6 +301,24 @@ export function useWorkscheduleAdmin() {
     [getToken, showError],
   );
 
+  const deleteRequest = useCallback(
+    async (id: string, silent = false) => {
+      try {
+        setLoading(true);
+        const token = await getToken();
+        if (!token) return false;
+        await deleteScheduleRequest(token, id);
+        return true;
+      } catch (error) {
+        showError(error, "Không thể xóa yêu cầu lịch làm việc", silent);
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [getToken, showError],
+  );
+
   const getEmployeeRequests = useCallback(
     async (
       params: WorkRequestQuery = {},
@@ -372,6 +391,7 @@ export function useWorkscheduleAdmin() {
     getTodayAttendance,
     getReport,
     adminUpdateEntries,
+    deleteRequest,
     getEmployeeRequests,
     approveEmployeeRequest,
     rejectEmployeeRequest,

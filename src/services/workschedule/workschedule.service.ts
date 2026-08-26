@@ -252,6 +252,13 @@ export async function updateAdminSchedule(
   );
 }
 
+export async function deleteScheduleRequest(token: string, id: string) {
+  return axios.delete(
+    `${ipNR}/workschedule/schedule/requests/${encodeURIComponent(id)}`,
+    getAuthHeader(token),
+  );
+}
+
 export async function scanAttendance(token: string, qrToken: string) {
   return axios.post<AttendanceScanResponse>(
     `${ipNR}/workschedule/attendance/scan`,

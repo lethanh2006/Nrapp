@@ -3,6 +3,7 @@ import { useWorkscheduleAdmin } from "@/src/features/workschedule/hooks/useWorks
 import type { AdminScheduleRequest } from "@/src/features/workschedule/hooks/useWorkscheduleAdmin";
 import ScheduleForm from "@/src/features/workschedule/ui/common/ScheduleForm";
 import type { EntryType, IScheduleEntry, WorkPeriod } from "@/src/services/workschedule/constant";
+import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import { Ionicons } from "@expo/vector-icons";
 import React, { useMemo, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from "react-native";
@@ -45,6 +46,7 @@ export function RequestManager() {
     handleApprove,
     handleBulkApprove,
     handleReject,
+    handleDelete,
     rejectingRequestId,
     setRejectingRequestId,
     rejectReason,
@@ -130,6 +132,32 @@ export function RequestManager() {
   const handleCancelEdit = () => {
     setEditEntries(savedEntries);
     setIsEditing(false);
+  };
+
+  const confirmDelete = (request: AdminScheduleRequest) => {
+    const employee = formatEmployee(request.employee);
+    const approvedWarning =
+      request.status === "approved"
+        ? " Lịch đã duyệt và dữ liệu chấm công được tạo từ lịch này cũng sẽ bị xóa."
+        : "";
+    Alert.alert(
+      "Xóa yêu cầu lịch?",
+      `Xóa lịch tuần ${formatDate(request.week_start)} của ${employee}?${approvedWarning} Hành động này không thể hoàn tác.`,
+      [
+        { text: "Giữ lại", style: "cancel" },
+        {
+          text: "Xóa",
+          style: "destructive",
+          onPress: async () => {
+            if (await handleDelete(request._id)) {
+              setExpandedId(null);
+              setIsEditing(false);
+              setRejectingRequestId(null);
+            }
+          },
+        },
+      ],
+    );
   };
 
   return (
@@ -378,6 +406,23 @@ export function RequestManager() {
                               </View>
                             )
                           ) : null}
+
+                          <Pressable
+                            className="mt-3 flex-row items-center justify-center rounded-xl border border-red-100 bg-red-50 py-3 disabled:opacity-50"
+                            disabled={busyRequestId === request._id || isEditing}
+                            onPress={() => confirmDelete(request)}
+                          >
+                            {busyRequestId === request._id ? (
+                              <ActivityIndicator color="#dc2626" size="small" />
+                            ) : (
+                              <Ionicons name="trash-outline" size={16} color="#dc2626" />
+                            )}
+                            <Text className="ml-2 text-xs font-black text-red-600">
+                              {busyRequestId === request._id
+                                ? "Đang xử lý..."
+                                : "Xóa yêu cầu lịch"}
+                            </Text>
+                          </Pressable>
                         </>
                       )}
                     </View>
