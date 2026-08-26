@@ -31,7 +31,7 @@ const periodOptions: { value: WorkPeriod; label: string }[] = [
   { value: "afternoon", label: "Chiều" },
 ];
 
-export default function ScheduleForm({
+export default function AdminScheduleForm({
   startDate,
   entries,
   onChangeEntry,

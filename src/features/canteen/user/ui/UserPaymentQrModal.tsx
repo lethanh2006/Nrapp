@@ -19,7 +19,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-type PaymentQrModalProps = {
+type UserPaymentQrModalProps = {
   visible: boolean;
   payment: PaymentRecord | null;
   loading: boolean;
@@ -36,13 +36,13 @@ const statusColor: Record<PaymentRecord["status"], string> = {
   REFUNDED: "#475569",
 };
 
-export default function PaymentQrModal({
+export default function UserPaymentQrModal({
   visible,
   payment,
   loading,
   onClose,
   onRefresh,
-}: PaymentQrModalProps) {
+}: UserPaymentQrModalProps) {
   const insets = useSafeAreaInsets();
 
   return (

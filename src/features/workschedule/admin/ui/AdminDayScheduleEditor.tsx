@@ -32,7 +32,7 @@ const WORK_OPTIONS: {
     description: "Làm việc trực tiếp",
     icon: "business",
     color: "#2563eb",
-    selectedBox: "border-blue-500 bg-blue-50",
+    selectedBox: "border-blue-500 bg-blue-500/10",
   },
   {
     value: "remote",
@@ -40,7 +40,7 @@ const WORK_OPTIONS: {
     description: "Làm việc online",
     icon: "home",
     color: "#9333ea",
-    selectedBox: "border-purple-500 bg-purple-50",
+    selectedBox: "border-purple-500 bg-purple-500/10",
   },
 ];
 
@@ -61,13 +61,13 @@ export function AdminDayScheduleEditor({
   const hasWorkSelection = entry.type === "office" || entry.type === "remote";
 
   return (
-    <View className="mt-4 border-t border-slate-100 pt-4">
+    <View className="mt-4 border-t border-slate-800 pt-4">
       <View className="mb-3 flex-row items-start justify-between">
         <View className="flex-1 pr-3">
-          <Text className="text-[11px] font-black uppercase tracking-wider text-red-600">
+          <Text className="text-[11px] font-black uppercase tracking-wider text-red-400">
             Thiết lập cho ngày
           </Text>
-          <Text className="mt-1 text-lg font-black capitalize text-slate-900">
+          <Text className="mt-1 text-lg font-black capitalize text-white">
             {date.toLocaleDateString("vi-VN", {
               weekday: "long",
               day: "2-digit",
@@ -77,12 +77,12 @@ export function AdminDayScheduleEditor({
         </View>
         <View
           className={`rounded-full px-2.5 py-1 ${
-            hasWorkSelection ? "bg-emerald-50" : "bg-slate-100"
+            hasWorkSelection ? "bg-emerald-500/15" : "bg-slate-800"
           }`}
         >
           <Text
             className={`text-[10px] font-black ${
-              hasWorkSelection ? "text-emerald-700" : "text-slate-500"
+              hasWorkSelection ? "text-emerald-300" : "text-slate-400"
             }`}
           >
             {hasWorkSelection ? "Đã đăng ký" : "Không đăng ký"}
@@ -91,14 +91,14 @@ export function AdminDayScheduleEditor({
       </View>
 
       {readOnlyReason ? (
-        <View className="mb-4 flex-row items-start rounded-2xl bg-slate-100 p-3">
+        <View className="mb-4 flex-row items-start rounded-2xl bg-slate-800 p-3">
           <Ionicons name="information-circle-outline" size={16} color="#64748b" />
-          <Text className="ml-2 flex-1 text-xs font-semibold leading-5 text-slate-600">
+          <Text className="ml-2 flex-1 text-xs font-semibold leading-5 text-slate-300">
             {readOnlyReason}
           </Text>
         </View>
       ) : (
-        <Text className="mb-3 text-xs leading-5 text-slate-500">
+        <Text className="mb-3 text-xs leading-5 text-slate-400">
           Chỉ chọn ngày bạn đi làm. Không chọn đồng nghĩa với nghỉ.
         </Text>
       )}
@@ -109,26 +109,26 @@ export function AdminDayScheduleEditor({
           return (
             <Pressable
               className={`mb-3 w-[48.5%] rounded-2xl border p-3 ${
-                selected ? option.selectedBox : "border-slate-200 bg-white"
+                selected ? option.selectedBox : "border-slate-700 bg-slate-950"
               } ${readOnly ? "opacity-60" : ""}`}
               disabled={readOnly}
               key={option.value}
               onPress={() => onChange("type", option.value)}
             >
               <View className="mb-3 flex-row items-center justify-between">
-                <View className="h-9 w-9 items-center justify-center rounded-xl bg-white">
+                <View className="h-9 w-9 items-center justify-center rounded-xl bg-slate-800">
                   <Ionicons name={option.icon} size={18} color={option.color} />
                 </View>
                 {selected ? (
                   <Ionicons name="checkmark-circle" size={20} color={option.color} />
                 ) : (
-                  <View className="h-5 w-5 rounded-full border-2 border-slate-200" />
+                  <View className="h-5 w-5 rounded-full border-2 border-slate-600" />
                 )}
               </View>
-              <Text className="text-sm font-black text-slate-800">
+              <Text className="text-sm font-black text-slate-100">
                 {option.label}
               </Text>
-              <Text className="mt-0.5 text-[10px] leading-4 text-slate-500">
+              <Text className="mt-0.5 text-[10px] leading-4 text-slate-400">
                 {option.description}
               </Text>
             </Pressable>
@@ -140,19 +140,19 @@ export function AdminDayScheduleEditor({
         <View>
           {!readOnly ? (
             <Pressable className="mb-3 items-center py-1" onPress={onClear}>
-              <Text className="text-xs font-bold text-slate-500">Bỏ đăng ký ngày này</Text>
+              <Text className="text-xs font-bold text-slate-400">Bỏ đăng ký ngày này</Text>
             </Pressable>
           ) : null}
 
           <View className="mt-1">
-            <Text className="mb-2 text-xs font-bold text-slate-700">Ca đăng ký</Text>
-            <View className="flex-row rounded-2xl bg-slate-100 p-1">
+            <Text className="mb-2 text-xs font-bold text-slate-300">Ca đăng ký</Text>
+            <View className="flex-row rounded-2xl bg-slate-950 p-1">
               {PERIOD_OPTIONS.map((option) => {
                 const selected = (entry.period || "full_day") === option.value;
                 return (
                   <Pressable
                     className={`flex-1 items-center rounded-xl border px-2 py-2.5 ${
-                      selected ? "border-red-100 bg-white" : "border-transparent bg-transparent"
+                      selected ? "border-red-800 bg-slate-800" : "border-transparent bg-transparent"
                     } ${readOnly ? "opacity-60" : ""}`}
                     disabled={readOnly}
                     key={option.value}
@@ -160,7 +160,7 @@ export function AdminDayScheduleEditor({
                   >
                     <Text
                       className={`text-[11px] font-black ${
-                        selected ? "text-red-600" : "text-slate-500"
+                        selected ? "text-red-300" : "text-slate-500"
                       }`}
                     >
                       {option.label}
@@ -173,11 +173,11 @@ export function AdminDayScheduleEditor({
           </View>
 
           <View className="mt-4">
-            <Text className="mb-2 text-xs font-bold text-slate-700">
+            <Text className="mb-2 text-xs font-bold text-slate-300">
               Ghi chú <Text className="font-normal text-slate-400">(không bắt buộc)</Text>
             </Text>
             <TextInput
-              className={`min-h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 ${
+              className={`min-h-12 rounded-2xl border border-slate-700 bg-slate-950 px-4 py-3 text-sm text-slate-100 ${
                 readOnly ? "opacity-60" : ""
               }`}
               editable={!readOnly}

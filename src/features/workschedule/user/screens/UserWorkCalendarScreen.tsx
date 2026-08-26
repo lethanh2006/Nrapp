@@ -184,7 +184,7 @@ export default function UserWorkCalendarScreen() {
 
           {loading ? (
             <View className="h-64 items-center justify-center">
-              <ActivityIndicator color="#dc2626" />
+              <ActivityIndicator color="#2563eb" />
             </View>
           ) : (
             <>

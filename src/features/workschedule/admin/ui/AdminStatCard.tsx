@@ -1,7 +1,7 @@
 import React from "react";
 import { Text, View } from "react-native";
 
-interface StatCardProps {
+interface AdminStatCardProps {
   title: string;
   value: string | number;
   containerStyle?: string;
@@ -9,7 +9,7 @@ interface StatCardProps {
   valueStyle?: string;
 }
 
-export function StatCard({ title, value, containerStyle = "bg-slate-50 border-slate-200", titleStyle = "text-slate-500", valueStyle = "text-slate-900" }: StatCardProps) {
+export function AdminStatCard({ title, value, containerStyle = "bg-slate-50 border-slate-200", titleStyle = "text-slate-500", valueStyle = "text-slate-900" }: AdminStatCardProps) {
   return (
     <View className={`flex-1 min-w-[100px] rounded-2xl border p-4 ${containerStyle}`}>
       <Text className={`text-xs ${titleStyle}`}>{title}</Text>

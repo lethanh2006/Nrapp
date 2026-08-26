@@ -6,8 +6,8 @@ import {
   isRegistrationClosed,
   toLocalDateKey,
 } from "@/src/features/workschedule/shared/utils/date";
-import { DayScheduleEditor } from "@/src/features/workschedule/user/ui/DayScheduleEditor";
-import { WeekPicker } from "@/src/features/workschedule/user/ui/WeekPicker";
+import { UserDayScheduleEditor } from "@/src/features/workschedule/user/ui/UserDayScheduleEditor";
+import { UserWeekPicker } from "@/src/features/workschedule/user/ui/UserWeekPicker";
 import type {
   EntryType,
   IScheduleEntry,
@@ -376,7 +376,7 @@ export default function UserWorkscheduleScreen() {
           title="Đăng ký lịch làm"
         />
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#dc2626" />
+          <ActivityIndicator size="large" color="#2563eb" />
           <Text className="mt-3 text-sm font-semibold text-slate-400">
             Đang tải lịch làm việc...
           </Text>
@@ -413,10 +413,10 @@ export default function UserWorkscheduleScreen() {
               </View>
             </View>
           ) : (
-            <View className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
+            <View className="mb-4 rounded-2xl border border-blue-100 bg-blue-50 px-4 py-3">
               <View className="flex-row items-center justify-center">
-                <Ionicons name="time-outline" size={17} color="#dc2626" />
-                <Text className="ml-2 text-sm font-black text-red-600">
+                <Ionicons name="time-outline" size={17} color="#2563eb" />
+                <Text className="ml-2 text-sm font-black text-blue-600">
                   Thời gian còn lại: {padCountdownValue(countdown.days)} :{" "}
                   {padCountdownValue(countdown.hours)} :{" "}
                   {padCountdownValue(countdown.minutes)} :{" "}
@@ -443,7 +443,7 @@ export default function UserWorkscheduleScreen() {
           ))}
         </View>
 
-        <WeekPicker
+        <UserWeekPicker
           weekStart={selectedWeekStart}
           index={selectedWeekIndex}
           total={allowedWeeks.length}
@@ -480,8 +480,8 @@ export default function UserWorkscheduleScreen() {
 
         <View className="mt-4 rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm">
           <View className="flex-row items-center">
-            <View className="h-8 w-8 items-center justify-center rounded-xl bg-red-50">
-              <Text className="text-sm font-black text-red-600">2</Text>
+            <View className="h-8 w-8 items-center justify-center rounded-xl bg-blue-50">
+              <Text className="text-sm font-black text-blue-600">2</Text>
             </View>
             <View className="ml-3 flex-1">
               <Text className="text-base font-black text-slate-900">
@@ -558,7 +558,7 @@ export default function UserWorkscheduleScreen() {
                 <Pressable
                   className={`w-[13%] items-center rounded-2xl border py-2.5 ${
                     selected
-                      ? "border-red-600 bg-red-600"
+                      ? "border-blue-600 bg-blue-600"
                       : "border-slate-200 bg-white"
                   }`}
                   key={toLocalDateKey(date)}
@@ -590,7 +590,7 @@ export default function UserWorkscheduleScreen() {
             })}
           </View>
 
-          <DayScheduleEditor
+          <UserDayScheduleEditor
             date={selectedDate}
             entry={selectedEntry}
             readOnly={Boolean(selectedDayReadOnlyReason)}
@@ -603,7 +603,7 @@ export default function UserWorkscheduleScreen() {
             <View className="mt-5 border-t border-slate-100 pt-4">
               <Pressable
                 className={`flex-row items-center justify-center rounded-2xl py-4 ${
-                  selectedWorkDays > 0 ? "bg-red-600" : "bg-red-300"
+                  selectedWorkDays > 0 ? "bg-blue-600" : "bg-blue-300"
                 }`}
                 disabled={submitting}
                 onPress={submitForApproval}

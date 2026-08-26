@@ -1,4 +1,4 @@
-import { WorkRequestManager } from "@/src/features/workschedule/admin/ui/WorkRequestManager";
+import { AdminWorkRequestManager } from "@/src/features/workschedule/admin/ui/AdminWorkRequestManager";
 import { ScreenHeader } from "@/src/shared/ui/ScreenHeader";
 import { router } from "expo-router";
 import { ScrollView, View } from "react-native";
@@ -15,7 +15,7 @@ export default function AdminWorkRequestsScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
-        <WorkRequestManager />
+        <AdminWorkRequestManager />
       </ScrollView>
     </View>
   );

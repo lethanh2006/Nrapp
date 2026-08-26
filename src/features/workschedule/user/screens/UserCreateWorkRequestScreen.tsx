@@ -202,7 +202,7 @@ export default function UserCreateWorkRequestScreen() {
                     key={option.value}
                     onPress={() => setPeriod(option.value)}
                   >
-                    <Text className={`text-[11px] font-black ${period === option.value ? "text-red-600" : "text-slate-500"}`}>
+                    <Text className={`text-[11px] font-black ${period === option.value ? "text-blue-600" : "text-slate-500"}`}>
                       {option.label}
                     </Text>
                   </Pressable>
@@ -213,7 +213,7 @@ export default function UserCreateWorkRequestScreen() {
 
           {type === "leave" ? (
             <Pressable className="mb-4 flex-row items-center" onPress={() => setIsSchoolLeave(value => !value)}>
-              <View className={`h-6 w-6 items-center justify-center rounded-md border ${isSchoolLeave ? "border-red-600 bg-red-600" : "border-slate-300 bg-white"}`}>
+              <View className={`h-6 w-6 items-center justify-center rounded-md border ${isSchoolLeave ? "border-blue-600 bg-blue-600" : "border-slate-300 bg-white"}`}>
                 {isSchoolLeave ? <Ionicons name="checkmark" size={16} color="white" /> : null}
               </View>
               <Text className="ml-2 text-xs font-semibold text-slate-600">Nghỉ để đi học</Text>
@@ -292,7 +292,7 @@ export default function UserCreateWorkRequestScreen() {
         </View>
 
         <Pressable
-          className={`mt-5 flex-row items-center justify-center rounded-2xl py-4 ${loading ? "bg-red-300" : "bg-red-600"}`}
+          className={`mt-5 flex-row items-center justify-center rounded-2xl py-4 ${loading ? "bg-blue-300" : "bg-blue-600"}`}
           disabled={loading}
           onPress={submit}
         >

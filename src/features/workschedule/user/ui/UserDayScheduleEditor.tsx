@@ -9,7 +9,7 @@ import { Pressable, Text, TextInput, View } from "react-native";
 
 type IconName = ComponentProps<typeof Ionicons>["name"];
 
-type DayScheduleEditorProps = {
+type UserDayScheduleEditorProps = {
   date: Date;
   entry: Partial<IScheduleEntry>;
   readOnly: boolean;
@@ -50,21 +50,21 @@ const PERIOD_OPTIONS: { value: WorkPeriod; label: string; hint: string }[] = [
   { value: "afternoon", label: "Buổi chiều", hint: "1 buổi" },
 ];
 
-export function DayScheduleEditor({
+export function UserDayScheduleEditor({
   date,
   entry,
   readOnly,
   readOnlyReason,
   onChange,
   onClear,
-}: DayScheduleEditorProps) {
+}: UserDayScheduleEditorProps) {
   const hasWorkSelection = entry.type === "office" || entry.type === "remote";
 
   return (
     <View className="mt-4 border-t border-slate-100 pt-4">
       <View className="mb-3 flex-row items-start justify-between">
         <View className="flex-1 pr-3">
-          <Text className="text-[11px] font-black uppercase tracking-wider text-red-600">
+          <Text className="text-[11px] font-black uppercase tracking-wider text-blue-600">
             Thiết lập cho ngày
           </Text>
           <Text className="mt-1 text-lg font-black capitalize text-slate-900">
@@ -152,7 +152,7 @@ export function DayScheduleEditor({
                 return (
                   <Pressable
                     className={`flex-1 items-center rounded-xl border px-2 py-2.5 ${
-                      selected ? "border-red-100 bg-white" : "border-transparent bg-transparent"
+                      selected ? "border-blue-100 bg-white" : "border-transparent bg-transparent"
                     } ${readOnly ? "opacity-60" : ""}`}
                     disabled={readOnly}
                     key={option.value}
@@ -160,7 +160,7 @@ export function DayScheduleEditor({
                   >
                     <Text
                       className={`text-[11px] font-black ${
-                        selected ? "text-red-600" : "text-slate-500"
+                        selected ? "text-blue-600" : "text-slate-500"
                       }`}
                     >
                       {option.label}

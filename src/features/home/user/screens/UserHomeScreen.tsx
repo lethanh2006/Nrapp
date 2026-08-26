@@ -22,7 +22,6 @@ import { APP_ROUTES } from "@/src/application/navigation/routes";
 export default function UserHomeScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuthSession();
-  const managesSchedule = false;
   const areaRoutes = APP_ROUTES.user;
   const [todayDate, setTodayDate] = useState(new Date());
 
@@ -56,10 +55,6 @@ export default function UserHomeScreen() {
 
   useFocusEffect(
     useCallback(() => {
-      if (managesSchedule) {
-        setHasLoaded(true);
-        return;
-      }
       let isActive = true;
       const loadSchedule = async () => {
         const schedules = await getMySchedules();
@@ -79,7 +74,7 @@ export default function UserHomeScreen() {
       return () => {
         isActive = false;
       };
-    }, [getMySchedules, managesSchedule])
+    }, [getMySchedules])
   );
 
   const getVietnameseDayName = (date: Date) => {
@@ -266,7 +261,7 @@ export default function UserHomeScreen() {
         </View>
       </ImageBackground>
 
-      {!managesSchedule && !currentWeekSchedule && hasLoaded ? (
+      {!currentWeekSchedule && hasLoaded ? (
         <View
           className="mx-4 bg-white rounded-3xl p-5 -mt-8 shadow-md border border-slate-100 items-center justify-center min-h-[110px]"
           style={{
@@ -299,7 +294,7 @@ export default function UserHomeScreen() {
             elevation: 4,
           }}
         >
-          {loading && !hasLoaded && !managesSchedule ? (
+          {loading && !hasLoaded ? (
             <View className="flex-1 items-center justify-center py-4">
               <ActivityIndicator size="small" color="#3b82f6" />
             </View>
@@ -312,41 +307,13 @@ export default function UserHomeScreen() {
                 <Text className="text-slate-800 text-4xl font-black tracking-tighter mb-3">
                   {todayDate.getDate()}
                 </Text>
-                {managesSchedule ? (
-                  <View className="bg-rose-50/70 border-l-4 border-rose-500 rounded-r-xl p-2">
-                    <Text className="text-rose-900 text-[11px] font-extrabold leading-tight">
-                      Lịch trình Admin
-                    </Text>
-                    <Text className="text-rose-700 text-[9px] font-bold mt-1">
-                      Linh hoạt
-                    </Text>
-                    <Text className="text-rose-500 text-[9px] font-semibold mt-0.5" numberOfLines={1}>
-                      Quyền Quản Lý / Điều Hành
-                    </Text>
-                  </View>
-                ) : (
-                  renderScheduleBox(todayEntry)
-                )}
+                {renderScheduleBox(todayEntry)}
               </View>
               <View className="flex-1 pl-4 justify-between">
                 <Text className="text-slate-400 text-[10px] font-extrabold uppercase tracking-wider mb-2">
                   {getVietnameseFullDate(tomorrow)}
                 </Text>
-                {managesSchedule ? (
-                  <View className="bg-rose-50/70 border-l-4 border-rose-500 rounded-r-xl p-2">
-                    <Text className="text-rose-900 text-[11px] font-extrabold leading-tight">
-                      Lịch trình Admin
-                    </Text>
-                    <Text className="text-rose-700 text-[9px] font-bold mt-1">
-                      Linh hoạt
-                    </Text>
-                    <Text className="text-rose-500 text-[9px] font-semibold mt-0.5" numberOfLines={1}>
-                      Quyền Quản Lý / Điều Hành
-                    </Text>
-                  </View>
-                ) : (
-                  renderScheduleBox(tomorrowEntry)
-                )}
+                {renderScheduleBox(tomorrowEntry)}
               </View>
             </>
           )}

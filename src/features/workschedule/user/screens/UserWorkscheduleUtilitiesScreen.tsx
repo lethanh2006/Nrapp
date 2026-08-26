@@ -22,8 +22,8 @@ export default function UserWorkscheduleUtilitiesScreen() {
       title: "Đăng ký lịch làm",
       description: "Chọn nơi làm và ca sáng, chiều hoặc cả ngày",
       icon: "calendar-outline",
-      color: "#dc2626",
-      background: "bg-red-50",
+      color: "#2563eb",
+      background: "bg-blue-50",
       route: APP_ROUTES.user.workschedule,
     },
     {

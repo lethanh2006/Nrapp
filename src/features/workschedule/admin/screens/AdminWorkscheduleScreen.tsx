@@ -4,12 +4,12 @@ import {
   AdminProvider,
   useAdminData,
 } from "@/src/features/workschedule/admin/model/AdminWorkscheduleContext";
-import { AttendanceQR } from "@/src/features/workschedule/admin/ui/AttendanceQR";
-import { PolicySection } from "@/src/features/workschedule/admin/ui/PolicySection";
-import { ReportSummary } from "@/src/features/workschedule/admin/ui/ReportSummary";
-import { RequestManager } from "@/src/features/workschedule/admin/ui/RequestManager";
-import { StatCard } from "@/src/features/workschedule/admin/ui/StatCard";
-import { WorkRequestManager } from "@/src/features/workschedule/admin/ui/WorkRequestManager";
+import { AdminAttendanceQR } from "@/src/features/workschedule/admin/ui/AdminAttendanceQR";
+import { AdminPolicySection } from "@/src/features/workschedule/admin/ui/AdminPolicySection";
+import { AdminReportSummary } from "@/src/features/workschedule/admin/ui/AdminReportSummary";
+import { AdminRequestManager } from "@/src/features/workschedule/admin/ui/AdminRequestManager";
+import { AdminStatCard } from "@/src/features/workschedule/admin/ui/AdminStatCard";
+import { AdminWorkRequestManager } from "@/src/features/workschedule/admin/ui/AdminWorkRequestManager";
 import AdminPersonalWorkscheduleScreen from "@/src/features/workschedule/admin/screens/AdminPersonalWorkscheduleScreen";
 import { Ionicons } from "@expo/vector-icons";
 import { useFocusEffect } from "expo-router";
@@ -106,28 +106,28 @@ function AdminDashboardContent() {
 
         <View className="-mt-3 px-4">
           <View className="flex-row flex-wrap rounded-3xl border border-slate-100 bg-white p-3 shadow-sm shadow-slate-200" style={{ gap: 8 }}>
-            <StatCard
+            <AdminStatCard
               containerStyle="bg-red-50 border-red-100"
               title="Lịch chờ duyệt"
               titleStyle="text-red-600"
               value={pendingSchedules.length}
               valueStyle="text-red-800"
             />
-            <StatCard
+            <AdminStatCard
               containerStyle="bg-emerald-50 border-emerald-100"
               title="Đã check-in"
               titleStyle="text-emerald-600"
               value={totalTodayCheckedIn}
               valueStyle="text-emerald-800"
             />
-            <StatCard
+            <AdminStatCard
               containerStyle="bg-amber-50 border-amber-100"
               title="Chưa check-in"
               titleStyle="text-amber-700"
               value={totalTodayMissing}
               valueStyle="text-amber-900"
             />
-            <StatCard title="Bản ghi báo cáo" value={reportRows.length} />
+            <AdminStatCard title="Bản ghi báo cáo" value={reportRows.length} />
           </View>
 
           <View className="my-4 flex-row rounded-2xl border border-slate-200 bg-white p-1">
@@ -155,15 +155,15 @@ function AdminDashboardContent() {
             })}
           </View>
 
-          {activeTab === "requests" ? <RequestManager /> : null}
-          {activeTab === "forms" ? <WorkRequestManager /> : null}
+          {activeTab === "requests" ? <AdminRequestManager /> : null}
+          {activeTab === "forms" ? <AdminWorkRequestManager /> : null}
           {activeTab === "system" ? (
             <View style={{ gap: 16 }}>
-              {canEditPolicy ? <PolicySection /> : null}
-              <AttendanceQR />
+              {canEditPolicy ? <AdminPolicySection /> : null}
+              <AdminAttendanceQR />
             </View>
           ) : null}
-          {activeTab === "reports" ? <ReportSummary /> : null}
+          {activeTab === "reports" ? <AdminReportSummary /> : null}
         </View>
       </ScrollView>
     </View>

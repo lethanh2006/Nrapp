@@ -1,7 +1,7 @@
 import { useWorkscheduleAdmin } from "@/src/features/workschedule/admin/hooks/useWorkscheduleAdmin";
 import type { AdminScheduleRequest } from "@/src/features/workschedule/admin/hooks/useWorkscheduleAdmin";
 import { useAdminData } from "@/src/features/workschedule/admin/model/AdminWorkscheduleContext";
-import ScheduleForm from "@/src/features/workschedule/admin/ui/ScheduleForm";
+import AdminScheduleForm from "@/src/features/workschedule/admin/ui/AdminScheduleForm";
 import type { EntryType, IScheduleEntry, WorkPeriod } from "@/src/services/workschedule/constant";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import { Ionicons } from "@expo/vector-icons";
@@ -35,7 +35,7 @@ const formatDateTime = (value?: string) => {
   return Number.isNaN(date.getTime()) ? "Chưa có" : date.toLocaleString("vi-VN");
 };
 
-export function RequestManager() {
+export function AdminRequestManager() {
   const {
     allSchedules,
     pendingSchedules,
@@ -332,7 +332,7 @@ export function RequestManager() {
                               </Text>
                             </Pressable>
                           </View>
-                          <ScheduleForm
+                          <AdminScheduleForm
                             entries={editEntries}
                             onChangeEntry={handleChangeEntry}
                             readOnly={!isEditing}

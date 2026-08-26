@@ -5,7 +5,7 @@ import {
   getCanteenErrorMessage,
 } from "@/src/features/canteen/shared/model/presentation";
 import UserOrderSummaryCard from "@/src/features/canteen/user/ui/UserOrderSummaryCard";
-import PaymentQrModal from "@/src/features/canteen/user/ui/PaymentQrModal";
+import UserPaymentQrModal from "@/src/features/canteen/user/ui/UserPaymentQrModal";
 import {
   cancelCanteenOrder,
   createCanteenOrder,
@@ -804,7 +804,7 @@ export default function UserCanteenScreen() {
         )}
       </ScrollView>
 
-      <PaymentQrModal
+      <UserPaymentQrModal
         loading={paymentLoading}
         onClose={() => setQrVisible(false)}
         onRefresh={refreshPayment}

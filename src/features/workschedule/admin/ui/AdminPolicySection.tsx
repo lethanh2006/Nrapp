@@ -122,7 +122,7 @@ function AdminDatePicker({ value, onChange, disabled, placeholder }: AdminDatePi
   );
 }
 
-export function PolicySection() {
+export function AdminPolicySection() {
   const { policy, policyDraft, setPolicyDraft, savingPolicy, handleSavePolicy, handleLockPolicy } = useAdminData();
   const [isOpen, setIsOpen] = useState(false);
 

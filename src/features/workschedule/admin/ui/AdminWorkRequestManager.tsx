@@ -42,7 +42,7 @@ const formatDateTime = (value?: string) => {
   return Number.isNaN(date.getTime()) ? "-" : date.toLocaleString("vi-VN");
 };
 
-export function WorkRequestManager() {
+export function AdminWorkRequestManager() {
   const { getEmployeeRequests, approveEmployeeRequest, rejectEmployeeRequest } = useWorkscheduleAdmin();
   const [requests, setRequests] = useState<IWorkRequest[]>([]);
   const [status, setStatus] = useState<WorkRequestStatus | "all">("pending");

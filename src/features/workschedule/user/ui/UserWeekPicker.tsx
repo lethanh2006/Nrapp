@@ -2,7 +2,7 @@ import { formatDateVi } from "@/src/features/workschedule/shared/utils/date";
 import { Ionicons } from "@expo/vector-icons";
 import { Pressable, Text, View } from "react-native";
 
-type WeekPickerProps = {
+type UserWeekPickerProps = {
   weekStart: Date;
   index: number;
   total: number;
@@ -26,7 +26,7 @@ const getWeekHint = (weekStart: Date) => {
   return `Sau ${difference} tuần`;
 };
 
-export function WeekPicker({
+export function UserWeekPicker({
   weekStart,
   index,
   total,
@@ -35,7 +35,7 @@ export function WeekPicker({
   statusTextClassName,
   onPrevious,
   onNext,
-}: WeekPickerProps) {
+}: UserWeekPickerProps) {
   const weekEnd = new Date(weekStart);
   weekEnd.setDate(weekEnd.getDate() + 6);
   const canPrevious = index > 0;
@@ -44,8 +44,8 @@ export function WeekPicker({
   return (
     <View className="rounded-3xl border border-slate-200/80 bg-white p-4 shadow-sm">
       <View className="mb-4 flex-row items-center">
-        <View className="h-8 w-8 items-center justify-center rounded-xl bg-red-50">
-          <Text className="text-sm font-black text-red-600">1</Text>
+        <View className="h-8 w-8 items-center justify-center rounded-xl bg-blue-50">
+          <Text className="text-sm font-black text-blue-600">1</Text>
         </View>
         <View className="ml-3 flex-1">
           <Text className="text-base font-black text-slate-900">
@@ -69,7 +69,7 @@ export function WeekPicker({
           <Ionicons name="chevron-back" size={20} color="#475569" />
         </Pressable>
         <View className="flex-1 items-center px-2">
-          <Text className="text-[11px] font-black uppercase tracking-wider text-red-600">
+          <Text className="text-[11px] font-black uppercase tracking-wider text-blue-600">
             {getWeekHint(weekStart)}
           </Text>
           <Text className="mt-1 text-base font-black text-slate-900">
@@ -93,7 +93,7 @@ export function WeekPicker({
           {Array.from({ length: total }).map((_, itemIndex) => (
             <View
               className={`mr-1.5 h-1.5 rounded-full ${
-                itemIndex === index ? "w-5 bg-red-600" : "w-1.5 bg-slate-200"
+                itemIndex === index ? "w-5 bg-blue-600" : "w-1.5 bg-slate-200"
               }`}
               key={itemIndex}
             />

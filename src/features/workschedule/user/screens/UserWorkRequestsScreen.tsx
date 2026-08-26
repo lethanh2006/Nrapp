@@ -78,14 +78,14 @@ export default function UserWorkRequestsScreen() {
         ].map(([value, label]) => (
           <Pressable
             className={`flex-1 items-center border-b-2 py-3 ${
-              activeTab === value ? "border-red-600" : "border-transparent"
+              activeTab === value ? "border-blue-600" : "border-transparent"
             }`}
             key={value}
             onPress={() => setActiveTab(value as "types" | "history")}
           >
             <Text
               className={`text-xs font-black ${
-                activeTab === value ? "text-red-600" : "text-slate-500"
+                activeTab === value ? "text-blue-600" : "text-slate-500"
               }`}
             >
               {label}
@@ -152,7 +152,7 @@ export default function UserWorkRequestsScreen() {
 
             {loading && requests.length === 0 ? (
               <View className="items-center py-16">
-                <ActivityIndicator color="#dc2626" />
+                <ActivityIndicator color="#2563eb" />
               </View>
             ) : filteredRequests.length === 0 ? (
               <View className="items-center rounded-3xl border border-dashed border-slate-200 bg-white p-8">

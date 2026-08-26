@@ -124,7 +124,7 @@ export default function UserMonthlyOverviewScreen() {
 
         {loading ? (
           <View className="items-center py-24">
-            <ActivityIndicator color="#dc2626" />
+            <ActivityIndicator color="#2563eb" />
             <Text className="mt-3 text-xs text-slate-400">Đang tổng hợp dữ liệu...</Text>
           </View>
         ) : (

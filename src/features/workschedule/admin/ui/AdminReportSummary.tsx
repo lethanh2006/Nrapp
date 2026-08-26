@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, Pressable } from "react-native";
 import { useAdminData } from "@/src/features/workschedule/admin/model/AdminWorkscheduleContext";
-import { StatCard } from "./StatCard";
+import { AdminStatCard } from "./AdminStatCard";
 
 const entryLabels: Record<string, string> = {
   office: "Lên công ty",
@@ -27,7 +27,7 @@ const formatDateTime = (value?: string) => {
 
 type ReportRange = "7d" | "30d";
 
-export function ReportSummary() {
+export function AdminReportSummary() {
   const {
     todayAttendance,
     missingToday,
@@ -62,21 +62,21 @@ export function ReportSummary() {
         </View>
 
         <View className="flex-row flex-wrap mb-4" style={{ gap: 10 }}>
-          <StatCard
+          <AdminStatCard
             title="Lịch office"
             value={totalTodayExpected}
             containerStyle="bg-slate-50 border-slate-200"
             titleStyle="text-slate-500"
             valueStyle="text-slate-900"
           />
-          <StatCard
+          <AdminStatCard
             title="Đã check-in"
             value={totalTodayCheckedIn}
             containerStyle="bg-emerald-50 border-emerald-100"
             titleStyle="text-emerald-700"
             valueStyle="text-emerald-900"
           />
-          <StatCard
+          <AdminStatCard
             title="Chưa check-in"
             value={totalTodayMissing}
             containerStyle="bg-rose-50 border-rose-100"
@@ -185,21 +185,21 @@ export function ReportSummary() {
         </View>
 
         <View className="flex-row flex-wrap mb-4" style={{ gap: 10 }}>
-          <StatCard
+          <AdminStatCard
             title="Tổng bản ghi"
             value={reportRows.length}
             containerStyle="bg-slate-50 border-slate-200"
             titleStyle="text-slate-500"
             valueStyle="text-slate-900"
           />
-          <StatCard
+          <AdminStatCard
             title="Nhân sự"
             value={totalReportEmployees}
             containerStyle="bg-red-50 border-red-100"
             titleStyle="text-red-700"
             valueStyle="text-red-950"
           />
-          <StatCard
+          <AdminStatCard
             title="Đủ check-out"
             value={totalReportCompleted}
             containerStyle="bg-emerald-50 border-emerald-100"

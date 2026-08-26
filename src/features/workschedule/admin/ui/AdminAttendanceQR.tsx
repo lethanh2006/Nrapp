@@ -3,7 +3,7 @@ import { View, Text, Pressable } from "react-native";
 import QRCode from "react-native-qrcode-svg";
 import { useAdminData } from "@/src/features/workschedule/admin/model/AdminWorkscheduleContext";
 
-export function AttendanceQR() {
+export function AdminAttendanceQR() {
   const { qrBusy, generatedQr, qrRemaining, handleGenerateQr } = useAdminData();
 
   const formatDateTime = (value?: string) => {
