@@ -116,11 +116,12 @@ Trong `src/features/<nghiệp vụ>/`, giao diện sau đăng nhập tuân theo 
 
 - `admin/`: màn hình, hook và UI chỉ dành cho khối quản trị.
 - `user/`: màn hình, hook và UI chỉ dành cho khối người dùng.
-- `shared/`: logic hoặc component được cả hai nhánh sử dụng.
+- `shared/`: hook, model, config, kiểu dữ liệu hoặc hạ tầng không mang giao diện
+  riêng của vai trò.
 
 Route admin chỉ import màn hình từ nhánh `admin`, route user chỉ import màn hình
-từ nhánh `user`. ESLint chặn import chéo giữa `admin/` và `user/`; mã cần dùng
-chung phải được chuyển vào `shared/`.
+từ nhánh `user`. ESLint chặn import chéo vai trò và cũng chặn screen/UI của
+admin hoặc user đi qua `shared/`. Hai giao diện phải có source độc lập.
 
 ### 3.3 Bảng URL hiện tại
 
@@ -152,7 +153,6 @@ app/_layout.tsx
       └── app/(main)/user/_layout.tsx
           └── app/(main)/user/chat.tsx
               └── src/features/chat/user/screens/UserChatScreen.tsx
-                  └── src/features/chat/shared/ui/ChatView.tsx
 ```
 
 Ý nghĩa:
@@ -328,54 +328,37 @@ export async function someRequest(token: string, payload: Payload) {
   bạ của admin.
 - `src/features/directory/user/screens/UserDirectoryScreen.tsx`: điểm vào danh
   bạ của user.
-- `src/features/directory/shared/screens/DirectoryScreen.tsx`: giao diện danh bạ
-  dùng chung, nhận `AppArea` để áp dụng quyền và màu phù hợp.
-- `src/features/profile/admin/` và `src/features/profile/user/`: điểm vào hồ sơ
-  riêng theo vai trò; giao diện dùng chung nằm trong `profile/shared/`.
+- Danh bạ admin có thao tác phân quyền và xóa tài khoản; danh bạ user là giao
+  diện chỉ xem. Hai màn không dùng chung component màn hình.
+- `src/features/profile/admin/` và `src/features/profile/user/`: hai giao diện
+  hồ sơ độc lập để có thể phát triển khác nhau theo vai trò.
 
 ### 4.7 `src/features/chat/`
 
-#### Admin/user entry
+#### Admin và user
 
-- `admin/screens/AdminChatScreen.tsx`: điểm vào Chat của route admin.
-- `user/screens/UserChatScreen.tsx`: điểm vào Chat của route user.
-
-#### Shared
-
-- `shared/model/ChatSocketContext.tsx`: sau khi có user và token, tạo kết nối Socket.IO;
-  giữ socket cùng danh sách user online; đăng ký log lỗi/kết nối và tự disconnect
-  khi unmount hoặc đổi user.
-- `shared/ui/ChatView.tsx`: component điều phối chính. Nó tải danh sách user/chat,
-  chọn cuộc trò chuyện, tải message, tạo chat, gửi text/ảnh, xử lý typing và các
-  event realtime `newMessage`, `userTyping`, `messagesSeen`.
-- `shared/ui/ChatHeader.tsx`: header của cuộc trò chuyện đang mở; hiển thị tên, online
-  và trạng thái đang nhập.
-- `shared/ui/ChatSideBar.tsx`: danh sách cuộc trò chuyện và danh sách nhân viên để tạo
-  chat mới; hỗ trợ tìm kiếm, unseen badge và refresh.
-- `shared/ui/ChatMessages.tsx`: loại message trùng, render bubble trái/phải, ảnh, thời
-  gian, trạng thái seen và tự cuộn xuống message mới nhất.
-- `shared/ui/MessageInput.tsx`: nhập nội dung, chọn/xóa ảnh preview và gửi message; tự
-  khóa nút trong lúc đang gửi.
+- `admin/screens/` và `admin/ui/`: giao diện Chat quản trị hệ tối/đỏ, gồm screen,
+  header, danh sách hội thoại, message và ô nhập riêng.
+- `user/screens/` và `user/ui/`: giao diện Chat người dùng hệ sáng/xanh với toàn
+  bộ component riêng.
+- `shared/model/ChatSocketContext.tsx`: hạ tầng Socket.IO duy nhất được dùng
+  chung; giữ socket cùng danh sách user online, đăng ký log lỗi/kết nối và tự
+  disconnect khi unmount hoặc đổi user.
 
 ### 4.8 `src/features/home/`
 
-- `admin/screens/AdminHomeScreen.tsx` và `user/screens/UserHomeScreen.tsx`: hai
-  điểm vào riêng cho route admin/user.
-- `shared/ui/HomeDashboard.tsx`: trang tổng quan dùng chung cho hai area. Hiển thị user,
-  ngày hiện tại, shortcut tới Chat/Todo/Workschedule. Với nhân viên, màn hình tải
-  lịch tuần hiện tại để hiển thị lịch hôm nay và ngày mai.
+- `admin/screens/AdminHomeScreen.tsx`: bảng điều hành tối/đỏ, hiển thị số lịch
+  chờ duyệt, chấm công và công cụ quản trị.
+- `user/screens/UserHomeScreen.tsx`: dashboard cá nhân sáng/xanh, hiển thị lịch
+  hôm nay, ngày mai và các tiện ích dành cho nhân viên.
 
 ### 4.9 `src/features/todo/`
 
-- `admin/screens/AdminTodoScreen.tsx` và `user/screens/UserTodoScreen.tsx`: điểm
-  vào riêng theo vai trò và quyết định quyền thao tác.
-- `shared/ui/TodoView.tsx`: component điều phối Todo. Nhận `AppArea`, chọn API theo khu
-  vực và quản lý loading/refresh/form, danh sách user cùng các thao tác CRUD.
-- `shared/ui/TodoIntroCard.tsx`: phần giới thiệu khác nhau giữa admin và user.
-- `shared/ui/TodoCreateTaskCard.tsx`: form admin tạo task, chọn deadline, độ ưu tiên và
-  người được giao.
-- `shared/ui/TodoTaskListCard.tsx`: render danh sách task, trạng thái, người giao/nhận;
-  hiển thị nút giao việc, đổi trạng thái hoặc xóa theo quyền.
+- `admin/screens/` và `admin/ui/`: screen cùng form tạo/sửa/giao/xóa và bộ lọc
+  riêng của khối quản trị.
+- `user/screens/` và `user/ui/`: screen cùng danh sách, bộ lọc và thao tác trạng
+  thái riêng của người dùng.
+- Todo không còn `shared/ui`; thay đổi UI một vai trò không tác động vai trò kia.
 
 ### 4.10 `src/features/workschedule/`
 
@@ -391,18 +374,15 @@ export async function someRequest(token: string, payload: Payload) {
 #### Nhánh user
 
 - `user/screens/`: toàn bộ điểm vào route lịch, tiện ích, lịch tháng, đơn từ và
-  thống kê của user. Các file này chỉ kết nối route user với màn hình phù hợp.
+  thống kê của user; mỗi file chứa giao diện thực, không phải wrapper.
+- `user/ui/`: editor ngày và bộ chọn tuần riêng của người dùng.
 
 #### Nhánh dùng chung
 
 - `shared/hooks/usePersonalWorkschedule.ts`: tải policy, lịch và chấm công cá nhân.
 - `shared/hooks/useWorkRequests.ts`: tạo và tải các đơn từ của người đang đăng nhập.
-- `shared/screens/PersonalWorkscheduleScreen.tsx`: lịch cá nhân dùng được ở cả
-  hai area khi tài khoản không có quyền quản lý.
-- `shared/screens/WorkCalendarScreen.tsx`, `MonthlyOverviewScreen.tsx` và
-  `WorkRequestHubScreen.tsx`: các màn hình dữ liệu cá nhân dùng chung.
+- `shared/config/workRequestConfig.ts`: nhãn và metadata thuần của các loại đơn.
 - `shared/ui/AttendanceScannerModal.tsx`: quét QR chấm công toàn ứng dụng.
-- `shared/ui/DayScheduleEditor.tsx`, `WeekPicker.tsx`: UI chỉnh lịch cá nhân.
 - `shared/utils/date.ts`: xử lý ngày, tuần, policy và định dạng tiếng Việt.
 
 ### 4.11 `src/shared/`
@@ -427,7 +407,7 @@ export async function someRequest(token: string, payload: Payload) {
 - `android-icon-foreground.png`: lớp trước của adaptive icon Android.
 - `android-icon-background.png`: lớp nền của adaptive icon Android.
 - `android-icon-monochrome.png`: icon đơn sắc Android.
-- `bg1.png`: ảnh nền được `HomeDashboard` sử dụng.
+- `bg1.png`: ảnh nền được `UserHomeScreen` sử dụng.
 
 ### 4.14 `docs/`
 
@@ -505,7 +485,7 @@ Ví dụ người dùng cập nhật trạng thái Todo:
 
 ```text
 TodoTaskListCard
-  → callback của TodoView
+  → callback của UserTodoScreen hoặc AdminTodoScreen
   → getToken()
   → updateTodoStatus(token, taskId, status)
   → axios.patch(url, payload, getAuthHeader(token))
@@ -527,7 +507,7 @@ REST API chịu trách nhiệm tải/tạo dữ liệu; Socket.IO chịu trách 
 đổi tức thời:
 
 ```text
-Mở ChatView
+Mở UserChatScreen hoặc AdminChatScreen
   ├── getAllUsers(token)
   ├── getChats(token)
   └── ChatSocketContext kết nối socket
@@ -587,7 +567,7 @@ export async function cancelTodoTask(token: string, taskId: string) {
   `features/<nghiệp vụ>/<admin|user>/`; phần dùng chung xem
   `features/<nghiệp vụ>/shared/`.
 - Chat không realtime: xem `ChatSocketContext.tsx` và listener trong
-  `ChatView.tsx`.
+  `UserChatScreen.tsx` hoặc `AdminChatScreen.tsx`.
 - Lịch admin không đồng bộ: xem `AdminWorkscheduleContext.tsx`.
 
 ## 11. Kiểm tra trước khi commit

@@ -1,24 +1,16 @@
-import type { AppArea } from "@/src/application/access/roles";
 import { Ionicons } from "@expo/vector-icons";
-import React from "react";
 import { Text, View } from "react-native";
 
-type Props = {
-  area: AppArea;
-};
-
-export default function UserTodoIntroCard({ area }: Props) {
+export default function UserTodoIntroCard() {
   return (
-    <View className="bg-blue-50/50 rounded-2xl p-4 border border-blue-100/60 flex-row items-center">
-      <View className="bg-blue-500/10 p-2.5 rounded-xl mr-3">
-        <Ionicons name="clipboard-outline" size={24} color="#3b82f6" />
+    <View className="flex-row items-center rounded-3xl border border-blue-100 bg-blue-50 p-4">
+      <View className="mr-3 h-12 w-12 items-center justify-center rounded-2xl bg-blue-600">
+        <Ionicons name="checkmark-done-outline" size={24} color="#fff" />
       </View>
       <View className="flex-1">
-        <Text className="text-lg font-bold text-slate-800">Không gian công việc</Text>
-        <Text className="text-xs text-slate-500 mt-0.5 leading-relaxed">
-          {area === "admin"
-            ? "Chế độ quản trị: Tạo mới, bàn giao và giám sát tiến độ công việc toàn hệ thống."
-            : "Chế độ nhân viên: Theo dõi, thực hiện và cập nhật trạng thái công việc được giao."}
+        <Text className="text-lg font-black text-slate-800">Công việc của tôi</Text>
+        <Text className="mt-1 text-xs leading-5 text-slate-500">
+          Theo dõi việc được giao và cập nhật tiến độ thực hiện.
         </Text>
       </View>
     </View>

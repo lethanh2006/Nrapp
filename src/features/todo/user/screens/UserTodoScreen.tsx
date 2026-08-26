@@ -1,37 +1,17 @@
-import UserTodoCreateTaskCard from "@/src/features/todo/user/ui/UserTodoCreateTaskCard";
 import UserTodoIntroCard from "@/src/features/todo/user/ui/UserTodoIntroCard";
 import UserTodoTaskFilters from "@/src/features/todo/user/ui/UserTodoTaskFilters";
 import UserTodoTaskListCard from "@/src/features/todo/user/ui/UserTodoTaskListCard";
-import type {
-  CreateTaskInput,
-  TaskItem,
-  TaskPagination,
-  TaskPriority,
-  TaskStatus,
-  UpdateTaskInput,
-} from "@/src/services/todo/constant";
-import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
-import { normalizeUser } from "@/src/shared/model/normalize-user";
 import {
-  assignTodoTask,
-  createTodoTask,
-  deleteTodoTask,
-  getAdminTasks,
-  getMyTasks,
-  updateTodoTask,
-  updateTodoStatus,
-} from "@/src/services/todo/todo.service";
-import { getApiErrorMessage } from "@/src/utils/apiHelper";
-import { getAllUsers } from "@/src/services/user/user.service";
+  type TaskItem,
+  type TaskPagination,
+  type TaskPriority,
+  type TaskStatus,
+} from "@/src/services/todo/constant";
+import { getMyTasks, updateTodoStatus } from "@/src/services/todo/todo.service";
+import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
-import type { User } from "@/src/services/user/constant";
-import React, {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { getApiErrorMessage } from "@/src/utils/apiHelper";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   RefreshControl,
@@ -40,7 +20,6 @@ import {
 } from "react-native";
 
 const TASK_PAGE_LIMIT = 10;
-
 const INITIAL_PAGINATION: TaskPagination = {
   page: 1,
   limit: TASK_PAGE_LIMIT,
@@ -49,116 +28,52 @@ const INITIAL_PAGINATION: TaskPagination = {
 };
 
 export default function UserTodoScreen() {
-  const area = "user" as const;
-  const { loading: appLoading, isAuth, user, getToken } = useAuthSession();
-  const isAdminArea = false;
-  const [users, setUsers] = useState<User[]>([]);
-
+  const { getToken, isAuth, loading: sessionLoading } = useAuthSession();
   const [tasks, setTasks] = useState<TaskItem[]>([]);
-  const [pagination, setPagination] =
-    useState<TaskPagination>(INITIAL_PAGINATION);
-  const [loading, setLoading] = useState(true);
+  const [pagination, setPagination] = useState(INITIAL_PAGINATION);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [tasksLoading, setTasksLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [assigningTaskId, setAssigningTaskId] = useState<string | null>(null);
   const [updatingTaskId, setUpdatingTaskId] = useState<string | null>(null);
-  const [savingTaskId, setSavingTaskId] = useState<string | null>(null);
-  const [deletingTaskId, setDeletingTaskId] = useState<string | null>(null);
-
   const [statusFilter, setStatusFilter] = useState<TaskStatus | null>(null);
-  const [priorityFilter, setPriorityFilter] =
-    useState<TaskPriority | null>(null);
+  const [priorityFilter, setPriorityFilter] = useState<TaskPriority | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const taskRequestRef = useRef(0);
-  const initializedRef = useRef(false);
-
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [priority, setPriority] = useState<TaskPriority>("medium");
-  const [deadline, setDeadline] = useState<Date | null>(null);
-  const [createAssignee, setCreateAssignee] = useState<string>("");
-
-  const [assignByTask, setAssignByTask] = useState<Record<string, string>>({});
-
-  const selectableUsers = useMemo(() => {
-    const currentUserId = user?._id;
-    return (users || []).filter((candidate) => candidate._id !== currentUserId);
-  }, [users, user?._id]);
+  const requestRef = useRef(0);
 
   const loadTasks = useCallback(async () => {
     if (!isAuth) return;
-
-    const requestNumber = ++taskRequestRef.current;
+    const requestNumber = ++requestRef.current;
+    setTasksLoading(true);
     try {
-      setTasksLoading(true);
       const token = await getToken();
       if (!token) return;
-
-      const query = {
+      const result = await getMyTasks(token, {
         page,
         limit: TASK_PAGE_LIMIT,
         ...(statusFilter ? { status: statusFilter } : {}),
         ...(priorityFilter ? { priority: priorityFilter } : {}),
         ...(search ? { search } : {}),
-      };
-      const result = isAdminArea
-        ? await getAdminTasks(token, query)
-        : await getMyTasks(token, query);
-
-      if (requestNumber !== taskRequestRef.current) return;
+      });
+      if (requestNumber !== requestRef.current) return;
       setTasks(result.tasks);
       setPagination(result.pagination);
-    } catch (error: unknown) {
-      if (requestNumber !== taskRequestRef.current) return;
-      Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được công việc"));
-    } finally {
-      if (requestNumber === taskRequestRef.current) setTasksLoading(false);
-    }
-  }, [
-    getToken,
-    isAdminArea,
-    isAuth,
-    page,
-    priorityFilter,
-    search,
-    statusFilter,
-  ]);
-
-  const loadUsers = useCallback(async () => {
-    if (!isAdminArea || !isAuth) return;
-    try {
-      const token = await getToken();
-      if (!token) return;
-      const { data } = await getAllUsers(token);
-      setUsers((data.users ?? []).map(normalizeUser));
-    } catch (error: unknown) {
-      Alert.alert(
-        "Lỗi",
-        getApiErrorMessage(error, "Không tải được danh sách nhân viên"),
-      );
-    }
-  }, [getToken, isAdminArea, isAuth]);
-
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      await loadTasks();
-      if (mounted && !initializedRef.current) {
-        initializedRef.current = true;
-        setLoading(false);
+    } catch (error) {
+      if (requestNumber === requestRef.current) {
+        Alert.alert("Lỗi", getApiErrorMessage(error, "Không tải được công việc"));
       }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, [loadTasks]);
+    } finally {
+      if (requestNumber === requestRef.current) {
+        setTasksLoading(false);
+        setInitialLoading(false);
+      }
+    }
+  }, [getToken, isAuth, page, priorityFilter, search, statusFilter]);
 
   useEffect(() => {
-    void loadUsers();
-  }, [loadUsers]);
+    void loadTasks();
+  }, [loadTasks]);
 
   useEffect(() => {
     if (pagination.totalPages > 0 && page > pagination.totalPages) {
@@ -166,89 +81,20 @@ export default function UserTodoScreen() {
     }
   }, [page, pagination.totalPages]);
 
-  const onRefresh = async () => {
+  const refresh = async () => {
     setRefreshing(true);
-    try {
-      await Promise.all([loadTasks(), loadUsers()]);
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  const createTask = async () => {
-    if (!title.trim()) {
-      Alert.alert("Thông báo", "Vui lòng nhập tiêu đề");
-      return;
-    }
-
-    if (createAssignee && createAssignee === user?._id) {
-      Alert.alert("Thông báo", "Không thể tự giao việc cho chính mình");
-      return;
-    }
-
-    try {
-      setCreating(true);
-      const payload: CreateTaskInput = {
-        title: title.trim(),
-        description: description.trim() || undefined,
-        priority,
-      };
-
-      if (deadline) payload.deadline = deadline.toISOString();
-      if (createAssignee) payload.assignedTo = createAssignee;
-
-      const token = await getToken();
-      if (!token) return;
-      await createTodoTask(token, payload);
-      setTitle("");
-      setDescription("");
-      setPriority("medium");
-      setDeadline(null);
-      setCreateAssignee("");
-      if (page === 1) await loadTasks();
-      else setPage(1);
-      Alert.alert("Thành công", "Đã tạo công việc");
-    } catch (error: unknown) {
-      Alert.alert("Lỗi", getApiErrorMessage(error, "Không tạo được công việc"));
-    } finally {
-      setCreating(false);
-    }
-  };
-
-  const assignTask = async (taskId: string) => {
-    const assignedTo = assignByTask[taskId];
-    if (!assignedTo) {
-      Alert.alert("Thông báo", "Hãy chọn người được giao");
-      return;
-    }
-
-    if (assignedTo === user?._id) {
-      Alert.alert("Thông báo", "Không thể tự giao việc cho chính mình");
-      return;
-    }
-
-    try {
-      setAssigningTaskId(taskId);
-      const token = await getToken();
-      if (!token) return;
-      await assignTodoTask(token, taskId, assignedTo);
-      await loadTasks();
-      Alert.alert("Thành công", "Đã giao công việc");
-    } catch (error: unknown) {
-      Alert.alert("Lỗi", getApiErrorMessage(error, "Không giao được công việc"));
-    } finally {
-      setAssigningTaskId(null);
-    }
+    await loadTasks();
+    setRefreshing(false);
   };
 
   const updateStatus = async (taskId: string, status: TaskStatus) => {
+    setUpdatingTaskId(taskId);
     try {
-      setUpdatingTaskId(taskId);
       const token = await getToken();
       if (!token) return;
       await updateTodoStatus(token, taskId, status);
       await loadTasks();
-    } catch (error: unknown) {
+    } catch (error) {
       Alert.alert(
         "Lỗi",
         getApiErrorMessage(error, "Không cập nhật được trạng thái"),
@@ -258,47 +104,9 @@ export default function UserTodoScreen() {
     }
   };
 
-  const updateTask = async (
-    taskId: string,
-    input: UpdateTaskInput,
-  ): Promise<boolean> => {
-    try {
-      setSavingTaskId(taskId);
-      const token = await getToken();
-      if (!token) return false;
-      await updateTodoTask(token, taskId, input);
-      await loadTasks();
-      Alert.alert("Thành công", "Đã cập nhật nội dung công việc");
-      return true;
-    } catch (error: unknown) {
-      Alert.alert(
-        "Lỗi",
-        getApiErrorMessage(error, "Không cập nhật được công việc"),
-      );
-      return false;
-    } finally {
-      setSavingTaskId(null);
-    }
-  };
-
-  const removeTask = async (taskId: string) => {
-    try {
-      setDeletingTaskId(taskId);
-      const token = await getToken();
-      if (!token) return;
-      await deleteTodoTask(token, taskId);
-      await loadTasks();
-      Alert.alert("Thành công", "Đã xoá công việc");
-    } catch (error: unknown) {
-      Alert.alert("Lỗi", getApiErrorMessage(error, "Không xoá được công việc"));
-    } finally {
-      setDeletingTaskId(null);
-    }
-  };
-
-  if (appLoading || loading) {
+  if (sessionLoading || initialLoading) {
     return (
-      <View className="flex-1 bg-white items-center justify-center">
+      <View className="flex-1 items-center justify-center bg-slate-50">
         <ActivityIndicator size="large" color="#2563eb" />
       </View>
     );
@@ -306,32 +114,18 @@ export default function UserTodoScreen() {
 
   return (
     <ScrollView
-      className="flex-1 bg-white"
-      contentContainerStyle={{ padding: 16, gap: 14 }}
+      className="flex-1 bg-slate-50"
+      contentContainerStyle={{ padding: 16, gap: 14, paddingBottom: 32 }}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
-    >
-      <UserTodoIntroCard area={area} />
-
-      {isAdminArea ? (
-        <UserTodoCreateTaskCard
-          title={title}
-          description={description}
-          deadline={deadline}
-          priority={priority}
-          createAssignee={createAssignee}
-          users={selectableUsers}
-          creating={creating}
-          setTitle={setTitle}
-          setDescription={setDescription}
-          setDeadline={setDeadline}
-          setPriority={setPriority}
-          setCreateAssignee={setCreateAssignee}
-          onCreateTask={createTask}
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={() => void refresh()}
+          tintColor="#2563eb"
         />
-      ) : null}
-
+      }
+      showsVerticalScrollIndicator={false}
+    >
+      <UserTodoIntroCard />
       <UserTodoTaskFilters
         status={statusFilter}
         priority={priorityFilter}
@@ -363,28 +157,11 @@ export default function UserTodoScreen() {
         }}
         onChangePage={setPage}
       />
-
       <UserTodoTaskListCard
-        area={area}
         tasks={tasks}
         loading={tasksLoading}
-        users={selectableUsers}
-        currentUser={user}
-        assignByTask={assignByTask}
-        assigningTaskId={assigningTaskId}
         updatingTaskId={updatingTaskId}
-        savingTaskId={savingTaskId}
-        deletingTaskId={deletingTaskId}
-        onSelectAssignUser={(taskId, userId) =>
-          setAssignByTask((prev) => ({
-            ...prev,
-            [taskId]: userId,
-          }))
-        }
-        onAssignTask={assignTask}
-        onUpdateStatus={updateStatus}
-        onUpdateTask={updateTask}
-        onRemoveTask={removeTask}
+        onUpdateStatus={(taskId, status) => void updateStatus(taskId, status)}
       />
     </ScrollView>
   );
