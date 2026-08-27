@@ -46,10 +46,11 @@ const ADMIN_TOOLS: {
 
 export default function AdminWorkscheduleUtilitiesScreen() {
   return (
-    <View className="flex-1 bg-slate-950">
+    <View className="flex-1 bg-slate-50">
       <ScreenHeader
         onBack={() => router.back()}
         subtitle="Công cụ dành riêng cho khối quản trị"
+        tone="admin"
         title="Trung tâm vận hành"
       />
 
@@ -58,7 +59,7 @@ export default function AdminWorkscheduleUtilitiesScreen() {
         contentContainerStyle={{ padding: 16, paddingBottom: 32 }}
         showsVerticalScrollIndicator={false}
       >
-        <View className="mb-4 overflow-hidden rounded-3xl bg-red-600 p-5">
+        <View className="mb-4 overflow-hidden rounded-3xl bg-red-900 p-5">
           <View className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/10" />
           <View className="absolute -bottom-14 left-10 h-28 w-28 rounded-full bg-red-800/40" />
           <View className="h-11 w-11 items-center justify-center rounded-2xl bg-white/15">
@@ -76,35 +77,35 @@ export default function AdminWorkscheduleUtilitiesScreen() {
           {ADMIN_TOOLS.map((item, index) => (
             <Pressable
               accessibilityLabel={item.title}
-              className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 p-4 active:bg-slate-800"
+              className="overflow-hidden rounded-3xl border border-slate-200 bg-white p-4 active:bg-red-50"
               key={item.title}
               onPress={() => router.push(item.route)}
             >
               <View className="flex-row items-start">
-                <View className="h-12 w-12 items-center justify-center rounded-2xl bg-red-500/15">
-                  <Ionicons name={item.icon} size={23} color="#f87171" />
+                <View className="h-12 w-12 items-center justify-center rounded-2xl bg-red-50">
+                  <Ionicons name={item.icon} size={23} color="#dc2626" />
                 </View>
                 <View className="ml-3 flex-1">
                   <View className="flex-row items-center justify-between">
-                    <Text className="flex-1 pr-2 text-sm font-black text-white">
+                    <Text className="flex-1 pr-2 text-sm font-black text-slate-900">
                       {item.title}
                     </Text>
-                    <View className="rounded-full bg-slate-800 px-2.5 py-1">
-                      <Text className="text-[9px] font-black uppercase text-slate-300">
+                    <View className="rounded-full bg-red-50 px-2.5 py-1">
+                      <Text className="text-[9px] font-black uppercase text-red-700">
                         {item.badge}
                       </Text>
                     </View>
                   </View>
-                  <Text className="mt-2 text-xs leading-5 text-slate-400">
+                  <Text className="mt-2 text-xs leading-5 text-slate-500">
                     {item.description}
                   </Text>
                 </View>
               </View>
-              <View className="mt-4 flex-row items-center justify-between border-t border-slate-800 pt-3">
-                <Text className="text-[10px] font-bold uppercase tracking-wider text-red-400">
+              <View className="mt-4 flex-row items-center justify-between border-t border-slate-100 pt-3">
+                <Text className="text-[10px] font-bold uppercase tracking-wider text-red-600">
                   Mở công cụ {String(index + 1).padStart(2, "0")}
                 </Text>
-                <Ionicons name="arrow-forward" size={17} color="#f87171" />
+                <Ionicons name="arrow-forward" size={17} color="#dc2626" />
               </View>
             </Pressable>
           ))}

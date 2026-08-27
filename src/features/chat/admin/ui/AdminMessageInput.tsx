@@ -124,7 +124,7 @@ export default function AdminMessageInput({
         <TextInput
           style={styles.input}
           placeholder="Nhập tin nhắn..."
-          placeholderTextColor="#aaaaaa"
+          placeholderTextColor="#94a3b8"
           value={message}
           onChangeText={setMessage}
           multiline
@@ -155,10 +155,15 @@ export default function AdminMessageInput({
 const styles = StyleSheet.create({
   container: {
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#e2e8f0',
     borderRadius: 20,
     padding: 10,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#ffffff',
+    shadowColor: '#0f172a',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   row: {
     flexDirection: 'row',
@@ -198,13 +203,13 @@ const styles = StyleSheet.create({
     minHeight: 44,
     maxHeight: 112,
     borderWidth: 1,
-    borderColor: '#334155',
-    backgroundColor: '#0f172a',
+    borderColor: '#e2e8f0',
+    backgroundColor: '#f8fafc',
     borderRadius: 14,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 14,
-    color: '#f8fafc',
+    color: '#0f172a',
   },
   sendBtn: {
     padding: 12,

@@ -9,8 +9,10 @@ import {
   type TaskPriority,
   type TaskStatus,
 } from "@/src/services/todo/constant";
+import type { AppArea } from "@/src/application/access/roles";
 
 type Props = {
+  area: AppArea;
   status: TaskStatus | null;
   priority: TaskPriority | null;
   searchInput: string;
@@ -28,6 +30,7 @@ type Props = {
 };
 
 export default function AdminTodoTaskFilters({
+  area,
   status,
   priority,
   searchInput,
@@ -43,6 +46,7 @@ export default function AdminTodoTaskFilters({
   onReset,
   onChangePage,
 }: Props) {
+  const isAdminArea = area === "admin";
   const hasFilter =
     status !== null ||
     priority !== null ||
@@ -54,8 +58,16 @@ export default function AdminTodoTaskFilters({
     <View className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
       <View className="mb-3 flex-row items-center justify-between">
         <View className="flex-row items-center">
-          <View className="mr-2 rounded-lg bg-indigo-500/10 p-1.5">
-            <Ionicons name="filter-outline" size={18} color="#6366f1" />
+          <View
+            className={`mr-2 rounded-lg p-1.5 ${
+              isAdminArea ? "bg-red-50" : "bg-indigo-500/10"
+            }`}
+          >
+            <Ionicons
+              name="filter-outline"
+              size={18}
+              color={isAdminArea ? "#dc2626" : "#6366f1"}
+            />
           </View>
           <Text className="text-sm font-bold text-slate-800">Bộ lọc công việc</Text>
         </View>
@@ -81,7 +93,9 @@ export default function AdminTodoTaskFilters({
         <Pressable
           onPress={onApplySearch}
           disabled={loading}
-          className="rounded-lg bg-slate-800 px-3 py-2 disabled:opacity-50"
+          className={`rounded-lg px-3 py-2 disabled:opacity-50 ${
+            isAdminArea ? "bg-red-600 active:bg-red-700" : "bg-slate-800"
+          }`}
         >
           <Text className="text-xs font-bold text-white">Tìm</Text>
         </Pressable>
@@ -94,6 +108,7 @@ export default function AdminTodoTaskFilters({
         <View className="flex-row py-0.5" style={{ gap: 7 }}>
           <FilterChip
             active={status === null}
+            adminTheme={isAdminArea}
             label="Tất cả"
             onPress={() => onChangeStatus(null)}
           />
@@ -101,6 +116,7 @@ export default function AdminTodoTaskFilters({
             <FilterChip
               key={value}
               active={status === value}
+              adminTheme={isAdminArea}
               label={STATUS_MAP[value].label}
               onPress={() => onChangeStatus(value)}
             />
@@ -114,6 +130,7 @@ export default function AdminTodoTaskFilters({
       <View className="flex-row flex-wrap" style={{ gap: 7 }}>
         <FilterChip
           active={priority === null}
+          adminTheme={isAdminArea}
           label="Tất cả"
           onPress={() => onChangePriority(null)}
         />
@@ -121,6 +138,7 @@ export default function AdminTodoTaskFilters({
           <FilterChip
             key={value}
             active={priority === value}
+            adminTheme={isAdminArea}
             label={PRIORITY_MAP[value].label.replace("Ưu tiên ", "")}
             onPress={() => onChangePriority(value)}
           />
@@ -148,7 +166,9 @@ export default function AdminTodoTaskFilters({
           <Pressable
             onPress={() => onChangePage(Math.min(totalPages, page + 1))}
             disabled={loading || page >= totalPages}
-            className="flex-1 items-center rounded-xl bg-slate-800 py-2.5 disabled:opacity-40"
+            className={`flex-1 items-center rounded-xl py-2.5 disabled:opacity-40 ${
+              isAdminArea ? "bg-red-600 active:bg-red-700" : "bg-slate-800"
+            }`}
           >
             <Text className="text-xs font-bold text-white">Trang sau</Text>
           </Pressable>
@@ -160,10 +180,12 @@ export default function AdminTodoTaskFilters({
 
 function FilterChip({
   active,
+  adminTheme,
   label,
   onPress,
 }: {
   active: boolean;
+  adminTheme: boolean;
   label: string;
   onPress: () => void;
 }) {
@@ -172,13 +194,19 @@ function FilterChip({
       onPress={onPress}
       className={`rounded-full border px-3 py-2 ${
         active
-          ? "border-indigo-500 bg-indigo-50"
+          ? adminTheme
+            ? "border-red-500 bg-red-50"
+            : "border-indigo-500 bg-indigo-50"
           : "border-slate-200 bg-white"
       }`}
     >
       <Text
         className={`text-xs font-bold ${
-          active ? "text-indigo-600" : "text-slate-500"
+          active
+            ? adminTheme
+              ? "text-red-600"
+              : "text-indigo-600"
+            : "text-slate-500"
         }`}
       >
         {label}

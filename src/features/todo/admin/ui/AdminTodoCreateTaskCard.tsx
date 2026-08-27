@@ -90,8 +90,8 @@ export default function AdminTodoCreateTaskCard({
   return (
     <View className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
       <View className="flex-row items-center mb-4">
-        <View className="bg-blue-500/10 p-1.5 rounded-lg mr-2">
-          <Ionicons name="add-circle-outline" size={20} color="#3b82f6" />
+        <View className="mr-2 rounded-lg bg-red-50 p-1.5">
+          <Ionicons name="add-circle-outline" size={20} color="#dc2626" />
         </View>
         <Text className="text-base font-bold text-slate-800">
           Tạo công việc mới
@@ -203,7 +203,7 @@ export default function AdminTodoCreateTaskCard({
                     </Text>
                   </View>
                   {isSelected && (
-                    <Ionicons name="checkmark" size={16} color="#3b82f6" />
+                    <Ionicons name="checkmark" size={16} color="#dc2626" />
                   )}
                 </Pressable>
               );
@@ -225,7 +225,7 @@ export default function AdminTodoCreateTaskCard({
             onPress={() => setCreateAssignee("")}
             className={`px-3 py-2 rounded-xl border flex-row items-center ${
               createAssignee === ""
-                ? "bg-slate-800 border-slate-800 shadow-sm shadow-slate-200"
+                ? "border-red-600 bg-red-600 shadow-sm shadow-red-200"
                 : "bg-white border-slate-200"
             }`}
           >
@@ -251,7 +251,7 @@ export default function AdminTodoCreateTaskCard({
                 onPress={() => setCreateAssignee(u._id)}
                 className={`px-3 py-2 rounded-xl border flex-row items-center ${
                   isSelected
-                    ? "bg-blue-600 border-blue-600 shadow-sm shadow-blue-200"
+                    ? "border-red-600 bg-red-600 shadow-sm shadow-red-200"
                     : "bg-white border-slate-200"
                 }`}
               >
@@ -278,7 +278,9 @@ export default function AdminTodoCreateTaskCard({
         onPress={onCreateTask}
         disabled={creating}
         className={`rounded-xl py-3.5 items-center flex-row justify-center ${
-          creating ? "bg-blue-300" : "bg-blue-600 active:bg-blue-700 shadow-sm shadow-blue-200"
+          creating
+            ? "bg-red-300"
+            : "bg-red-600 shadow-sm shadow-red-200 active:bg-red-700"
         }`}
       >
         {creating ? (

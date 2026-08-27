@@ -67,8 +67,8 @@ const STATUS_CONFIG: Record<
 };
 
 const TYPE_META: Record<EntryType, { dot: string }> = {
-  office: { dot: "bg-blue-500" },
-  remote: { dot: "bg-purple-500" },
+  office: { dot: "bg-red-600" },
+  remote: { dot: "bg-rose-400" },
   day_off: { dot: "bg-slate-400" },
   leave: { dot: "bg-orange-500" },
 };
@@ -369,10 +369,11 @@ export default function AdminPersonalWorkscheduleScreen() {
 
   if (initialLoad) {
     return (
-      <View className="flex-1 bg-slate-950">
+      <View className="flex-1 bg-slate-50">
         <ScreenHeader
           onBack={returnToUtilities}
           subtitle="Lịch cá nhân trong khu quản trị"
+          tone="admin"
           title="Lịch làm của tôi"
         />
         <View className="flex-1 items-center justify-center">
@@ -386,10 +387,11 @@ export default function AdminPersonalWorkscheduleScreen() {
   }
 
   return (
-    <View className="flex-1 bg-slate-950">
+    <View className="flex-1 bg-slate-50">
       <ScreenHeader
         onBack={returnToUtilities}
         subtitle="Lịch cá nhân trong khu quản trị"
+        tone="admin"
         title="Lịch làm của tôi"
       />
 
@@ -399,14 +401,14 @@ export default function AdminPersonalWorkscheduleScreen() {
         ref={scrollRef}
         showsVerticalScrollIndicator={false}
       >
-        <View className="mb-4 overflow-hidden rounded-3xl border border-red-900/60 bg-slate-900 p-5">
-          <View className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-red-600/10" />
+        <View className="mb-4 overflow-hidden rounded-3xl bg-red-900 p-5">
+          <View className="absolute -right-8 -top-10 h-32 w-32 rounded-full bg-white/10" />
           <View className="flex-row items-center">
-            <View className="h-12 w-12 items-center justify-center rounded-2xl bg-red-500/15">
-              <Ionicons name="shield-checkmark-outline" size={24} color="#f87171" />
+            <View className="h-12 w-12 items-center justify-center rounded-2xl bg-white/15">
+              <Ionicons name="shield-checkmark-outline" size={24} color="#ffffff" />
             </View>
             <View className="ml-3 flex-1">
-              <Text className="text-[10px] font-black uppercase tracking-[2px] text-red-400">
+              <Text className="text-[10px] font-black uppercase tracking-[2px] text-red-100">
                 Chế độ quản trị
               </Text>
               <Text className="mt-1 text-lg font-black text-white">
@@ -414,7 +416,7 @@ export default function AdminPersonalWorkscheduleScreen() {
               </Text>
             </View>
           </View>
-          <Text className="mt-4 text-xs leading-5 text-slate-400">
+          <Text className="mt-4 text-xs leading-5 text-red-100">
             Lịch này chỉ áp dụng cho tài khoản hiện tại và được tách khỏi khu vực duyệt lịch nhân viên.
           </Text>
         </View>
@@ -433,10 +435,10 @@ export default function AdminPersonalWorkscheduleScreen() {
               </View>
             </View>
           ) : (
-            <View className="mb-4 rounded-2xl border border-red-900/60 bg-red-950/40 px-4 py-3">
+            <View className="mb-4 rounded-2xl border border-red-100 bg-red-50 px-4 py-3">
               <View className="flex-row items-center justify-center">
                 <Ionicons name="time-outline" size={17} color="#dc2626" />
-                <Text className="ml-2 text-sm font-black text-red-300">
+                <Text className="ml-2 text-sm font-black text-red-700">
                   Thời gian còn lại: {padCountdownValue(countdown.days)} :{" "}
                   {padCountdownValue(countdown.hours)} :{" "}
                   {padCountdownValue(countdown.minutes)} :{" "}
@@ -482,13 +484,13 @@ export default function AdminPersonalWorkscheduleScreen() {
           </View>
         ) : null}
 
-        <View className="mt-4 rounded-3xl border border-slate-800 bg-slate-900 p-4">
+        <View className="mt-4 rounded-3xl border border-slate-200 bg-white p-4">
           <View className="flex-row items-center">
-            <View className="h-8 w-8 items-center justify-center rounded-xl bg-red-500/15">
-              <Ionicons name="calendar-outline" size={17} color="#f87171" />
+            <View className="h-8 w-8 items-center justify-center rounded-xl bg-red-50">
+              <Ionicons name="calendar-outline" size={17} color="#dc2626" />
             </View>
             <View className="ml-3 flex-1">
-              <Text className="text-base font-black text-white">
+              <Text className="text-base font-black text-slate-900">
                 Cấu hình ngày làm việc
               </Text>
               <Text className="mt-0.5 text-xs text-slate-400">
@@ -498,7 +500,7 @@ export default function AdminPersonalWorkscheduleScreen() {
           </View>
 
           {!weekReadOnlyReason ? (
-            <View className="mt-4 rounded-2xl border border-slate-800 bg-slate-950 p-3">
+            <View className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
               <Text className="mb-2 text-[11px] font-black uppercase tracking-wider text-slate-400">
                 Thiết lập nhanh T2 - T6
               </Text>
@@ -523,20 +525,20 @@ export default function AdminPersonalWorkscheduleScreen() {
               </Pressable>
               <View className="flex-row">
                 <Pressable
-                  className="mr-2 flex-1 flex-row items-center justify-center rounded-xl border border-slate-700 bg-slate-900 py-2.5"
+                  className="mr-2 flex-1 flex-row items-center justify-center rounded-xl border border-red-100 bg-white py-2.5"
                   onPress={() => applyPreset("office")}
                 >
-                  <Ionicons name="business-outline" size={15} color="#2563eb" />
-                  <Text className="ml-1.5 text-xs font-black text-blue-300">
+                  <Ionicons name="business-outline" size={15} color="#dc2626" />
+                  <Text className="ml-1.5 text-xs font-black text-red-700">
                     Tại công ty
                   </Text>
                 </Pressable>
                 <Pressable
-                  className="flex-1 flex-row items-center justify-center rounded-xl border border-slate-700 bg-slate-900 py-2.5"
+                  className="flex-1 flex-row items-center justify-center rounded-xl border border-red-100 bg-white py-2.5"
                   onPress={() => applyPreset("remote")}
                 >
-                  <Ionicons name="home-outline" size={15} color="#9333ea" />
-                  <Text className="ml-1.5 text-xs font-black text-purple-300">
+                  <Ionicons name="home-outline" size={15} color="#dc2626" />
+                  <Text className="ml-1.5 text-xs font-black text-red-700">
                     Làm từ xa
                   </Text>
                 </Pressable>
@@ -546,8 +548,8 @@ export default function AdminPersonalWorkscheduleScreen() {
               </Text>
             </View>
           ) : (
-            <View className="mt-4 rounded-2xl bg-slate-800 p-3">
-              <Text className="text-xs font-semibold leading-5 text-slate-300">
+            <View className="mt-4 rounded-2xl bg-slate-100 p-3">
+              <Text className="text-xs font-semibold leading-5 text-slate-600">
                 {status.description}
               </Text>
             </View>
@@ -563,7 +565,7 @@ export default function AdminPersonalWorkscheduleScreen() {
                   className={`w-[13%] items-center rounded-2xl border py-2.5 ${
                     selected
                       ? "border-red-600 bg-red-600"
-                      : "border-slate-700 bg-slate-950"
+                      : "border-slate-200 bg-slate-50"
                   }`}
                   key={toLocalDateKey(date)}
                   onPress={() => setSelectedDayIndex(index)}
@@ -577,7 +579,7 @@ export default function AdminPersonalWorkscheduleScreen() {
                   </Text>
                   <Text
                     className={`mt-1 text-sm font-black ${
-                      selected ? "text-white" : "text-slate-200"
+                      selected ? "text-white" : "text-slate-800"
                     }`}
                   >
                     {date.getDate()}
@@ -604,7 +606,7 @@ export default function AdminPersonalWorkscheduleScreen() {
           />
 
           {!weekReadOnlyReason ? (
-            <View className="mt-5 border-t border-slate-800 pt-4">
+            <View className="mt-5 border-t border-slate-100 pt-4">
               <Pressable
                 className={`flex-row items-center justify-center rounded-2xl py-4 ${
                   selectedWorkDays > 0 ? "bg-red-600" : "bg-red-300"

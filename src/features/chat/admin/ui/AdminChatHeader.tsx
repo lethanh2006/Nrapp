@@ -38,7 +38,7 @@ export default function AdminChatHeader({
         style={styles.backBtn}
         onPress={onBack}
       >
-        <Ionicons name="arrow-back" size={20} color="#e2e8f0" />
+        <Ionicons name="arrow-back" size={20} color="#ffffff" />
       </Pressable>
 
       <View style={styles.userInfo}>
@@ -46,7 +46,7 @@ export default function AdminChatHeader({
           <>
             <View style={styles.avatarWrap}>
               <View style={styles.avatar}>
-                <Ionicons name="person" size={28} color="#9ca3af" />
+                <Ionicons name="person" size={28} color="#dc2626" />
               </View>
               {isOnline && <View style={styles.onlineDot} />}
             </View>
@@ -70,7 +70,7 @@ export default function AdminChatHeader({
         ) : (
           <View style={styles.placeholder}>
             <View style={styles.avatar}>
-              <Ionicons name="person" size={28} color="#6b7280" />
+              <Ionicons name="person" size={28} color="#dc2626" />
             </View>
             <View>
               <Text style={styles.placeholderTitle}>Chọn cuộc trò chuyện</Text>
@@ -88,11 +88,16 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
-    backgroundColor: '#1e293b',
+    backgroundColor: '#7f1d1d',
     borderRadius: 20,
     padding: 12,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#991b1b',
+    shadowColor: '#7f1d1d',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.18,
+    shadowRadius: 8,
+    elevation: 3,
   },
   backBtn: {
     width: 40,
@@ -101,7 +106,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 8,
     borderRadius: 12,
-    backgroundColor: '#0f172a',
+    backgroundColor: 'rgba(255, 255, 255, 0.12)',
   },
   userInfo: {
     flex: 1,
@@ -116,7 +121,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 15,
-    backgroundColor: '#450a0a',
+    backgroundColor: '#ffffff',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -129,7 +134,7 @@ const styles = StyleSheet.create({
     borderRadius: 7,
     backgroundColor: '#22c55e',
     borderWidth: 2,
-    borderColor: '#ffffff',
+    borderColor: '#7f1d1d',
   },
   textWrap: {
     flex: 1,
@@ -142,13 +147,13 @@ const styles = StyleSheet.create({
   },
   typing: {
     fontSize: 14,
-    color: '#dc2626',
+    color: '#fecaca',
     fontStyle: 'italic',
     marginTop: 2,
   },
   presence: {
     fontSize: 13,
-    color: '#94a3b8',
+    color: '#fecaca',
     marginTop: 2,
   },
   placeholder: {
@@ -159,11 +164,11 @@ const styles = StyleSheet.create({
   placeholderTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#999999',
+    color: '#ffffff',
   },
   placeholderSub: {
     fontSize: 12,
-    color: '#aaaaaa',
+    color: '#fecaca',
     marginTop: 4,
   },
 });

@@ -115,17 +115,17 @@ export default function AdminChatSideBar({
           </View>
         </View>
         <View style={styles.companyIcon}>
-          <Ionicons name="shield-checkmark" size={22} color="#f87171" />
+          <Ionicons name="shield-checkmark" size={22} color="#ffffff" />
         </View>
       </View>
 
       <View style={styles.searchBox}>
-        <Ionicons name="search" size={20} color="#6b7280" />
+        <Ionicons name="search" size={20} color="#dc2626" />
         <TextInput
           value={query}
           onChangeText={setQuery}
           placeholder="Tìm nhân viên theo tên hoặc email"
-          placeholderTextColor="#6b7280"
+          placeholderTextColor="#94a3b8"
           style={styles.searchInput}
           autoCapitalize="none"
         />
@@ -136,7 +136,7 @@ export default function AdminChatSideBar({
             hitSlop={8}
             onPress={() => setQuery("")}
           >
-            <Ionicons name="close-circle" size={19} color="#9ca3af" />
+            <Ionicons name="close-circle" size={19} color="#94a3b8" />
           </Pressable>
         )}
       </View>
@@ -205,7 +205,7 @@ export default function AdminChatSideBar({
                   )}
                 </View>
               </View>
-              <Ionicons name="chevron-forward" size={18} color="#cbd5e1" />
+              <Ionicons name="chevron-forward" size={18} color="#94a3b8" />
             </Pressable>
           );
         }}
@@ -223,32 +223,32 @@ export default function AdminChatSideBar({
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#020617", paddingHorizontal: 16 },
-  titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingTop: 14, paddingBottom: 13 },
-  title: { fontSize: 22, fontWeight: "900", color: "#f8fafc" },
-  subtitle: { fontSize: 12, color: "#94a3b8" },
+  container: { flex: 1, backgroundColor: "#f8fafc", paddingHorizontal: 16 },
+  titleRow: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 14, marginBottom: 14, paddingVertical: 16, paddingHorizontal: 16, borderRadius: 22, backgroundColor: "#7f1d1d", shadowColor: "#7f1d1d", shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.18, shadowRadius: 8, elevation: 3 },
+  title: { fontSize: 22, fontWeight: "900", color: "#ffffff" },
+  subtitle: { fontSize: 12, color: "#fecaca" },
   connectionLine: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 2 },
   connectionDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: "#f59e0b" },
   connectionDotOnline: { backgroundColor: "#22c55e" },
   connectionDotError: { backgroundColor: "#ef4444" },
-  companyIcon: { width: 44, height: 44, borderRadius: 16, alignItems: "center", justifyContent: "center", backgroundColor: "#450a0a" },
-  searchBox: { flexDirection: "row", alignItems: "center", gap: 9, height: 48, borderRadius: 16, borderWidth: 1, borderColor: "#334155", paddingHorizontal: 14, marginBottom: 12, backgroundColor: "#1e293b" },
-  searchInput: { flex: 1, paddingVertical: 0, fontSize: 14, color: "#f8fafc" },
+  companyIcon: { width: 44, height: 44, borderRadius: 16, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: "rgba(255, 255, 255, 0.18)", backgroundColor: "rgba(255, 255, 255, 0.12)" },
+  searchBox: { flexDirection: "row", alignItems: "center", gap: 9, height: 48, borderRadius: 16, borderWidth: 1, borderColor: "#e2e8f0", paddingHorizontal: 14, marginBottom: 12, backgroundColor: "#ffffff" },
+  searchInput: { flex: 1, paddingVertical: 0, fontSize: 14, color: "#0f172a" },
   listContent: { flexGrow: 1, paddingBottom: 20 },
-  row: { flexDirection: "row", alignItems: "center", minHeight: 76, marginBottom: 8, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 20, borderWidth: 1, borderColor: "#1e293b", backgroundColor: "#0f172a" },
-  rowPressed: { backgroundColor: "#1e293b", borderColor: "#7f1d1d" },
+  row: { flexDirection: "row", alignItems: "center", minHeight: 76, marginBottom: 8, paddingVertical: 8, paddingHorizontal: 10, borderRadius: 20, borderWidth: 1, borderColor: "#e2e8f0", backgroundColor: "#ffffff" },
+  rowPressed: { backgroundColor: "#fef2f2", borderColor: "#fecaca" },
   avatarWrap: { position: "relative", marginRight: 12 },
-  avatar: { width: 52, height: 52, borderRadius: 18, backgroundColor: "#450a0a", alignItems: "center", justifyContent: "center" },
-  avatarText: { fontSize: 20, fontWeight: "800", color: "#fca5a5" },
+  avatar: { width: 52, height: 52, borderRadius: 18, backgroundColor: "#fee2e2", alignItems: "center", justifyContent: "center" },
+  avatarText: { fontSize: 20, fontWeight: "800", color: "#dc2626" },
   onlineDot: { position: "absolute", right: 1, bottom: 2, width: 14, height: 14, borderRadius: 7, borderWidth: 2, borderColor: "#fff", backgroundColor: "#22c55e" },
   rowBody: { flex: 1, minWidth: 0, marginRight: 6 },
   nameLine: { flexDirection: "row", alignItems: "center", gap: 8 },
-  name: { flex: 1, fontSize: 14, fontWeight: "700", color: "#f1f5f9" },
+  name: { flex: 1, fontSize: 14, fontWeight: "700", color: "#1e293b" },
   unreadName: { fontWeight: "800" },
   time: { fontSize: 12, color: "#9ca3af" },
   previewLine: { flexDirection: "row", alignItems: "center", marginTop: 4, gap: 8 },
-  preview: { flex: 1, fontSize: 12, color: "#94a3b8" },
-  unreadPreview: { fontWeight: "700", color: "#e2e8f0" },
+  preview: { flex: 1, fontSize: 12, color: "#64748b" },
+  unreadPreview: { fontWeight: "700", color: "#334155" },
   badge: { minWidth: 20, height: 20, paddingHorizontal: 5, borderRadius: 10, alignItems: "center", justifyContent: "center", backgroundColor: "#dc2626" },
   badgeText: { color: "#fff", fontSize: 11, fontWeight: "800" },
   empty: { flex: 1, minHeight: 280, alignItems: "center", justifyContent: "center", gap: 12 },

@@ -88,8 +88,16 @@ export default function AdminTodoTaskListCard({
     <View className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
       <View className="flex-row items-center justify-between mb-4 pb-2 border-b border-slate-50">
         <View className="flex-row items-center">
-          <View className="bg-blue-500/10 p-1.5 rounded-lg mr-2">
-            <Ionicons name="list-outline" size={20} color="#3b82f6" />
+          <View
+            className={`mr-2 rounded-lg p-1.5 ${
+              isAdminArea ? "bg-red-50" : "bg-blue-500/10"
+            }`}
+          >
+            <Ionicons
+              name="list-outline"
+              size={20}
+              color={isAdminArea ? "#dc2626" : "#3b82f6"}
+            />
           </View>
           <Text className="text-base font-bold text-slate-800">
             {isAdminArea ? "Tất cả công việc" : "Công việc của tôi"}
@@ -104,7 +112,10 @@ export default function AdminTodoTaskListCard({
 
       {loading ? (
         <View className="items-center justify-center py-10">
-          <ActivityIndicator size="small" color="#2563eb" />
+          <ActivityIndicator
+            size="small"
+            color={isAdminArea ? "#dc2626" : "#2563eb"}
+          />
           <Text className="mt-2 text-xs font-medium text-slate-400">
             Đang tải danh sách...
           </Text>
@@ -345,15 +356,15 @@ export default function AdminTodoTaskListCard({
                     ) : (
                       <Pressable
                         onPress={() => setEditingTaskId(task._id)}
-                        className="mb-3 flex-row items-center justify-center rounded-xl border border-blue-100 bg-blue-50 py-2.5"
+                        className="mb-3 flex-row items-center justify-center rounded-xl border border-red-100 bg-red-50 py-2.5 active:bg-red-100"
                       >
                         <Ionicons
                           name="create-outline"
                           size={14}
-                          color="#2563eb"
+                          color="#dc2626"
                           style={{ marginRight: 6 }}
                         />
-                        <Text className="text-xs font-bold text-blue-600">
+                        <Text className="text-xs font-bold text-red-600">
                           Chỉnh sửa công việc
                         </Text>
                       </Pressable>
@@ -383,7 +394,7 @@ export default function AdminTodoTaskListCard({
                                   }
                                   className={`flex-row items-center rounded-xl border px-3 py-1.5 ${
                                     isSelected
-                                      ? "border-slate-800 bg-slate-800 shadow-sm"
+                                      ? "border-red-600 bg-red-600 shadow-sm"
                                       : "border-slate-200 bg-white"
                                   }`}
                                 >
@@ -414,8 +425,8 @@ export default function AdminTodoTaskListCard({
                           disabled={assigningTaskId === task._id}
                           className={`mt-3 flex-row items-center justify-center rounded-xl py-3 ${
                             assigningTaskId === task._id
-                              ? "bg-emerald-300"
-                              : "bg-emerald-600 shadow-sm active:bg-emerald-700"
+                              ? "bg-red-300"
+                              : "bg-red-600 shadow-sm active:bg-red-700"
                           }`}
                         >
                           <Ionicons

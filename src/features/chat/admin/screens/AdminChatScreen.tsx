@@ -545,17 +545,17 @@ export default function AdminChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#020617",
+    backgroundColor: "#f8fafc",
   },
   center: {
     flex: 1,
-    backgroundColor: "#020617",
+    backgroundColor: "#f8fafc",
     justifyContent: "center",
     alignItems: "center",
   },
   chatArea: {
     flex: 1,
     padding: CHAT_AREA_PADDING,
-    backgroundColor: "#0f172a",
+    backgroundColor: "#f8fafc",
   },
 });

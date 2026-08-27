@@ -166,13 +166,13 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 6,
   },
   bubbleOther: {
-    backgroundColor: '#1e293b',
+    backgroundColor: '#ffffff',
     borderBottomLeftRadius: 6,
     borderWidth: 1,
-    borderColor: '#334155',
+    borderColor: '#e2e8f0',
   },
   msgText: {
-    color: '#f1f5f9',
+    color: '#334155',
     fontSize: 14,
     lineHeight: 20,
   },

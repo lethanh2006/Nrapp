@@ -9,9 +9,11 @@ import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { useWorkscheduleAdmin } from "@/src/features/workschedule/admin/hooks/useWorkscheduleAdmin";
 import { Ionicons } from "@expo/vector-icons";
 import { router, useFocusEffect, type Href } from "expo-router";
+import { StatusBar } from "expo-status-bar";
 import { useCallback, useMemo, useState, type ComponentProps } from "react";
 import {
   ActivityIndicator,
+  ImageBackground,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -95,104 +97,144 @@ export default function AdminHomeScreen() {
   );
 
   return (
-    <ScrollView
-      className="flex-1 bg-slate-950"
-      contentContainerStyle={{ paddingBottom: 28 }}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          onRefresh={() => void loadOverview(true)}
-          tintColor="#ef4444"
-        />
-      }
-      showsVerticalScrollIndicator={false}
-    >
-      <View
-        className="overflow-hidden border-b border-slate-800 bg-slate-900 px-5 pb-7"
-        style={{ paddingTop: insets.top + 18 }}
+    <View className="flex-1 bg-slate-50">
+      <StatusBar style="light" />
+      <ScrollView
+        className="flex-1 bg-slate-50"
+        contentContainerStyle={{ paddingBottom: 28 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={() => void loadOverview(true)}
+            tintColor="#dc2626"
+          />
+        }
+        showsVerticalScrollIndicator={false}
       >
-        <View className="absolute -right-12 -top-14 h-40 w-40 rounded-full bg-red-600/15" />
-        <View className="flex-row items-center justify-between">
-          <Pressable
-            className="flex-1 flex-row items-center"
-            onPress={() => router.push(APP_ROUTES.admin.profile)}
-          >
-            <View className="h-12 w-12 items-center justify-center rounded-2xl bg-red-600">
-              <Text className="text-xl font-black text-white">
-                {(user?.name || "A").charAt(0).toUpperCase()}
-              </Text>
-            </View>
-            <View className="ml-3 flex-1">
-              <Text className="text-[10px] font-black uppercase tracking-[2px] text-red-400">
-                Bảng điều hành
-              </Text>
-              <Text className="mt-1 text-xl font-black text-white" numberOfLines={1}>
-                {user?.name || "Quản trị viên"}
-              </Text>
-              <Text className="mt-1 text-xs text-slate-400">{getRoleLabel(user?.role)}</Text>
-            </View>
-          </Pressable>
-          <Pressable
-            accessibilityLabel="Mở trò chuyện"
-            className="h-11 w-11 items-center justify-center rounded-2xl border border-slate-700 bg-slate-800"
-            onPress={() => router.push(APP_ROUTES.admin.chat)}
-          >
-            <Ionicons name="chatbubbles-outline" size={21} color="#f87171" />
-          </Pressable>
-        </View>
-      </View>
-
-      <View className="px-4 pt-4">
-        <View className="mb-4 flex-row" style={{ gap: 10 }}>
-          <View className="flex-1 rounded-3xl border border-slate-800 bg-slate-900 p-4">
-            <Text className="text-[10px] font-bold uppercase text-slate-500">Chấm công hôm nay</Text>
-            {loading ? (
-              <ActivityIndicator className="mt-3 self-start" color="#ef4444" />
-            ) : (
-              <Text className="mt-2 text-3xl font-black text-white">{attendanceToday}</Text>
-            )}
-            <Text className="mt-1 text-[11px] text-slate-500">Nhân sự đã ghi nhận</Text>
-          </View>
-          <View className="flex-1 rounded-3xl bg-red-600 p-4">
-            <Text className="text-[10px] font-bold uppercase text-red-100">Cần xử lý</Text>
-            {loading ? (
-              <ActivityIndicator className="mt-3 self-start" color="#fff" />
-            ) : (
-              <Text className="mt-2 text-3xl font-black text-white">{pendingSchedules}</Text>
-            )}
-            <Text className="mt-1 text-[11px] text-red-100">Yêu cầu lịch chờ duyệt</Text>
-          </View>
-        </View>
-
-        <View className="mb-3 flex-row items-center justify-between">
-          <Text className="text-base font-black text-white">Công cụ quản trị</Text>
-          <Pressable onPress={() => router.push(APP_ROUTES.admin.utilities)}>
-            <Text className="text-xs font-black text-red-400">Xem tiện ích</Text>
-          </Pressable>
-        </View>
-
-        <View style={{ gap: 10 }}>
-          {tools.map((tool, index) => (
+        <ImageBackground
+          source={require("@/assets/images/bg1.png")}
+          resizeMode="cover"
+          style={{ paddingTop: insets.top + 18, paddingBottom: 46 }}
+        >
+          <View className="absolute inset-0 bg-red-950/75" />
+          <View className="flex-row items-center justify-between px-5">
             <Pressable
-              className="flex-row items-center rounded-3xl border border-slate-800 bg-slate-900 p-4 active:bg-slate-800"
-              key={tool.title}
-              onPress={() => router.push(tool.route)}
+              accessibilityLabel="Mở hồ sơ cá nhân"
+              accessibilityRole="button"
+              className="flex-1 flex-row items-center active:opacity-80"
+              onPress={() => router.push(APP_ROUTES.admin.profile)}
             >
-              <View className="h-12 w-12 items-center justify-center rounded-2xl bg-red-500/15">
-                <Ionicons name={tool.icon} size={22} color="#f87171" />
+              <View className="h-12 w-12 items-center justify-center rounded-2xl border border-white/20 bg-red-600">
+                <Text className="text-xl font-black text-white">
+                  {(user?.name || "A").charAt(0).toUpperCase()}
+                </Text>
               </View>
               <View className="ml-3 flex-1">
-                <Text className="text-sm font-black text-slate-100">{tool.title}</Text>
-                <Text className="mt-1 text-[11px] leading-4 text-slate-500">{tool.subtitle}</Text>
+                <Text className="text-[10px] font-black uppercase tracking-[2px] text-red-200">
+                  Bảng điều hành
+                </Text>
+                <Text className="mt-1 text-xl font-black text-white" numberOfLines={1}>
+                  {user?.name || "Quản trị viên"}
+                </Text>
+                <Text className="mt-1 text-xs font-semibold text-white/65">
+                  {getRoleLabel(user?.role)}
+                </Text>
               </View>
-              <Text className="mr-2 text-[10px] font-black text-slate-600">
-                {String(index + 1).padStart(2, "0")}
-              </Text>
-              <Ionicons name="chevron-forward" size={17} color="#64748b" />
             </Pressable>
-          ))}
+            <Pressable
+              accessibilityLabel="Mở trò chuyện"
+              accessibilityRole="button"
+              className="h-11 w-11 items-center justify-center rounded-2xl border border-white/15 bg-white/10 active:bg-white/20"
+              onPress={() => router.push(APP_ROUTES.admin.chat)}
+            >
+              <Ionicons name="chatbubbles-outline" size={21} color="#fecaca" />
+            </Pressable>
+          </View>
+        </ImageBackground>
+
+        <View className="-mt-5 px-4">
+          <View className="mb-5 flex-row" style={{ gap: 10 }}>
+            <View
+              className="flex-1 rounded-3xl border border-slate-100 bg-white p-4 shadow-sm"
+              style={{ elevation: 2 }}
+            >
+              <View className="flex-row items-center justify-between">
+                <Text className="text-[10px] font-bold uppercase text-slate-500">
+                  Chấm công hôm nay
+                </Text>
+                <View className="h-7 w-7 items-center justify-center rounded-xl bg-emerald-50">
+                  <Ionicons name="checkmark-circle-outline" size={16} color="#10b981" />
+                </View>
+              </View>
+              {loading ? (
+                <ActivityIndicator className="mt-3 self-start" color="#dc2626" />
+              ) : (
+                <Text className="mt-2 text-3xl font-black text-slate-900">
+                  {attendanceToday}
+                </Text>
+              )}
+              <Text className="mt-1 text-[11px] text-slate-400">Nhân sự đã ghi nhận</Text>
+            </View>
+            <View
+              className="flex-1 rounded-3xl border border-red-100 bg-white p-4 shadow-sm"
+              style={{ elevation: 2 }}
+            >
+              <View className="flex-row items-center justify-between">
+                <Text className="text-[10px] font-bold uppercase text-red-600">Cần xử lý</Text>
+                <View className="h-7 w-7 items-center justify-center rounded-xl bg-red-50">
+                  <Ionicons name="time-outline" size={16} color="#dc2626" />
+                </View>
+              </View>
+              {loading ? (
+                <ActivityIndicator className="mt-3 self-start" color="#dc2626" />
+              ) : (
+                <Text className="mt-2 text-3xl font-black text-red-600">
+                  {pendingSchedules}
+                </Text>
+              )}
+              <Text className="mt-1 text-[11px] text-slate-400">Yêu cầu lịch chờ duyệt</Text>
+            </View>
+          </View>
+
+          <View className="mb-3 ml-1 flex-row items-center justify-between">
+            <Text className="text-base font-black text-slate-800">Công cụ quản trị</Text>
+            <Pressable
+              accessibilityLabel="Xem tất cả tiện ích quản trị"
+              accessibilityRole="button"
+              className="rounded-xl bg-red-50 px-3 py-2 active:bg-red-100"
+              onPress={() => router.push(APP_ROUTES.admin.utilities)}
+            >
+              <Text className="text-xs font-black text-red-600">Xem tiện ích</Text>
+            </Pressable>
+          </View>
+
+          <View style={{ gap: 10 }}>
+            {tools.map((tool, index) => (
+              <Pressable
+                accessibilityRole="button"
+                className="flex-row items-center rounded-3xl border border-slate-100 bg-white p-4 shadow-sm active:bg-red-50"
+                key={tool.title}
+                onPress={() => router.push(tool.route)}
+                style={{ elevation: 1 }}
+              >
+                <View className="h-12 w-12 items-center justify-center rounded-2xl bg-red-50">
+                  <Ionicons name={tool.icon} size={22} color="#dc2626" />
+                </View>
+                <View className="ml-3 flex-1">
+                  <Text className="text-sm font-black text-slate-800">{tool.title}</Text>
+                  <Text className="mt-1 text-[11px] leading-4 text-slate-400">
+                    {tool.subtitle}
+                  </Text>
+                </View>
+                <Text className="mr-2 text-[10px] font-black text-slate-300">
+                  {String(index + 1).padStart(2, "0")}
+                </Text>
+                <Ionicons name="chevron-forward" size={17} color="#94a3b8" />
+              </Pressable>
+            ))}
+          </View>
         </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }

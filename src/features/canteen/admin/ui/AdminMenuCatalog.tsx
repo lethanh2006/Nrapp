@@ -275,14 +275,14 @@ export default function AdminMenuCatalog({ refreshKey = 0 }: Props) {
   if (loading) {
     return (
       <View className="items-center py-20">
-        <ActivityIndicator size="large" color="#ea580c" />
+        <ActivityIndicator size="large" color="#dc2626" />
       </View>
     );
   }
 
   return (
     <View>
-      <View className="mb-4 rounded-3xl border border-orange-100 bg-white p-4">
+      <View className="mb-4 rounded-3xl border border-red-100 bg-white p-4">
         <View className="flex-row items-center justify-between">
           <View className="flex-1 pr-3">
             <Text className="text-base font-black text-slate-900">
@@ -314,14 +314,14 @@ export default function AdminMenuCatalog({ refreshKey = 0 }: Props) {
                   key={category._id}
                   className={`mr-2 rounded-full border px-3 py-2 ${
                     selected
-                      ? "border-orange-500 bg-orange-50"
+                      ? "border-red-500 bg-red-50"
                       : "border-slate-200 bg-white"
                   }`}
                   onPress={() => setCategoryId(category._id)}
                 >
                   <Text
                     className={`text-xs font-bold ${
-                      selected ? "text-orange-600" : "text-slate-500"
+                      selected ? "text-red-600" : "text-slate-500"
                     }`}
                   >
                     {category.name}
@@ -398,7 +398,7 @@ export default function AdminMenuCatalog({ refreshKey = 0 }: Props) {
         </Pressable>
 
         <Pressable
-          className="mt-3 items-center rounded-2xl bg-orange-600 py-3.5 disabled:opacity-50"
+          className="mt-3 items-center rounded-2xl bg-red-600 py-3.5 disabled:opacity-50"
           disabled={busyKey !== null}
           onPress={saveItem}
         >
@@ -431,10 +431,10 @@ export default function AdminMenuCatalog({ refreshKey = 0 }: Props) {
         </Pressable>
         <Pressable
           accessibilityLabel="Tải lại danh mục"
-          className="h-11 w-11 items-center justify-center rounded-2xl bg-slate-800"
+          className="h-11 w-11 items-center justify-center rounded-2xl bg-red-50 active:bg-red-100"
           onPress={() => loadCatalog()}
         >
-          <Ionicons name="refresh" size={18} color="white" />
+          <Ionicons name="refresh" size={18} color="#dc2626" />
         </Pressable>
       </View>
 
@@ -454,14 +454,14 @@ export default function AdminMenuCatalog({ refreshKey = 0 }: Props) {
               key={category._id}
               className={`mr-2 rounded-full border px-3 py-2 ${
                 selected
-                  ? "border-orange-500 bg-orange-50"
+                  ? "border-red-500 bg-red-50"
                   : "border-slate-200 bg-white"
               }`}
               onPress={() => setCategoryFilter(category._id)}
             >
               <Text
                 className={`text-xs font-bold ${
-                  selected ? "text-orange-600" : "text-slate-500"
+                  selected ? "text-red-600" : "text-slate-500"
                 }`}
               >
                 {category.name}
@@ -492,7 +492,7 @@ export default function AdminMenuCatalog({ refreshKey = 0 }: Props) {
                 <Text className="text-base font-black text-slate-900">
                   {item.name}
                 </Text>
-                <Text className="mt-1 text-xs font-bold text-orange-600">
+                <Text className="mt-1 text-xs font-bold text-red-600">
                   {formatMoney(item.price)} · {categoryById.get(item.categoryId)?.name ?? "Không rõ danh mục"}
                 </Text>
                 {item.description ? (
@@ -523,7 +523,7 @@ export default function AdminMenuCatalog({ refreshKey = 0 }: Props) {
 
             <View className="mt-3 flex-row border-t border-slate-100 pt-3">
               <Pressable
-                className="mr-2 flex-1 items-center rounded-xl bg-slate-800 py-2.5"
+                className="mr-2 flex-1 items-center rounded-xl bg-red-600 py-2.5 active:bg-red-700"
                 onPress={() => editItem(item)}
               >
                 <Text className="text-xs font-black text-white">Chỉnh sửa</Text>

@@ -222,21 +222,25 @@ export default function AdminTableManager({
   if (loading) {
     return (
       <View className="items-center py-20">
-        <ActivityIndicator color="#ea580c" size="large" />
+        <ActivityIndicator color="#dc2626" size="large" />
       </View>
     );
   }
 
   return (
     <View>
-      <View className="mb-4 rounded-3xl bg-slate-900 p-4">
-        <Text className="text-base font-black text-white">Cấp bàn tự động</Text>
-        <Text className="mt-1 text-xs leading-5 text-slate-400">
+      <View
+        className="mb-4 overflow-hidden rounded-3xl border border-red-100 bg-white p-4 shadow-sm"
+        style={{ elevation: 2 }}
+      >
+        <View className="absolute -right-10 -top-12 h-28 w-28 rounded-full bg-red-50" />
+        <Text className="text-base font-black text-slate-900">Cấp bàn tự động</Text>
+        <Text className="mt-1 text-xs leading-5 text-slate-500">
           Hệ thống chọn một bàn vừa đủ hoặc gộp các bàn trống.
         </Text>
         <View className="mt-3 flex-row">
           <TextInput
-            className="mr-2 flex-1 rounded-2xl bg-white px-3 py-3 text-sm font-bold text-slate-800"
+            className="mr-2 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-bold text-slate-800"
             keyboardType="number-pad"
             onChangeText={setPartySize}
             placeholder="Số khách"
@@ -244,7 +248,7 @@ export default function AdminTableManager({
             value={partySize}
           />
           <Pressable
-            className="items-center justify-center rounded-2xl bg-orange-500 px-5 disabled:opacity-50"
+            className="items-center justify-center rounded-2xl bg-red-600 px-5 active:bg-red-700 disabled:opacity-50"
             disabled={busyKey !== null}
             onPress={allocateTables}
           >
@@ -258,7 +262,7 @@ export default function AdminTableManager({
       </View>
 
       {canManageStructure ? (
-        <View className="mb-4 rounded-3xl border border-orange-100 bg-white p-4">
+        <View className="mb-4 rounded-3xl border border-red-100 bg-white p-4">
           <View className="flex-row items-center justify-between">
             <Text className="text-base font-black text-slate-900">
               {editingId ? "Chỉnh sửa bàn" : "Tạo bàn mới"}
@@ -297,7 +301,7 @@ export default function AdminTableManager({
             value={qrCodeUrl}
           />
           <Pressable
-            className="mt-3 items-center rounded-2xl bg-orange-600 py-3.5 disabled:opacity-50"
+            className="mt-3 items-center rounded-2xl bg-red-600 py-3.5 disabled:opacity-50"
             disabled={busyKey !== null}
             onPress={saveTable}
           >
@@ -318,10 +322,10 @@ export default function AdminTableManager({
         </Text>
         <Pressable
           accessibilityLabel="Tải lại danh sách bàn"
-          className="h-10 w-10 items-center justify-center rounded-xl bg-slate-800"
+          className="h-10 w-10 items-center justify-center rounded-xl bg-red-50 active:bg-red-100"
           onPress={() => loadTables()}
         >
-          <Ionicons color="white" name="refresh" size={17} />
+          <Ionicons color="#dc2626" name="refresh" size={17} />
         </Pressable>
       </View>
 
@@ -343,7 +347,7 @@ export default function AdminTableManager({
                 <Text className="text-base font-black text-slate-900">
                   {table.name}
                 </Text>
-                <Text className="mt-1 text-xs font-bold text-orange-600">
+                <Text className="mt-1 text-xs font-bold text-red-600">
                   Sức chứa {table.capacity} người
                 </Text>
                 <Text className="mt-2 text-[11px] leading-4 text-slate-400" selectable>
@@ -380,7 +384,7 @@ export default function AdminTableManager({
                   <Pressable
                     className={`mr-2 flex-1 items-center rounded-xl border py-2.5 disabled:opacity-50 ${
                       selected
-                        ? "border-orange-500 bg-orange-50"
+                        ? "border-red-500 bg-red-50"
                         : "border-slate-200 bg-white"
                     }`}
                     disabled={busyKey !== null || selected}
@@ -388,11 +392,11 @@ export default function AdminTableManager({
                     onPress={() => changeStatus(table, status)}
                   >
                     {busyKey === `status:${table._id}:${status}` ? (
-                      <ActivityIndicator color="#ea580c" size="small" />
+                      <ActivityIndicator color="#dc2626" size="small" />
                     ) : (
                       <Text
                         className={`text-[10px] font-black ${
-                          selected ? "text-orange-600" : "text-slate-500"
+                          selected ? "text-red-600" : "text-slate-500"
                         }`}
                       >
                         {TABLE_STATUS_LABELS[status]}
@@ -405,7 +409,7 @@ export default function AdminTableManager({
             {canManageStructure ? (
               <View className="mt-2 flex-row">
                 <Pressable
-                  className="mr-2 flex-1 items-center rounded-xl bg-slate-800 py-2.5"
+                  className="mr-2 flex-1 items-center rounded-xl bg-red-600 py-2.5 active:bg-red-700"
                   onPress={() => startEditing(table)}
                 >
                   <Text className="text-xs font-black text-white">Chỉnh sửa</Text>

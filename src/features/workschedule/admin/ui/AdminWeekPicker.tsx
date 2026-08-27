@@ -42,13 +42,13 @@ export function AdminWeekPicker({
   const canNext = index < total - 1;
 
   return (
-    <View className="rounded-3xl border border-slate-800 bg-slate-900 p-4">
+    <View className="rounded-3xl border border-slate-200 bg-white p-4">
       <View className="mb-4 flex-row items-center">
-        <View className="h-9 w-9 items-center justify-center rounded-xl bg-red-500/15">
-          <Ionicons name="calendar-number-outline" size={18} color="#f87171" />
+        <View className="h-9 w-9 items-center justify-center rounded-xl bg-red-50">
+          <Ionicons name="calendar-number-outline" size={18} color="#dc2626" />
         </View>
         <View className="ml-3 flex-1">
-          <Text className="text-base font-black text-white">
+          <Text className="text-base font-black text-slate-900">
             Kỳ đăng ký cá nhân
           </Text>
           <Text className="mt-0.5 text-xs text-slate-400">
@@ -57,22 +57,22 @@ export function AdminWeekPicker({
         </View>
       </View>
 
-      <View className="flex-row items-center rounded-2xl border border-slate-800 bg-slate-950 p-2">
+      <View className="flex-row items-center rounded-2xl border border-slate-200 bg-slate-50 p-2">
         <Pressable
           accessibilityLabel="Tuần trước"
           disabled={!canPrevious}
           onPress={onPrevious}
-          className={`h-11 w-11 items-center justify-center rounded-xl bg-slate-800 ${
+          className={`h-11 w-11 items-center justify-center rounded-xl bg-white ${
             canPrevious ? "opacity-100" : "opacity-30"
           }`}
         >
-          <Ionicons name="chevron-back" size={20} color="#cbd5e1" />
+          <Ionicons name="chevron-back" size={20} color="#dc2626" />
         </Pressable>
         <View className="flex-1 items-center px-2">
-          <Text className="text-[11px] font-black uppercase tracking-wider text-red-400">
+          <Text className="text-[11px] font-black uppercase tracking-wider text-red-600">
             {getWeekHint(weekStart)}
           </Text>
-          <Text className="mt-1 text-base font-black text-white">
+          <Text className="mt-1 text-base font-black text-slate-900">
             {formatDateVi(weekStart)} - {formatDateVi(weekEnd)}
           </Text>
         </View>
@@ -80,11 +80,11 @@ export function AdminWeekPicker({
           accessibilityLabel="Tuần sau"
           disabled={!canNext}
           onPress={onNext}
-          className={`h-11 w-11 items-center justify-center rounded-xl bg-slate-800 ${
+          className={`h-11 w-11 items-center justify-center rounded-xl bg-white ${
             canNext ? "opacity-100" : "opacity-30"
           }`}
         >
-          <Ionicons name="chevron-forward" size={20} color="#cbd5e1" />
+          <Ionicons name="chevron-forward" size={20} color="#dc2626" />
         </Pressable>
       </View>
 
@@ -93,7 +93,7 @@ export function AdminWeekPicker({
           {Array.from({ length: total }).map((_, itemIndex) => (
             <View
               className={`mr-1.5 h-1.5 rounded-full ${
-                itemIndex === index ? "w-5 bg-red-500" : "w-1.5 bg-slate-700"
+                itemIndex === index ? "w-5 bg-red-600" : "w-1.5 bg-slate-200"
               }`}
               key={itemIndex}
             />

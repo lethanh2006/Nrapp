@@ -91,10 +91,11 @@ export default function AdminMonthlyOverviewScreen() {
     );
 
   return (
-    <View className="flex-1 bg-slate-950">
+    <View className="flex-1 bg-slate-50">
       <ScreenHeader
         onBack={() => router.back()}
         subtitle="Dữ liệu tổng hợp của toàn bộ nhân sự"
+        tone="admin"
         title="Báo cáo vận hành"
       />
 
@@ -109,28 +110,28 @@ export default function AdminMonthlyOverviewScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <View className="mb-4 flex-row items-center rounded-2xl border border-slate-800 bg-slate-900 p-2">
+        <View className="mb-4 flex-row items-center rounded-2xl border border-slate-200 bg-white p-2">
           <Pressable
             accessibilityLabel="Xem tháng trước"
-            className="h-10 w-10 items-center justify-center rounded-xl bg-slate-800"
+            className="h-10 w-10 items-center justify-center rounded-xl bg-red-50"
             onPress={() => changeMonth(-1)}
           >
-            <Ionicons name="chevron-back" size={18} color="#e2e8f0" />
+            <Ionicons name="chevron-back" size={18} color="#dc2626" />
           </Pressable>
           <View className="flex-1 items-center">
             <Text className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
               Kỳ báo cáo
             </Text>
-            <Text className="mt-0.5 text-sm font-black text-white">
+            <Text className="mt-0.5 text-sm font-black text-slate-900">
               Tháng {month.getMonth() + 1}/{month.getFullYear()}
             </Text>
           </View>
           <Pressable
             accessibilityLabel="Xem tháng sau"
-            className="h-10 w-10 items-center justify-center rounded-xl bg-slate-800"
+            className="h-10 w-10 items-center justify-center rounded-xl bg-red-50"
             onPress={() => changeMonth(1)}
           >
-            <Ionicons name="chevron-forward" size={18} color="#e2e8f0" />
+            <Ionicons name="chevron-forward" size={18} color="#dc2626" />
           </Pressable>
         </View>
 
@@ -149,11 +150,11 @@ export default function AdminMonthlyOverviewScreen() {
                 ["Lịch đã duyệt", stats.approved, "shield-checkmark-outline"],
               ].map(([label, value, icon]) => (
                 <View
-                  className="min-w-[46%] flex-1 rounded-2xl border border-slate-800 bg-slate-900 p-4"
+                  className="min-w-[46%] flex-1 rounded-2xl border border-red-100 bg-white p-4"
                   key={String(label)}
                 >
-                  <Ionicons name={icon as never} size={19} color="#f87171" />
-                  <Text className="mt-3 text-2xl font-black text-white">{value}</Text>
+                  <Ionicons name={icon as never} size={19} color="#dc2626" />
+                  <Text className="mt-3 text-2xl font-black text-slate-900">{value}</Text>
                   <Text className="mt-1 text-[10px] font-bold uppercase text-slate-500">
                     {label}
                   </Text>
@@ -161,9 +162,9 @@ export default function AdminMonthlyOverviewScreen() {
               ))}
             </View>
 
-            <View className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900">
-              <View className="border-b border-slate-800 p-4">
-                <Text className="text-base font-black text-white">Chấm công gần nhất</Text>
+            <View className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
+              <View className="border-b border-slate-100 p-4">
+                <Text className="text-base font-black text-slate-900">Chấm công gần nhất</Text>
                 <Text className="mt-1 text-xs text-slate-500">
                   {attendance.length} bản ghi trong kỳ đã chọn
                 </Text>
@@ -180,16 +181,16 @@ export default function AdminMonthlyOverviewScreen() {
                   <View
                     className={`flex-row items-center p-4 ${
                       index < recentAttendance.length - 1
-                        ? "border-b border-slate-800"
+                        ? "border-b border-slate-100"
                         : ""
                     }`}
                     key={record._id}
                   >
-                    <View className="h-10 w-10 items-center justify-center rounded-xl bg-red-500/15">
-                      <Ionicons name="person-outline" size={18} color="#f87171" />
+                    <View className="h-10 w-10 items-center justify-center rounded-xl bg-red-50">
+                      <Ionicons name="person-outline" size={18} color="#dc2626" />
                     </View>
                     <View className="ml-3 flex-1">
-                      <Text className="text-sm font-black text-slate-100">
+                      <Text className="text-sm font-black text-slate-800">
                         {employeeName(record)}
                       </Text>
                       <Text className="mt-1 text-[11px] text-slate-500">

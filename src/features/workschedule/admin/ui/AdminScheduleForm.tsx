@@ -18,8 +18,8 @@ interface Props {
 }
 
 const typeOptions: { value: EntryType; label: string; color: string }[] = [
-  { value: "office", label: "Lên cty", color: "bg-blue-100 text-blue-800" },
-  { value: "remote", label: "Từ xa", color: "bg-purple-100 text-purple-800" },
+  { value: "office", label: "Lên cty", color: "bg-red-50 text-red-800" },
+  { value: "remote", label: "Từ xa", color: "bg-rose-50 text-rose-800" },
   { value: "day_off", label: "Nghỉ", color: "bg-gray-100 text-gray-800" },
   { value: "leave", label: "Phép", color: "bg-orange-100 text-orange-800" },
 ];
@@ -60,11 +60,11 @@ export default function AdminScheduleForm({
             className="bg-white p-4 rounded-xl shadow-sm border border-gray-100"
           >
             <View className="flex-row items-center mb-3">
-              <View className="w-12 h-12 bg-blue-50 rounded-lg items-center justify-center mr-3">
-                <Text className="text-xs text-blue-600 font-bold">
+              <View className="w-12 h-12 bg-red-50 rounded-lg items-center justify-center mr-3">
+                <Text className="text-xs text-red-600 font-bold">
                   {dayNames[date.getDay()]}
                 </Text>
-                <Text className="text-lg text-blue-900 font-bold">
+                <Text className="text-lg text-red-900 font-bold">
                   {date.getDate()}
                 </Text>
               </View>
@@ -83,13 +83,13 @@ export default function AdminScheduleForm({
                     onPress={() => onChangeEntry(dateStr, "type", opt.value)}
                     className={`px-3 py-1.5 rounded-lg border ${
                       isSelected
-                        ? "border-blue-500 bg-blue-50"
+                        ? "border-red-500 bg-red-50"
                         : "border-gray-200 bg-white"
                     } ${readOnly ? "opacity-70" : ""}`}
                   >
                     <Text
                       className={`text-sm font-medium ${
-                        isSelected ? "text-blue-700" : "text-gray-600"
+                        isSelected ? "text-red-700" : "text-gray-600"
                       }`}
                     >
                       {opt.label}
@@ -113,7 +113,7 @@ export default function AdminScheduleForm({
                   >
                     <Text
                       className={`text-xs font-bold ${
-                        selected ? "text-blue-700" : "text-gray-500"
+                        selected ? "text-red-700" : "text-gray-500"
                       }`}
                     >
                       {option.label}

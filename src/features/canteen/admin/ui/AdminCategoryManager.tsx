@@ -176,14 +176,14 @@ export default function AdminCategoryManager({ refreshKey = 0 }: Props) {
   if (loading) {
     return (
       <View className="items-center py-20">
-        <ActivityIndicator color="#ea580c" size="large" />
+        <ActivityIndicator color="#dc2626" size="large" />
       </View>
     );
   }
 
   return (
     <View>
-      <View className="mb-4 rounded-3xl border border-orange-100 bg-white p-4">
+      <View className="mb-4 rounded-3xl border border-red-100 bg-white p-4">
         <View className="flex-row items-center justify-between">
           <View className="flex-1 pr-3">
             <Text className="text-base font-black text-slate-900">
@@ -251,7 +251,7 @@ export default function AdminCategoryManager({ refreshKey = 0 }: Props) {
           />
         </Pressable>
         <Pressable
-          className="mt-3 items-center rounded-2xl bg-orange-600 py-3.5 disabled:opacity-50"
+          className="mt-3 items-center rounded-2xl bg-red-600 py-3.5 disabled:opacity-50"
           disabled={busyKey !== null}
           onPress={saveCategory}
         >
@@ -271,10 +271,10 @@ export default function AdminCategoryManager({ refreshKey = 0 }: Props) {
         </Text>
         <Pressable
           accessibilityLabel="Tải lại danh mục"
-          className="h-10 w-10 items-center justify-center rounded-xl bg-slate-800"
+          className="h-10 w-10 items-center justify-center rounded-xl bg-red-50 active:bg-red-100"
           onPress={() => loadCategories()}
         >
-          <Ionicons color="white" name="refresh" size={17} />
+          <Ionicons color="#dc2626" name="refresh" size={17} />
         </Pressable>
       </View>
 
@@ -319,7 +319,7 @@ export default function AdminCategoryManager({ refreshKey = 0 }: Props) {
             </View>
             <View className="mt-3 flex-row border-t border-slate-100 pt-3">
               <Pressable
-                className="mr-2 flex-1 items-center rounded-xl bg-slate-800 py-2.5"
+                className="mr-2 flex-1 items-center rounded-xl bg-red-600 py-2.5 active:bg-red-700"
                 onPress={() => startEditing(category)}
               >
                 <Text className="text-xs font-black text-white">Chỉnh sửa</Text>

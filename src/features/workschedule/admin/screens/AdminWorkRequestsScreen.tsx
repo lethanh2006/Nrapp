@@ -5,10 +5,11 @@ import { ScrollView, View } from "react-native";
 
 export default function AdminWorkRequestsScreen() {
   return (
-    <View className="flex-1 bg-slate-950">
+    <View className="flex-1 bg-slate-50">
       <ScreenHeader
         onBack={() => router.back()}
         subtitle="Phê duyệt và theo dõi đơn của toàn bộ nhân sự"
+        tone="admin"
         title="Duyệt đơn nhân sự"
       />
       <ScrollView

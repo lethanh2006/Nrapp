@@ -313,18 +313,22 @@ export default function AdminInventoryManager({
   if (loading) {
     return (
       <View className="items-center py-20">
-        <ActivityIndicator color="#ea580c" size="large" />
+        <ActivityIndicator color="#dc2626" size="large" />
       </View>
     );
   }
 
   return (
     <View>
-      <View className="mb-4 rounded-3xl bg-slate-900 p-4">
+      <View
+        className="mb-4 overflow-hidden rounded-3xl border border-red-100 bg-white p-4 shadow-sm"
+        style={{ elevation: 2 }}
+      >
+        <View className="absolute -right-10 -top-12 h-28 w-28 rounded-full bg-red-50" />
         <View className="flex-row items-center justify-between">
           <View className="flex-1 pr-3">
-            <Text className="text-base font-black text-white">Vận hành kho FEFO</Text>
-            <Text className="mt-1 text-xs leading-5 text-slate-400">
+            <Text className="text-base font-black text-slate-900">Vận hành kho FEFO</Text>
+            <Text className="mt-1 text-xs leading-5 text-slate-500">
               {canManageResources
                 ? "Chọn nguyên liệu để nhập lô hoặc trừ lô hết hạn sớm trước."
                 : "Theo dõi tồn kho và trừ lô hết hạn sớm trước khi chế biến."}
@@ -332,10 +336,10 @@ export default function AdminInventoryManager({
           </View>
           <Pressable
             accessibilityLabel="Tải lại kho"
-            className="h-10 w-10 items-center justify-center rounded-xl bg-slate-700"
+            className="h-10 w-10 items-center justify-center rounded-xl bg-red-50 active:bg-red-100"
             onPress={() => loadInventory()}
           >
-            <Ionicons color="white" name="refresh" size={17} />
+            <Ionicons color="#dc2626" name="refresh" size={17} />
           </Pressable>
         </View>
 
@@ -351,15 +355,15 @@ export default function AdminInventoryManager({
               <Pressable
                 className={`mr-2 rounded-full border px-3 py-2 ${
                   selected
-                    ? "border-orange-400 bg-orange-500"
-                    : "border-slate-600 bg-slate-800"
+                    ? "border-red-600 bg-red-600"
+                    : "border-slate-200 bg-white"
                 }`}
                 key={ingredient._id}
                 onPress={() => setSelectedIngredientId(ingredient._id)}
               >
                 <Text
                   className={`text-xs font-black ${
-                    selected ? "text-white" : "text-slate-300"
+                    selected ? "text-white" : "text-slate-600"
                   }`}
                 >
                   {ingredient.name}
@@ -370,11 +374,11 @@ export default function AdminInventoryManager({
         </ScrollView>
 
         {selectedIngredient ? (
-          <View className="mt-3 rounded-2xl bg-slate-800 p-3">
-            <Text className="text-xs font-black text-white">
+          <View className="mt-3 rounded-2xl border border-red-100 bg-red-50 p-3">
+            <Text className="text-xs font-black text-red-800">
               {selectedIngredient.name}: {selectedStock} {selectedIngredient.unit}
             </Text>
-            <Text className="mt-1 text-[11px] text-slate-400">
+            <Text className="mt-1 text-[11px] text-red-600">
               Ngưỡng cảnh báo {selectedIngredient.minimumThreshold} {selectedIngredient.unit}
               {selectedStock <= selectedIngredient.minimumThreshold
                 ? " · Sắp hết hàng"
@@ -382,7 +386,7 @@ export default function AdminInventoryManager({
             </Text>
           </View>
         ) : (
-          <Text className="mt-3 text-xs font-semibold text-slate-400">
+          <Text className="mt-3 text-xs font-semibold text-slate-500">
             {canManageResources
               ? "Hãy tạo nguyên liệu trước khi nhập kho."
               : "Kho chưa có nguyên liệu để vận hành."}
@@ -391,7 +395,7 @@ export default function AdminInventoryManager({
       </View>
 
       {selectedIngredient ? (
-        <View className="mb-4 rounded-3xl border border-blue-100 bg-white p-4">
+        <View className="mb-4 rounded-3xl border border-red-100 bg-white p-4">
           {canManageResources ? (
             <>
               <Text className="text-base font-black text-slate-900">
@@ -432,7 +436,7 @@ export default function AdminInventoryManager({
                 value={supplier}
               />
               <Pressable
-                className="mt-3 items-center rounded-2xl bg-blue-600 py-3.5 disabled:opacity-50"
+                className="mt-3 items-center rounded-2xl bg-red-600 py-3.5 disabled:opacity-50"
                 disabled={busyKey !== null}
                 onPress={createBatch}
               >
@@ -474,7 +478,7 @@ export default function AdminInventoryManager({
       ) : null}
 
       {canManageResources ? (
-        <View className="mb-4 rounded-3xl border border-orange-100 bg-white p-4">
+        <View className="mb-4 rounded-3xl border border-red-100 bg-white p-4">
         <View className="flex-row items-center justify-between">
           <Text className="text-base font-black text-slate-900">
             {editingId ? "Chỉnh sửa nguyên liệu" : "Tạo nguyên liệu"}
@@ -515,7 +519,7 @@ export default function AdminInventoryManager({
           />
         </View>
         <Pressable
-          className="mt-3 items-center rounded-2xl bg-orange-600 py-3.5 disabled:opacity-50"
+          className="mt-3 items-center rounded-2xl bg-red-600 py-3.5 disabled:opacity-50"
           disabled={busyKey !== null}
           onPress={saveIngredient}
         >
@@ -548,7 +552,7 @@ export default function AdminInventoryManager({
                 <Text className="text-base font-black text-slate-900">
                   {ingredient.name}
                 </Text>
-                <Text className="mt-1 text-xs font-bold text-orange-600">
+                <Text className="mt-1 text-xs font-bold text-red-600">
                   Tồn khả dụng: {stock} {ingredient.unit}
                 </Text>
                 <Text className="mt-1 text-[11px] text-slate-400">
@@ -566,7 +570,7 @@ export default function AdminInventoryManager({
             {canManageResources ? (
               <View className="mt-3 flex-row border-t border-slate-100 pt-3">
                 <Pressable
-                  className="mr-2 flex-1 items-center rounded-xl bg-slate-800 py-2.5"
+                  className="mr-2 flex-1 items-center rounded-xl bg-red-600 py-2.5 active:bg-red-700"
                   onPress={() => {
                     setSelectedIngredientId(ingredient._id);
                     startEditing(ingredient);

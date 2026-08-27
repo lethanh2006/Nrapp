@@ -82,9 +82,9 @@ function AdminDashboardContent() {
           />
         }
       >
-        <View className="overflow-hidden bg-red-600 px-5 pb-7 pt-5">
-          <View className="absolute -right-10 -top-14 h-40 w-40 rounded-full bg-red-500" />
-          <View className="absolute -bottom-20 left-12 h-40 w-40 rounded-full bg-red-700/40" />
+        <View className="overflow-hidden bg-red-900 px-5 pb-7 pt-5">
+          <View className="absolute -right-10 -top-14 h-40 w-40 rounded-full bg-red-500/20" />
+          <View className="absolute -bottom-20 left-12 h-40 w-40 rounded-full bg-white/5" />
           <View className="flex-row items-center justify-between">
             <View className="flex-1 pr-3">
               <Text className="text-[11px] font-black uppercase tracking-[2px] text-red-100">

@@ -299,18 +299,29 @@ export default function AdminTodoScreen() {
 
   if (appLoading || loading) {
     return (
-      <View className="flex-1 bg-white items-center justify-center">
-        <ActivityIndicator size="large" color="#2563eb" />
+      <View
+        className={`flex-1 items-center justify-center ${
+          isAdminArea ? "bg-slate-50" : "bg-white"
+        }`}
+      >
+        <ActivityIndicator
+          size="large"
+          color={isAdminArea ? "#dc2626" : "#2563eb"}
+        />
       </View>
     );
   }
 
   return (
     <ScrollView
-      className="flex-1 bg-white"
+      className={`flex-1 ${isAdminArea ? "bg-slate-50" : "bg-white"}`}
       contentContainerStyle={{ padding: 16, gap: 14 }}
       refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        <RefreshControl
+          refreshing={refreshing}
+          onRefresh={onRefresh}
+          tintColor={isAdminArea ? "#dc2626" : "#2563eb"}
+        />
       }
     >
       <AdminTodoIntroCard area={area} />
@@ -334,6 +345,7 @@ export default function AdminTodoScreen() {
       ) : null}
 
       <AdminTodoTaskFilters
+        area={area}
         status={statusFilter}
         priority={priorityFilter}
         searchInput={searchInput}

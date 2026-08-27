@@ -11,6 +11,7 @@ import {
   PAYMENT_STATUS_COLORS,
   shortId,
 } from "@/src/features/canteen/shared/model/presentation";
+import { getRoleLabel } from "@/src/application/access/roles";
 import { Ionicons } from "@expo/vector-icons";
 import type { ReactNode } from "react";
 import { Text, View } from "react-native";
@@ -30,7 +31,10 @@ export default function AdminOrderSummaryCard({
   const paymentColors = PAYMENT_STATUS_COLORS[order.paymentStatus];
 
   return (
-    <View className="mb-3 overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
+    <View
+      className="mb-3 overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm"
+      style={{ elevation: 2 }}
+    >
       <View className="flex-row items-start justify-between border-b border-slate-100 px-4 py-3.5">
         <View className="flex-1 pr-3">
           <Text className="text-base font-black text-slate-900">
@@ -40,9 +44,35 @@ export default function AdminOrderSummaryCard({
             {formatDateTime(order.createdAt)}
           </Text>
           {showOwner ? (
-            <Text className="mt-1 text-[11px] font-bold text-slate-500">
-              Người đặt: {shortId(order.userId)} · {order.userRole}
-            </Text>
+            <View
+              className="mt-2 flex-row flex-wrap items-center"
+              style={{ gap: 6 }}
+            >
+              <View className="flex-row items-center rounded-full bg-slate-100 px-2 py-1">
+                <Ionicons name="person-outline" size={11} color="#64748b" />
+                <Text className="ml-1 text-[10px] font-bold text-slate-600">
+                  {getRoleLabel(order.userRole)} · {shortId(order.userId)}
+                </Text>
+              </View>
+              <View
+                className={`flex-row items-center rounded-full px-2 py-1 ${
+                  order.tableId ? "bg-blue-50" : "bg-amber-50"
+                }`}
+              >
+                <Ionicons
+                  name={order.tableId ? "restaurant-outline" : "bag-handle-outline"}
+                  size={11}
+                  color={order.tableId ? "#2563eb" : "#d97706"}
+                />
+                <Text
+                  className={`ml-1 text-[10px] font-bold ${
+                    order.tableId ? "text-blue-700" : "text-amber-700"
+                  }`}
+                >
+                  {order.tableId ? `Tại bàn · ${shortId(order.tableId)}` : "Mang đi"}
+                </Text>
+              </View>
+            </View>
           ) : null}
         </View>
         <View
@@ -118,7 +148,7 @@ export default function AdminOrderSummaryCard({
                 {formatMoney(order.totalAmount)}
               </Text>
             ) : null}
-            <Text className="text-lg font-black text-rose-600">
+            <Text className="text-lg font-black text-red-600">
               {formatMoney(order.finalAmount)}
             </Text>
           </View>

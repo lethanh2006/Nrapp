@@ -62,45 +62,49 @@ export default function AdminCanteenAnalytics({ refreshKey = 0 }: Props) {
   if (loading) {
     return (
       <View className="items-center py-20">
-        <ActivityIndicator color="#ea580c" size="large" />
+        <ActivityIndicator color="#dc2626" size="large" />
       </View>
     );
   }
 
   return (
     <View>
-      <View className="mb-4 rounded-3xl bg-slate-900 p-4">
+      <View
+        className="mb-4 overflow-hidden rounded-3xl border border-red-100 bg-white p-4 shadow-sm"
+        style={{ elevation: 2 }}
+      >
+        <View className="absolute -right-10 -top-12 h-28 w-28 rounded-full bg-red-50" />
         <View className="flex-row items-center justify-between">
           <View className="flex-1 pr-3">
-            <Text className="text-base font-black text-white">
+            <Text className="text-base font-black text-slate-900">
               Món được đặt nhiều
             </Text>
-            <Text className="mt-1 text-xs leading-5 text-slate-400">
+            <Text className="mt-1 text-xs leading-5 text-slate-500">
               Dữ liệu từ đơn chưa bị hủy, chưa phải báo cáo hoàn tất hoặc đối soát.
             </Text>
           </View>
           <Pressable
             accessibilityLabel="Tải lại thống kê"
-            className="h-10 w-10 items-center justify-center rounded-xl bg-slate-700"
+            className="h-10 w-10 items-center justify-center rounded-xl bg-red-50 active:bg-red-100"
             onPress={() => loadTopDishes()}
           >
-            <Ionicons color="white" name="refresh" size={17} />
+            <Ionicons color="#dc2626" name="refresh" size={17} />
           </Pressable>
         </View>
         <View className="mt-4 flex-row">
-          <View className="mr-2 flex-1 rounded-2xl bg-slate-800 p-3">
-            <Text className="text-[10px] font-black uppercase text-slate-400">
+          <View className="mr-2 flex-1 rounded-2xl border border-slate-100 bg-slate-50 p-3">
+            <Text className="text-[10px] font-black uppercase text-slate-500">
               Số lượng trong top
             </Text>
-            <Text className="mt-1 text-lg font-black text-white">
+            <Text className="mt-1 text-lg font-black text-slate-900">
               {totals.quantity} món
             </Text>
           </View>
-          <View className="flex-1 rounded-2xl bg-slate-800 p-3">
-            <Text className="text-[10px] font-black uppercase text-slate-400">
+          <View className="flex-1 rounded-2xl border border-red-100 bg-red-50 p-3">
+            <Text className="text-[10px] font-black uppercase text-red-500">
               Giá trị món gộp
             </Text>
-            <Text className="mt-1 text-lg font-black text-orange-400">
+            <Text className="mt-1 text-lg font-black text-red-700">
               {formatMoney(totals.revenue)}
             </Text>
           </View>
@@ -115,7 +119,7 @@ export default function AdminCanteenAnalytics({ refreshKey = 0 }: Props) {
           <Pressable
             className={`mr-2 rounded-full border px-4 py-2 ${
               limit === option
-                ? "border-orange-500 bg-orange-50"
+                ? "border-red-500 bg-red-50"
                 : "border-slate-200 bg-white"
             }`}
             key={option}
@@ -123,7 +127,7 @@ export default function AdminCanteenAnalytics({ refreshKey = 0 }: Props) {
           >
             <Text
               className={`text-xs font-black ${
-                limit === option ? "text-orange-600" : "text-slate-500"
+                limit === option ? "text-red-600" : "text-slate-500"
               }`}
             >
               Top {option}
@@ -147,12 +151,12 @@ export default function AdminCanteenAnalytics({ refreshKey = 0 }: Props) {
           >
             <View
               className={`h-11 w-11 items-center justify-center rounded-2xl ${
-                index < 3 ? "bg-orange-50" : "bg-slate-100"
+                index < 3 ? "bg-red-50" : "bg-slate-100"
               }`}
             >
               <Text
                 className={`text-base font-black ${
-                  index < 3 ? "text-orange-600" : "text-slate-500"
+                  index < 3 ? "text-red-600" : "text-slate-500"
                 }`}
               >
                 #{index + 1}

@@ -102,10 +102,11 @@ export default function AdminWorkCalendarScreen() {
   );
 
   return (
-    <View className="flex-1 bg-slate-950">
+    <View className="flex-1 bg-slate-50">
       <ScreenHeader
         onBack={() => router.back()}
         subtitle="Lịch đăng ký của toàn bộ nhân sự"
+        tone="admin"
         title="Lịch hệ thống"
       />
       <ScrollView
@@ -119,7 +120,7 @@ export default function AdminWorkCalendarScreen() {
         }
         showsVerticalScrollIndicator={false}
       >
-        <View className="rounded-3xl bg-red-600 p-5">
+        <View className="rounded-3xl bg-red-900 p-5">
           <Text className="text-[10px] font-black uppercase tracking-[2px] text-red-100">
             Tuần điều hành
           </Text>
@@ -162,19 +163,19 @@ export default function AdminWorkCalendarScreen() {
                 ["Nghỉ phép", totals.leave || 0, "cafe-outline"],
               ].map(([label, value, icon]) => (
                 <View
-                  className="min-w-[46%] flex-1 rounded-2xl border border-slate-800 bg-slate-900 p-4"
+                  className="min-w-[46%] flex-1 rounded-2xl border border-red-100 bg-white p-4"
                   key={String(label)}
                 >
-                  <Ionicons name={icon as never} size={18} color="#f87171" />
-                  <Text className="mt-2 text-xl font-black text-white">{value}</Text>
+                  <Ionicons name={icon as never} size={18} color="#dc2626" />
+                  <Text className="mt-2 text-xl font-black text-slate-900">{value}</Text>
                   <Text className="mt-1 text-[10px] font-bold uppercase text-slate-500">{label}</Text>
                 </View>
               ))}
             </View>
 
-            <View className="overflow-hidden rounded-3xl border border-slate-800 bg-slate-900">
-              <View className="border-b border-slate-800 p-4">
-                <Text className="text-base font-black text-white">Đăng ký theo nhân viên</Text>
+            <View className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
+              <View className="border-b border-slate-100 p-4">
+                <Text className="text-base font-black text-slate-900">Đăng ký theo nhân viên</Text>
                 <Text className="mt-1 text-xs text-slate-500">{requests.length} yêu cầu trong tuần</Text>
               </View>
               {requests.length === 0 ? (
@@ -192,14 +193,14 @@ export default function AdminWorkCalendarScreen() {
                     "Nhân viên";
                   return (
                     <View
-                      className={`flex-row items-center p-4 ${index < requests.length - 1 ? "border-b border-slate-800" : ""}`}
+                      className={`flex-row items-center p-4 ${index < requests.length - 1 ? "border-b border-slate-100" : ""}`}
                       key={request._id}
                     >
-                      <View className="h-10 w-10 items-center justify-center rounded-xl bg-slate-800">
-                        <Ionicons name="person-outline" size={18} color="#cbd5e1" />
+                      <View className="h-10 w-10 items-center justify-center rounded-xl bg-red-50">
+                        <Ionicons name="person-outline" size={18} color="#dc2626" />
                       </View>
                       <View className="ml-3 flex-1">
-                        <Text className="text-sm font-black text-slate-100">{name}</Text>
+                        <Text className="text-sm font-black text-slate-800">{name}</Text>
                         <Text className="mt-1 text-[11px] text-slate-500">
                           {(request.entries || []).length} ngày đăng ký
                         </Text>
