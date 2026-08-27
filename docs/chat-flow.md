@@ -1,306 +1,269 @@
-# Chat Flow Documentation (Nrapp)
-
-## 1) Muc tieu tai lieu
-
-Tai lieu nay giai thich:
-
-- Luong hoat dong cua man hinh chat trong `app/(main)/chat.tsx`
-- Cac trach nhiem cua tung component con
-- Luong du lieu giua AppContext, SocketContext va UI
-- Nhung diem de gay roi va huong tach de code de bao tri hon
-
-## 2) Kien truc tong quan
-
-Man chat duoc compose tu 4 component UI:
-
-- `ChatHeader`: hien thong tin nguoi dang chat + typing state + nut mo sidebar
-- `ChatSideBar`: danh sach cuoc tro chuyen, tao chat moi, logout
-- `ChatMessages`: hien danh sach tin nhan va auto scroll
-- `MessageInput`: nhap text/chon anh/gui tin nhan
-
-File dieu phoi chinh:
-
-- `app/(main)/chat.tsx`
-
-Nguon du lieu toan cuc:
-
-- `context/AppContext.tsx`
-  - auth state (`user`, `isAuth`, `loading`)
-  - du lieu danh ba (`users`) va danh sach chat (`chats`)
-  - ham API (`fetchChats`, `fetchUsers`, `getToken`, `logoutUser`)
-- `context/SocketContext.tsx`
-  - ket noi Socket.IO
-  - danh sach online user IDs (`onlineUsers`)
-  - phat realtime events vao UI
-
-## 3) Ownership state (state nam o dau)
-
-### 3.1 State tai man `chat.tsx` (local screen state)
-
-- `selectedUser`: chatId dang duoc mo
-- `message`: noi dung text input
-- `sidebarOpen`: dong/mo sidebar modal
-- `messages`: danh sach message cua chat dang mo
-- `chatUser`: thong tin user doi phuong cua chat dang mo
-- `showAllUser`: toggle giua mode "chat list" va "all users"
-- `isTyping`: trang thai doi phuong dang nhap
-- `typingTimeoutRef`: debounce event typingStop
-
-### 3.2 State tai context
-
-- AppContext cung cap:
-  - `user` (logged in user)
-  - `users` (all users de tao chat)
-  - `chats` (chat sidebar list)
-- SocketContext cung cap:
-  - `socket` instance
-  - `onlineUsers`
-
-## 4) Luong khoi dong man chat
-
-1. `chat.tsx` mount.
-2. Neu `loading=false` va `isAuth=false` thi redirect sang login.
-3. AppContext (tu truoc do) da fetch:
-   - profile user (`/user/me`)
-   - chat list (`/chat/chat/all`)
-   - all users (`/user/user/all`)
-4. SocketContext ket noi socket theo `user._id`.
-5. Khi socket emit `getOnlineUsers`, UI cap nhat green dot online trong header/sidebar.
-
-## 5) Luong chon chat
-
-1. User chon 1 item trong `ChatSideBar`.
-2. `setSelectedUser(chatId)` va dong sidebar.
-3. `useEffect([selectedUser])` trong `chat.tsx` goi `fetchChat()`:
-   - GET `/chat/message/:chatId`
-   - cap nhat `messages`
-   - cap nhat `chatUser` (nguoi doi phuong)
-   - goi lai `fetchChats()` de dong bo unseen/latest
-4. `ChatHeader` hien ten va status cua `chatUser`.
-5. `ChatMessages` render danh sach message cua chat vua chon.
-
-## 6) Luong tao chat moi
-
-1. Trong `ChatSideBar`, bat mode `showAllUsers=true`.
-2. Tim user qua search.
-3. Chon user -> goi `createChat(u)`:
-   - POST `/chat/chat/new` voi `{ userId, otherUserId }`
-   - nhan `chatId` moi
-   - `setSelectedUser(chatId)`
-   - tat mode all users
-   - refresh `fetchChats()`
-4. Sau khi `selectedUser` doi, man hinh tu dong vao luong `fetchChat()`.
-
-## 7) Luong gui tin nhan
-
-### 7.1 Text message
-
-1. User nhap text trong `MessageInput` (thuc chat dang goi `setMessage={handleTyping}`).
-2. `handleTyping` cap nhat state `message` va emit socket event:
-   - `typing` ngay lap tuc
-   - `typingStop` sau 800ms neu khong tiep tuc go
-3. Nhan nut send -> `handleMessageSend`:
-   - tao `FormData` gom `chatId`, `text`
-   - POST `/chat/message`
-   - append message moi vao `messages` (co check trung theo `_id`)
-   - clear `message`
-
-### 7.2 Image message
-
-1. `MessageInput` xin quyen thu vien anh.
-2. Chon anh -> luu `imageUri` local de preview.
-3. Nhan send -> goi `handleMessageSend(null, imageUri)`.
-4. Hien trang thai thuc te hien tai:
-   - UI cho phep chon anh
-   - Ham send da nhan tham so `imageUri`
-   - Nhung request hien tai moi append `chatId` va `text` vao FormData
-
-Ket luan nho:
-
-- Image flow o mobile chua day du den API (co tham so imageUri nhung chua append file vao FormData).
-
-## 8) Luong realtime (socket events)
-
-Trong `chat.tsx` co dang ky:
-
-- `newMessage`
-  - Neu `data.message.chatId === selectedUser`: append vao `messages` (co dedupe theo `_id`)
-  - Luon `fetchChats()` de dong bo sidebar
-- `userTyping`
-  - Neu dung chat va dung nguoi doi phuong: `setIsTyping(true)`
-- `userTypingStop`
-  - Neu dung chat: `setIsTyping(false)`
-
-Cleanup:
-
-- Unsubscribe cac socket handler trong return useEffect.
-- Clear typing timeout khi unmount.
-
-## 9) Trach nhiem tung component
-
-### ChatHeader
-
-Input:
-
-- `user`, `isTyping`, `otherUserId`, `onlineUsers`, `setSidebarOpen`
-  Trach nhiem:
-- Hien ten nguoi chat (fallback user/email)
-- Hien typing text
-- Hien online dot
-- Trigger open sidebar
-
-### ChatSideBar
-
-Input:
-
-- auth/chat/user states va action (`createChat`, `handleLogout`, `setSelectedUser`)
-  Trach nhiem:
-- Mode 1: danh sach chat hien co
-- Mode 2: danh sach users de tao chat moi
-- Search users
-- Hien unseen badge, latest message
-- Hien online dot va logout action
-
-### ChatMessages
-
-Input:
-
-- `selectedUser`, `messages`, `loggedInUser`
-  Trach nhiem:
-- Empty state neu chua chon chat
-- Dedupe message theo `_id`
-- Bubble trai/phai theo sender
-- Hien text/image + timestamp + seen check
-- Auto scroll xuong cuoi khi co noi dung moi
-
-### MessageInput
-
-Input:
-
-- `selectedUser`, `message`, `setMessage`, `handleMessageSend`
-  Trach nhiem:
-- Input text
-- Pick/remove image preview
-- Trigger send
-- Disable send khi khong co noi dung
-
-## 10) Vi sao cam giac "hoi loan"
-
-1. Ten bien `selectedUser` thuc te la `chatId`.
-2. `chatUser` va `otherUserId` co nhieu dang shape (raw/user.user), can normalize som.
-3. Image send flow chua hoan chinh (UI co, payload chua co file).
-4. Logic fetch, socket, typing, send dang nam chung trong 1 screen lon.
-5. Chat list item phai xu ly fallback du lieu khong dong nhat tu backend.
-
-## 11) De xuat tach gon (uu tien theo buoc)
-
-1. Doi ten bien cho dung nghia:
-   - `selectedUser` -> `selectedChatId`
-   - `showAllUser` -> `showAllUsers`
-2. Tach custom hooks:
-   - `useChatData(selectedChatId)` cho fetch message/user
-   - `useChatSocket(selectedChatId, otherUserId)` cho events realtime
-   - `useTyping(socket, selectedChatId, otherUserId)` cho typing debounce
-3. Tao mapper chung cho payload chat/message:
-   - normalize 1 lan tai API layer, UI nhan du lieu on dinh
-4. Hoan chinh image upload:
-   - append file object vao FormData tren mobile
-5. Tach "container vs presentational":
-   - `chat.tsx` giu orchestration
-   - components chat chi giu rendering + callback
-
-## 12) Sequence ngan gon
-
-### Open chat
-
-Sidebar click -> set selectedChatId -> fetchChat -> set messages/chatUser -> render header/messages.
-
-### Send message
-
-Input change -> emit typing -> click send -> POST message -> optimistic append -> socket newMessage sync them clients.
-
-### Receive message
-
-Socket newMessage -> neu dung chat thi append vao message list -> refresh chat list de cap nhat latest/unseen.
-
-## 13) Checklist de review nhanh
-
-- [ ] selected variable names phan anh dung nghia (chatId vs userId)
-- [ ] image payload da append dung kieu file chua
-- [ ] socket events da cleanup day du
-- [ ] normalize data shape o 1 cho duy nhat
-- [ ] side effects da tach khoi component UI chua
-
----
-
-Tai lieu nay tap trung vao luong hien tai de team doc nhanh, sau do moi toi giai doan refactor theo tung buoc nho de tranh vo behavior.
-
-Màn chat chính là container orchestration: giữ state chính, gọi API, nghe socket, rồi truyền props và callback xuống các component con để render.
-
-Điều kiện redirect là loading = false và isAuth = false. Không có token thường dẫn đến trạng thái này, nhưng điều kiện trực tiếp vẫn là isAuth false sau khi hết loading.
-
-AppContext cấp dữ liệu nghiệp vụ nền:
-
-user đăng nhập
-danh sách users
-danh sách chats
-hàm fetchChats, fetchUsers, getToken, logoutUser
-SocketContext cấp dữ liệu realtime:
-
-socket instance
-danh sách onlineUsers
-Chọn chat trong sidebar:
-set selected chat id
-đóng sidebar
-effect theo selected chat id chạy fetchChat
-lấy messages và user đối phương
-gọi fetchChats để đồng bộ latest và unseen
-header và messages render lại theo chat mới
-Gọi lại fetchChats để đồng bộ danh sách sidebar: latest message, unseen count, thứ tự chat sau khi có dữ liệu mới.
-
-selectedUser hiện đang chứa chatId, không phải userId. Tên này dễ gây hiểu sai logic và làm code khó đọc khi debug.
-
-isTyping là state hiển thị typing indicator. Bật bởi event userTyping, tắt bởi userTypingStop (và cũng tắt khi đổi ngữ cảnh chat).
-
-Dedupe theo message id để tránh trùng tin nhắn do vừa append local sau send, vừa nhận lại cùng message từ socket.
-
-Nút send disable khi không có text hợp lệ và cũng không có ảnh được chọn.
-
-Cleanup cần có:
-
-bỏ đăng ký tất cả socket listeners đã đăng ký trong effect
-clear timeout typing còn treo
-ngắt kết nối socket ở provider khi user đổi hoặc unmount
-Nếu newMessage thuộc chat khác chat đang mở:
-khung messages hiện tại không append
-vẫn phải refresh chat list để cập nhật latest/unseen trên sidebar
-Timeout trong typing dùng để debounce sự kiện typingStop, tránh spam event và đảm bảo trạng thái đang nhập không bị treo mãi. Bỏ timeout có thể gây quá nhiều emit hoặc trạng thái typing sai.
-
-Image flow đã hoàn chỉnh end-to-end. UI kiểm tra loại và dung lượng ảnh, còn service chuẩn hóa `FormData` riêng cho web và mobile, gửi trường `image` cùng `chatId`, `text`, đồng thời chuyển lỗi upload thành thông báo dễ hiểu cho người dùng.
-
-Cần normalize sớm để mọi component nhận data shape ổn định, tránh fallback rải rác, giảm bug ẩn và giảm công sửa khi backend đổi nhẹ response.
-
-Component dễ bị ảnh hưởng nhất là sidebar và header vì phụ thuộc nhiều field user/chat. Lỗi hay gặp: tên hiển thị sai, online dot sai user, latest message rỗng, unseen count lệch.
-
-Thứ tự tách hook hợp lý:
-
-useTyping trước (nhỏ, ít rủi ro)
-useChatSocket tiếp theo (tách realtime listeners)
-useChatData sau cùng (tách fetch và mapping)
-Lý do: tách dần từ phần ít phụ thuộc đến phần nhiều side effect.
-Điểm dễ race condition nhất là fetchChat khi đổi chat nhanh liên tục: response cũ về sau response mới có thể overwrite messages sai chat nếu không có guard.
-
-Giảm fetchChats quá nhiều bằng:
-
-throttle/debounce refresh sidebar
-chỉ refresh khi event liên quan chat list
-hoặc cập nhật cục bộ chat list từ payload socket thay vì luôn refetch full
-Muốn thêm gửi file tổng quát:
-tạo lớp chuẩn hóa attachment
-mở rộng messageType thành text, image, file
-chuẩn hóa hàm build FormData chung cho mọi loại attachment
-giữ MessageInput làm UI, để logic upload ở service hoặc hook riêng
-3 điểm review đầu tiên:
-tính đúng của state flow và naming (chatId hay userId)
-socket lifecycle và cleanup (tránh duplicate listeners)
-tính nhất quán dữ liệu và chống duplicate message giữa optimistic update và realtime event
+# Luồng Chat realtime của Nrapp
+
+> Tài liệu này mô tả source Chat hiện tại. Tổng quan toàn dự án nằm tại
+> [Kiến trúc và luồng hoạt động](kien-truc-va-luong-hoat-dong.md).
+
+## 1. Nguyên tắc thiết kế
+
+Chat dùng hai kênh song song:
+
+- REST tạo/lấy dữ liệu bền vững: user, chat, message và ảnh.
+- Socket.IO báo thay đổi tức thời: online, tin mới, typing và đã xem.
+
+Admin và user dùng chung hợp đồng dữ liệu, service và socket context, nhưng có
+source giao diện riêng hoàn toàn:
+
+```text
+src/features/chat/
+├── admin/
+│   ├── screens/AdminChatScreen.tsx
+│   └── ui/
+│       ├── AdminChatHeader.tsx
+│       ├── AdminChatMessages.tsx
+│       ├── AdminChatSideBar.tsx
+│       └── AdminMessageInput.tsx
+├── user/
+│   ├── screens/UserChatScreen.tsx
+│   └── ui/
+│       ├── UserChatHeader.tsx
+│       ├── UserChatMessages.tsx
+│       ├── UserChatSideBar.tsx
+│       └── UserMessageInput.tsx
+└── shared/model/ChatSocketContext.tsx
+```
+
+Hai controller screen hiện chứa cùng quy tắc điều phối để mỗi khu tự sở hữu UI.
+Khi sửa lỗi fetch, merge, typing hoặc socket listener, phải đối chiếu cả
+`AdminChatScreen.tsx` và `UserChatScreen.tsx`.
+
+## 2. Điểm vào và provider
+
+```text
+/admin/chat
+  → app/(main)/admin/chat.tsx
+  → AdminChatScreen
+
+/user/chat
+  → app/(main)/user/chat.tsx
+  → UserChatScreen
+```
+
+`ChatSocketProvider` được gắn một lần trong `app/_layout.tsx`, bên trong
+`AuthSessionProvider`:
+
+```text
+AuthSessionProvider
+  └── ChatSocketProvider
+      └── toàn bộ route của ứng dụng
+```
+
+Provider chỉ tạo socket khi đã có `user._id`. Nó cung cấp:
+
+| State | Tác dụng |
+| --- | --- |
+| `socket` | Socket instance để screen đăng ký event hoặc emit |
+| `onlineUsers` | Danh sách user ID đang online |
+| `isConnected` | Trạng thái realtime hiện tại |
+| `connectionError` | Lỗi kết nối gần nhất |
+
+## 3. Kết nối Socket.IO
+
+Nguồn cấu hình: `src/utils/ip.ts`.
+
+```text
+socketUrl = EXPO_PUBLIC_SOCKET_URL
+         hoặc origin của EXPO_PUBLIC_API_URL/ipNR
+
+socketPath = EXPO_PUBLIC_SOCKET_PATH
+           hoặc /socket.io
+```
+
+Socket cấu hình transport theo thứ tự `websocket`, sau đó `polling`. Trường
+`auth` là callback gọi `getToken()` nên mỗi lần reconnect đều lấy access token
+mới nhất.
+
+Vòng đời:
+
+1. Có user → tạo socket, đăng ký listener nền và gọi `connect()`.
+2. `connect` → `isConnected=true`, xóa lỗi.
+3. `disconnect`/`connect_error` → cập nhật trạng thái cho UI.
+4. `getOnlineUsers` → chuẩn hóa mọi ID thành chuỗi.
+5. User đổi sau refresh phiên → hủy socket cũ và tạo socket mới.
+6. Logout/unmount → disconnect, remove listener và reset state.
+
+REST vẫn có thể tải và gửi dữ liệu khi realtime mất kết nối; lúc đó badge
+online, typing và thông báo tức thời có thể chậm cho đến khi danh sách được tải
+lại.
+
+## 4. REST API
+
+File: `src/services/chat/chat.service.ts`.
+
+| Method | Endpoint | Hàm | Tác dụng |
+| --- | --- | --- | --- |
+| POST | `/chat/chat/new` | `createChat` | Tạo/lấy cuộc chat với một user |
+| GET | `/chat/chat/all` | `getChats` | Danh sách chat, tin gần nhất, số chưa xem |
+| GET | `/chat/message/:chatId` | `getChatMessages` | Tin nhắn và người đối thoại |
+| POST | `/chat/message` | `sendChatMessage` | Gửi text hoặc multipart ảnh |
+
+Bốn endpoint đều nhận Bearer token. Screen lấy token từ `AuthSessionContext`
+rồi truyền rõ ràng vào service; Axios không tự gắn token cho request mới.
+
+## 5. Mở màn Chat
+
+Khi route được focus:
+
+```mermaid
+sequenceDiagram
+    participant Screen as Admin/User ChatScreen
+    participant UserAPI as User service
+    participant ChatAPI as Chat service
+    participant Sidebar as ChatSideBar
+    participant Socket as ChatSocketContext
+
+    Screen->>UserAPI: GET /user/user/all
+    Screen->>ChatAPI: GET /chat/chat/all
+    UserAPI-->>Screen: users
+    ChatAPI-->>Screen: chats
+    Socket-->>Screen: getOnlineUsers
+    Screen->>Sidebar: users + chats + onlineUsers
+```
+
+Screen chuẩn hóa response trước khi render:
+
+- User đi qua `normalizeUser` để ổn định `_id`, `name`, `email`, `role`.
+- Chat được đưa về `ChatSummary` thống nhất dù backend bọc `user/chat` khác nhau.
+- `unseenCount`, `latestMessage` và thời gian được giữ cho sidebar.
+- Sequence của request danh sách ngăn response cũ ghi đè response mới hơn.
+
+## 6. Chọn hoặc tạo cuộc chat
+
+Nếu user đã có chat, sidebar truyền `chatId` vào `selectChat`. Nếu chưa có:
+
+```text
+chọn user
+  → POST /chat/chat/new { otherUserId }
+  → nhận chatId
+  → selectChat(chatId)
+  → GET /chat/message/:chatId
+  → render header + messages + input
+```
+
+Mỗi lần đổi chat, screen:
+
+- cập nhật `selectedChatRef`;
+- tăng phiên bản lựa chọn;
+- xóa messages, chat user, draft text và typing cũ;
+- bỏ response tải message nếu chat đã đổi trong lúc request đang chạy.
+
+Message được chuẩn hóa rồi merge theo `_id`. Message sai `chatId` bị bỏ, bản
+trùng được hợp nhất và toàn bộ danh sách được sắp theo `createdAt`, sau đó theo
+ID để có thứ tự ổn định.
+
+## 7. Gửi text
+
+```text
+nhập nội dung
+  → kiểm tra text sau trim
+  → dừng typing
+  → POST /chat/message { chatId, text }
+  → merge data.message vào chat đang mở
+  → xóa đúng draft vừa gửi
+  → GET /chat/chat/all để cập nhật sidebar
+```
+
+Draft chỉ bị xóa nếu người dùng chưa thay nội dung trong lúc request gửi đang
+chạy. Input dùng `sendingRef` và state `sending` để chặn bấm gửi trùng.
+
+## 8. Gửi ảnh
+
+Input admin và user có UI riêng nhưng cùng quy trình:
+
+1. Xin quyền truy cập thư viện.
+2. Chỉ chọn một ảnh, quality `0.8`.
+3. Chặn file có `fileSize > 5 MB`.
+4. Chỉ chấp nhận JPEG, PNG hoặc GIF; `image/jpg` được chuẩn hóa thành JPEG.
+5. Hiện preview, cho bỏ ảnh trước khi gửi.
+6. Preflight `GET <API origin>/health` tối đa ba lần:
+   - timeout mỗi lần: 4 giây;
+   - chờ giữa hai lần: 400 ms.
+7. Dựng multipart `FormData`:
+   - Web: đổi URI sang Blob.
+   - Native: thêm `{ uri, name, type }`.
+8. `POST /chat/message` với timeout upload 60 giây.
+9. Thành công mới xóa preview và merge message trả về.
+
+Các field multipart:
+
+```text
+chatId: bắt buộc
+text: tùy chọn
+image: bắt buộc khi gửi ảnh
+```
+
+Service phân biệt lỗi định dạng, Gateway chưa kết nối, upload timeout, lỗi
+backend và lỗi mạng để trả thông báo phù hợp.
+
+## 9. Event realtime
+
+| Event | Hướng tại frontend | Payload frontend dùng | Xử lý |
+| --- | --- | --- | --- |
+| `getOnlineUsers` | nhận ở Context | `string[]` | Cập nhật badge online |
+| `newMessage` | nhận ở Screen | `{ message }` | Merge chat đang mở hoặc refresh sidebar |
+| `typing` | phát từ Screen | `{ chatId, targetUserId }` | Báo đang nhập |
+| `typingStop` | phát từ Screen | `{ chatId, targetUserId }` | Dừng đang nhập |
+| `userTyping` | nhận ở Screen | `{ chatId, userId }` | Chỉ bật nếu đúng chat và đối phương |
+| `userTypingStop` | nhận ở Screen | `{ chatId }` | Tắt typing của chat đang mở |
+| `messagesSeen` | nhận ở Screen | `{ chatId }` | Đánh dấu tin mình gửi là đã xem |
+
+Typing hoạt động như sau:
+
+```text
+input có nội dung
+  → emit typing
+  → reset timer
+  → không gõ thêm trong 800 ms: emit typingStop
+```
+
+Xóa hết text, đóng chat hoặc gửi message cũng emit `typingStop`. Khi realtime
+mất kết nối, UI xóa trạng thái `isTyping` để không treo nhãn “đang nhập”.
+
+Khi nhận `newMessage`:
+
+- Đúng chat đang mở: merge ngay, sau đó tải lại chat để đồng bộ seen/user.
+- Chat khác: chỉ tải lại sidebar để cập nhật tin mới và `unseenCount`.
+
+Khi nhận `messagesSeen`, screen chỉ cập nhật message do tài khoản hiện tại gửi
+trong đúng chat đang mở.
+
+## 10. Bàn phím và quay lại
+
+- iOS dùng `KeyboardAvoidingView` với behavior `padding`.
+- Android đo phần bàn phím che vùng chat và cộng `paddingBottom` tương ứng.
+- Khi đang mở một cuộc chat, nút Back Android đóng chat và quay về sidebar thay
+  vì thoát route ngay.
+- Main bottom bar được layout cấp trên ẩn khi bàn phím mở.
+
+## 11. Khi cần sửa lỗi
+
+| Hiện tượng | Nơi kiểm tra trước |
+| --- | --- |
+| Không tải user/chat | `getAllUsers`, `getChats`, token và Gateway URL |
+| Đổi chat nhanh bị hiện sai tin | selection version, request sequence, `selectedChatRef` |
+| Tin bị trùng/sai thứ tự | `normalizeMessage`, `mergeMessages` ở cả hai Screen |
+| Gửi text được nhưng ảnh lỗi | `/health`, MIME, FormData, giới hạn 5 MB, timeout 60 giây |
+| Không hiện online | `ChatSocketContext`, socket URL/path, event `getOnlineUsers` |
+| Không hiện tin mới | listener `newMessage` ở cả hai Screen |
+| Typing bị treo | timer 800 ms, `typingStop`, cleanup khi đóng chat |
+| Seen không đổi | payload `messagesSeen`, sender ID và chat ID |
+| Input bị bàn phím che | logic keyboard riêng iOS/Android trong ChatScreen |
+
+## 12. Checklist khi thay đổi Chat
+
+1. Giữ UI admin trong `chat/admin`, UI user trong `chat/user`.
+2. Nếu sửa controller data flow, áp dụng và kiểm tra cả hai ChatScreen.
+3. Không đăng ký socket listener mà thiếu `off` trong cleanup.
+4. Luôn kiểm tra `chatId` trước khi merge event hoặc response.
+5. Không bỏ sequence/ref chống race condition khi đổi chat nhanh.
+6. Kiểm tra riêng text, ảnh, typing, seen, reconnect và Android keyboard.
+7. Chạy `npm run lint`, `npx tsc --noEmit` và Expo web export.

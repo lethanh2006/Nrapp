@@ -1,576 +1,197 @@
 # Nrapp
 
-Nrapp là ứng dụng Expo/React Native dành cho hai nhóm người dùng:
+Nrapp là frontend Expo/React Native kết nối với Service Gateway cho các nghiệp
+vụ nội bộ: xác thực OTP, danh bạ, hồ sơ, chat realtime, công việc, căn tin,
+lịch làm, đơn nhân sự và chấm công QR.
 
-- **Khối quản trị**: các role `admin`, `manager`, `chef`.
-- **Nhân viên**: role `user` và các role không thuộc khối quản trị.
+Ứng dụng có hai khu giao diện tách biệt:
 
-Ứng dụng có các chức năng chính: đăng nhập bằng OTP, chat realtime, quản lý
-công việc, đăng ký lịch làm việc, duyệt lịch và chấm công bằng QR.
+- Khu admin: `admin`, `manager`, `chef`, `cashier`, `waiter`.
+- Khu user: `user`, `vip`; role chưa biết hiện cũng được đưa về khu user.
 
-Tài liệu này giải thích từ ngoài vào trong: cách chạy dự án, cơ chế routing,
-luồng dữ liệu và nhiệm vụ của từng thư mục, từng file.
+## Tài liệu nên đọc
 
-## 1. Cách hiểu nhanh kiến trúc
+- [Kiến trúc và luồng hoạt động](docs/kien-truc-va-luong-hoat-dong.md): tài
+  liệu nguồn chuẩn, giải thích chi tiết từng thư mục, route, role, feature,
+  service, endpoint và vị trí cần sửa.
+- [Luồng Chat realtime](docs/chat-flow.md): tài liệu chuyên sâu cho REST,
+  Socket.IO, typing, seen và upload ảnh.
 
-Luồng thông thường của một chức năng:
+Nếu README và source có khác biệt, ưu tiên source. Khi thay đổi route, role hoặc
+hợp đồng Gateway, hãy cập nhật tài liệu kiến trúc trong cùng commit.
+
+## Kiến trúc nhanh
 
 ```text
-URL
-  ↓
-app/.../route.tsx
-  ↓
-src/features/.../Screen hoặc View
-  ↓
-src/services/<nghiệp vụ>/<nghiệp vụ>.service.ts
-  ↓
-Axios → Backend
+URL / thao tác người dùng
+  → route mỏng trong app/
+  → screen riêng trong src/features/<feature>/<admin|user>/
+  → hook/context nếu feature cần
+  → service trong src/services/<domain>/
+  → Axios hoặc Socket.IO
+  → Service Gateway
 ```
 
-Các phần có trách nhiệm rõ ràng:
+Các lớp chính:
 
-- `app/` quyết định URL nào mở màn hình nào.
-- `src/features/` chứa state và giao diện của từng chức năng.
-- `src/services/` chứa hàm gọi backend và định nghĩa dữ liệu.
-- `src/application/` chứa quy tắc role, quyền truy cập và đường dẫn dùng chung.
-- `src/components/` chứa component khung dùng ở nhiều màn hình.
-- `src/utils/` chứa Axios, địa chỉ server và helper HTTP.
+| Vị trí | Trách nhiệm |
+| --- | --- |
+| `app/` | Expo Router, layout, URL và route guard |
+| `src/application/` | Phân khu role, quyền và route constants |
+| `src/features/` | Screen, UI, hook và state theo tính năng |
+| `src/services/` | REST endpoint, payload, response và domain type |
+| `src/shared/` | Hạ tầng thật sự dùng chung toàn ứng dụng |
+| `src/components/` | Component khung dùng ở nhiều tính năng |
+| `src/utils/` | URL Gateway, Axios và chuẩn hóa lỗi HTTP |
 
-## 2. Cài đặt và chạy dự án
+Luồng khởi động:
+
+```text
+expo-router/entry
+  → app/_layout.tsx
+  → AuthSessionProvider khôi phục phiên
+  → app/index.tsx chọn khu theo role
+  → /admin/home hoặc /user/home
+```
+
+## Ranh giới admin và user
+
+Một feature có thể có cấu trúc:
+
+```text
+src/features/<feature>/
+├── admin/
+│   ├── screens/       # màn hoàn chỉnh chỉ khu admin
+│   └── ui/            # component mang phong cách admin
+├── user/
+│   ├── screens/       # màn hoàn chỉnh chỉ khu user
+│   └── ui/            # component mang phong cách user
+└── shared/
+    ├── hooks/         # nghiệp vụ trung lập về vai trò
+    ├── model/         # context/model trung lập
+    ├── config/        # metadata thuần
+    └── utils/         # hàm tính toán thuần
+```
+
+Quy tắc bắt buộc:
+
+- Admin không import screen/UI của user và ngược lại.
+- `shared` không phụ thuộc ngược vào `admin` hoặc `user`.
+- Không đặt một giao diện dùng chung vào `shared` rồi cho hai role cùng render.
+- Chỉ chia sẻ type, service, hook hoặc hàm thuần khi chúng không mang bố cục của
+  một vai trò.
+- Route trong `app/` chỉ nối URL tới screen, không chứa nghiệp vụ lớn.
+
+`eslint.config.js` kiểm tra các ranh giới import này.
+
+## Role và quyền frontend
+
+| Role | Khu UI | Tài khoản | Task | Lịch/chấm công |
+| --- | --- | --- | --- | --- |
+| `admin` | admin | Quản lý | Quản lý | Quản lý |
+| `manager` | admin | Chỉ xem | Quản lý | Quản lý |
+| `chef` | admin | Chỉ xem | Quản lý | Quản lý |
+| `cashier` | admin | Chỉ xem | Cá nhân | Cá nhân |
+| `waiter` | admin | Chỉ xem | Cá nhân | Cá nhân |
+| `user`, `vip` | user | Chỉ xem | Cá nhân | Cá nhân |
+
+Đây chỉ là lớp điều hướng và ẩn/hiện thao tác ở frontend. Gateway/backend vẫn
+phải kiểm tra quyền cho từng endpoint.
+
+## Chạy dự án
+
+Yêu cầu: Node.js, npm và môi trường Expo phù hợp với nền tảng cần chạy.
 
 ```bash
 npm install
 npm start
 ```
 
-Các lệnh chạy theo nền tảng:
+Các lệnh thường dùng:
 
 ```bash
-# Android Emulator: dùng localhost + ADB reverse, ổn định hơn LAN
+# Android Emulator; script hỗ trợ khởi động máy ảo và ADB reverse
 npm run android
 
-# Thiết bị Android thật cùng Wi-Fi
+# Android thật cùng mạng LAN
 npm run android:lan
 
-# Thiết bị thật không truy cập được máy qua LAN/firewall
+# Android thật qua Expo tunnel
 npm run android:tunnel
 
 npm run ios
 npm run web
 ```
 
-`npm start` cũng mặc định dùng `localhost` cho emulator. Nếu cần quét QR bằng
-thiết bị thật, dùng `npm run start:lan` hoặc `npm run start:tunnel`.
+Không chạy `npm run reset-project` trên source đang phát triển; đây là script
+mẫu của Expo có thể di chuyển hoặc xóa cây `app/` hiện tại.
 
-Tạo `.env.local` hoặc cấu hình biến môi trường:
+## Cấu hình Gateway
+
+Sao chép `.env.example` thành `.env.local`, sau đó điền địa chỉ phù hợp:
 
 ```env
-EXPO_PUBLIC_API_URL=http://localhost:3000/api
-EXPO_PUBLIC_SOCKET_URL=http://localhost:3000
-EXPO_PUBLIC_SOCKET_PATH=/socket.io
+EXPO_PUBLIC_API_URL=http://YOUR_GATEWAY_HOST:3000/api
 EXPO_PUBLIC_API_TIMEOUT_MS=10000
+EXPO_PUBLIC_SOCKET_URL=http://YOUR_SOCKET_HOST:3000
+EXPO_PUBLIC_SOCKET_PATH=/socket.io
 ```
 
-Ý nghĩa:
+- Production bắt buộc có `EXPO_PUBLIC_API_URL`.
+- Android Emulator ở development dùng `10.0.2.2` với
+  `EXPO_PUBLIC_API_PORT`/`EXPO_PUBLIC_API_PATH`.
+- Thiết bị thật cần truy cập được IP máy đang chạy Gateway.
+- Nếu không đặt `EXPO_PUBLIC_SOCKET_URL`, app suy ra Socket origin từ API URL.
+- Biến `EXPO_PUBLIC_*` được đóng gói vào client, không đặt secret trong đó.
 
-- `EXPO_PUBLIC_API_URL`: địa chỉ gốc của REST API. Production bắt buộc có.
-- `EXPO_PUBLIC_SOCKET_URL`: địa chỉ Socket.IO; nếu bỏ trống sẽ suy ra từ API.
-- `EXPO_PUBLIC_SOCKET_PATH`: đường dẫn Socket.IO, mặc định `/socket.io`.
-- `EXPO_PUBLIC_API_TIMEOUT_MS`: timeout Axios, mặc định 10 giây.
-
-Khi chạy trên thiết bị thật mà không khai báo URL, `src/utils/ip.ts` cố lấy IP
-của máy chạy Expo. Android Emulator dùng `10.0.2.2`.
-
-## 3. Cơ chế routing của Expo Router
-
-### 3.1 Tại sao mỗi route phải có một file?
-
-Expo Router dùng **file-based routing**: cây file trong `app/` chính là bảng
-route. Tên file không chỉ để chứa code, nó còn tạo URL.
-
-Ví dụ:
+## Xác thực và token
 
 ```text
-app/(main)/user/chat.tsx → /user/chat
-app/(main)/admin/todo.tsx → /admin/todo
-```
-
-Vì vậy các route file chỉ có vài dòng là bình thường. Chúng làm đúng một việc:
-trỏ URL sang component thật trong `src/features/`. Logic nghiệp vụ không đặt
-trong những file này.
-
-### 3.2 Các quy tắc đặt tên
-
-- `_layout.tsx`: layout bao quanh toàn bộ route con trong cùng thư mục.
-- `index.tsx`: route mặc định của thư mục.
-- `[id].tsx`: route động; `id` được lấy từ URL.
-- `(auth)` và `(main)`: route group. Dấu ngoặc giúp nhóm file nhưng tên group
-  không xuất hiện trong URL hiển thị.
-- `router.push(...)`: mở route mới và vẫn cho phép quay lại.
-- `router.replace(...)`: thay route hiện tại, thường dùng khi đăng nhập hoặc
-  redirect để người dùng không quay lại màn cũ.
-- `<Slot />`: vị trí Expo Router render route con phù hợp.
-- `<Stack />`: điều khiển nhóm màn hình theo kiểu stack navigation.
-
-Trong `src/features/<nghiệp vụ>/`, giao diện sau đăng nhập tuân theo ba nhánh:
-
-- `admin/`: màn hình, hook và UI chỉ dành cho khối quản trị.
-- `user/`: màn hình, hook và UI chỉ dành cho khối người dùng.
-- `shared/`: hook, model, config, kiểu dữ liệu hoặc hạ tầng không mang giao diện
-  riêng của vai trò.
-
-Route admin chỉ import màn hình từ nhánh `admin`, route user chỉ import màn hình
-từ nhánh `user`. ESLint chặn import chéo vai trò và cũng chặn screen/UI của
-admin hoặc user đi qua `shared/`. Hai giao diện phải có source độc lập.
-
-### 3.3 Bảng URL hiện tại
-
-| File route | URL | Component được mở |
-| --- | --- | --- |
-| `app/index.tsx` | `/` | Kiểm tra phiên đăng nhập rồi redirect |
-| `app/(auth)/login.tsx` | `/login` | Màn đăng nhập |
-| `app/(auth)/register.tsx` | `/register` | Màn đăng ký |
-| `app/(auth)/verify.tsx` | `/verify?email=...` | Nhập OTP và lưu phiên |
-| `app/(main)/admin/home.tsx` | `/admin/home` | `AdminHomeScreen` |
-| `app/(main)/admin/chat.tsx` | `/admin/chat` | `AdminChatScreen` |
-| `app/(main)/admin/todo.tsx` | `/admin/todo` | `AdminTodoScreen` |
-| `app/(main)/admin/workschedule.tsx` | `/admin/workschedule` | `AdminWorkscheduleScreen` |
-| `app/(main)/user/home.tsx` | `/user/home` | `UserHomeScreen` |
-| `app/(main)/user/chat.tsx` | `/user/chat` | `UserChatScreen` |
-| `app/(main)/user/todo.tsx` | `/user/todo` | `UserTodoScreen` |
-| `app/(main)/user/workschedule/index.tsx` | `/user/workschedule` | `UserWorkscheduleScreen` |
-
-Trong code có thể dùng đường dẫn kèm group như `/(main)/user/home`. Expo Router
-dùng group để chọn đúng layout nhưng URL người dùng thấy vẫn là `/user/home`.
-
-### 3.4 Thứ tự layout được chạy
-
-Khi mở `/user/chat`, cây render là:
-
-```text
-app/_layout.tsx
-  └── app/(main)/_layout.tsx
-      └── app/(main)/user/_layout.tsx
-          └── app/(main)/user/chat.tsx
-              └── src/features/chat/user/screens/UserChatScreen.tsx
-```
-
-Ý nghĩa:
-
-1. Root layout tạo Auth Context, Socket Context, theme và safe area.
-2. Main layout kiểm tra đăng nhập, vẽ header, bottom bar và các modal chung.
-3. User layout dùng `AreaGuard` để chặn tài khoản admin vào khu user và ngược
-   lại.
-4. File `chat.tsx` map route sang giao diện Chat.
-
-### 3.5 Luồng redirect khi mở ứng dụng
-
-```text
-Mở app
-  ↓
-AuthSessionProvider đọc token
-  ↓
-Có token? ── không ──→ /login
-  │
-  có
-  ↓
-GET /user/me
-  ↓
-getAreaForRole(role)
-  ├── admin/manager/chef → /admin/home
-  └── role khác          → /user/home
-```
-
-`AreaGuard` kiểm tra lại quyền tại layout. Đây là lớp bảo vệ thứ hai nếu người
-dùng tự nhập URL không đúng khu vực.
-
-## 4. Cây thư mục và nhiệm vụ từng file
-
-### 4.1 Thư mục `app/` — route và layout
-
-#### Cấp gốc
-
-- `app/_layout.tsx`: layout cao nhất. Import CSS, cấu hình Reanimated, bọc app
-  bằng `SafeAreaProvider`, `AuthSessionProvider`, `ChatSocketProvider`, theme và
-  khai báo ba stack `index`, `(auth)`, `(main)`.
-- `app/index.tsx`: màn trung gian khi mở `/`. Chờ Auth Context kiểm tra token,
-  sau đó redirect đến login hoặc trang chủ phù hợp với role. Trong lúc chờ chỉ
-  hiện loading.
-
-#### Nhóm `app/(auth)/`
-
-- `app/(auth)/_layout.tsx`: stack riêng cho login, register và verify; tắt header
-  mặc định của navigation.
-- `app/(auth)/login.tsx`: quản lý form email/mật khẩu, gọi `loginUser`, sau đó
-  chuyển email sang màn OTP. Nếu đã đăng nhập thì tự về trang chủ đúng role.
-- `app/(auth)/register.tsx`: kiểm tra form đăng ký và mật khẩu xác nhận, gọi
-  `registerUser`, rồi quay về login.
-- `app/(auth)/verify.tsx`: đọc `email` từ query params, quản lý sáu ô OTP, gọi
-  `verifyOtp`, lưu token, cập nhật Auth Context và redirect theo role.
-
-#### Nhóm `app/(main)/`
-
-- `app/(main)/_layout.tsx`: khung chung sau đăng nhập. Nó chứa stack admin/user,
-  header, thanh điều hướng dưới, modal quét QR và bảng thông tin cá nhân. Nếu
-  phiên đăng nhập mất thì redirect về login.
-
-#### Khu `app/(main)/admin/`
-
-- `app/(main)/admin/_layout.tsx`: gọi `AreaGuard area="admin"`; chỉ role thuộc
-  khối quản trị được render route con.
-- `app/(main)/admin/home.tsx`: mở `AdminHomeScreen`.
-- `app/(main)/admin/chat.tsx`: mở `AdminChatScreen`.
-- `app/(main)/admin/todo.tsx`: mở `AdminTodoScreen`, cho phép tạo, giao và
-  xóa công việc.
-- `app/(main)/admin/workschedule.tsx`: mở `AdminWorkscheduleScreen` để
-  hiển thị màn quản trị lịch, chính sách, QR và báo cáo.
-
-#### Khu `app/(main)/user/`
-
-- `app/(main)/user/_layout.tsx`: gọi `AreaGuard area="user"`; chỉ nhân viên được
-  render route con.
-- `app/(main)/user/home.tsx`: mở `UserHomeScreen`.
-- `app/(main)/user/chat.tsx`: mở `UserChatScreen`.
-- `app/(main)/user/todo.tsx`: mở `UserTodoScreen`; nhân viên chỉ xem task
-  được giao và cập nhật trạng thái.
-- `app/(main)/user/workschedule/index.tsx`: mở `UserWorkscheduleScreen`
-  cho lịch nhân viên.
-
-### 4.2 `src/application/` — quy tắc toàn ứng dụng
-
-#### `src/application/access/`
-
-- `roles.ts`: định nghĩa khu `admin/user`, danh sách role quản trị và các hàm
-  `isAdminRole`, `getAreaForRole`, `canAccessArea`.
-- `AreaGuard.tsx`: đọc user từ Auth Context. Khi đang tải thì hiện spinner; chưa
-  đăng nhập thì về login; sai khu vực thì chuyển sang home đúng role; hợp lệ thì
-  render `<Slot />`.
-
-#### `src/application/navigation/`
-
-- `routes.ts`: nơi khai báo tập trung đường dẫn login, home, chat, todo và
-  workschedule. `createAreaRoutes` tạo cùng cấu trúc route cho admin/user;
-  `getAreaRoutes(area)` trả bộ route đúng khu vực.
-
-### 4.3 `src/components/layout/` — giao diện khung dùng chung
-
-- `MainBottomBar.tsx`: thanh dưới của khu vực đăng nhập. Nút trái về home, nút
-  giữa mở máy quét QR, nút phải mở profile. Route home được chọn theo area.
-
-### 4.4 `src/services/` — gọi backend và định nghĩa dữ liệu
-
-Mỗi nghiệp vụ có đúng hai file:
-
-```text
-<nghiệp vụ>/
-├── <nghiệp vụ>.service.ts  # Chỉ chứa hàm Axios
-└── constant.ts             # Type, interface và giá trị cố định
-```
-
-Service có dạng thống nhất:
-
-```ts
-export async function someRequest(token: string, payload: Payload) {
-  return axios.patch(
-    `${ipNR}/endpoint`,
-    payload,
-    getAuthHeader(token),
-  );
-}
-```
-
-#### `src/services/auth/`
-
-- `constant.ts`: chứa `TOKEN_KEY`, key token cũ, payload register/login/OTP,
-  message response và `AuthSessionResponse`.
-- `auth.service.ts`: chứa `registerUser`, `loginUser`, `verifyOtp`; đồng thời
-  lưu, đọc và xóa token bằng AsyncStorage.
-
-#### `src/services/user/`
-
-- `constant.ts`: định nghĩa role và cấu trúc `User` dùng trên toàn app.
-- `user.service.ts`: `getUserProfile(token)` lấy user hiện tại và
-  `getAllUsers(token)` lấy danh sách user cho Chat/Todo admin.
-
-#### `src/services/chat/`
-
-- `constant.ts`: định nghĩa user trong chat, file ảnh upload, bản ghi chat,
-  chat đã normalize và message.
-- `chat.service.ts`: tạo chat, lấy danh sách chat, gửi message và lấy message
-  theo chat ID. File này cũng tạo `FormData` cho ảnh trên web/mobile.
-
-#### `src/services/todo/`
-
-- `constant.ts`: định nghĩa trạng thái, độ ưu tiên, task, payload tạo task và
-  các map dùng để hiển thị label/màu/icon.
-- `todo.service.ts`: lấy task admin, lấy task của user, tạo task, giao task, cập
-  nhật trạng thái và xóa task.
-
-#### `src/services/workschedule/`
-
-- `constant.ts`: chứa toàn bộ kiểu lịch, entry, policy, request admin, attendance,
-  heatmap, query, kết quả scan và danh sách lựa chọn hiển thị lịch.
-- `workschedule.service.ts`: chứa toàn bộ REST endpoint của lịch làm việc:
-  policy, lịch cá nhân, tạo/sửa/nộp/xóa request, danh sách admin, duyệt/từ chối,
-  duyệt hàng loạt, heatmap, QR, chấm công và báo cáo.
-
-### 4.5 `src/features/auth/`
-
-- `model/AuthSessionContext.tsx`: nguồn trạng thái đăng nhập chung của app. Khi
-  khởi động, context đọc token và gọi `getUserProfile`. Nó cung cấp `user`,
-  `isAuth`, `loading`, `getToken`, setter dùng sau OTP và hàm logout.
-
-### 4.6 Danh bạ, hồ sơ và dữ liệu người dùng
-
-- `src/shared/model/normalize-user.ts`: chuẩn hóa dữ liệu user không đồng nhất
-  từ backend để mọi feature nhận `_id`, `name`, `email`, `role` ổn định.
-- `src/features/directory/admin/screens/AdminDirectoryScreen.tsx`: điểm vào danh
-  bạ của admin.
-- `src/features/directory/user/screens/UserDirectoryScreen.tsx`: điểm vào danh
-  bạ của user.
-- Danh bạ admin có thao tác phân quyền và xóa tài khoản; danh bạ user là giao
-  diện chỉ xem. Hai màn không dùng chung component màn hình.
-- `src/features/profile/admin/` và `src/features/profile/user/`: hai giao diện
-  hồ sơ độc lập để có thể phát triển khác nhau theo vai trò.
-
-### 4.7 `src/features/chat/`
-
-#### Admin và user
-
-- `admin/screens/` và `admin/ui/`: giao diện Chat quản trị hệ tối/đỏ, gồm screen,
-  header, danh sách hội thoại, message và ô nhập riêng.
-- `user/screens/` và `user/ui/`: giao diện Chat người dùng hệ sáng/xanh với toàn
-  bộ component riêng.
-- `shared/model/ChatSocketContext.tsx`: hạ tầng Socket.IO duy nhất được dùng
-  chung; giữ socket cùng danh sách user online, đăng ký log lỗi/kết nối và tự
-  disconnect khi unmount hoặc đổi user.
-
-### 4.8 `src/features/home/`
-
-- `admin/screens/AdminHomeScreen.tsx`: bảng điều hành tối/đỏ, hiển thị số lịch
-  chờ duyệt, chấm công và công cụ quản trị.
-- `user/screens/UserHomeScreen.tsx`: dashboard cá nhân sáng/xanh, hiển thị lịch
-  hôm nay, ngày mai và các tiện ích dành cho nhân viên.
-
-### 4.9 `src/features/todo/`
-
-- `admin/screens/` và `admin/ui/`: screen cùng form tạo/sửa/giao/xóa và bộ lọc
-  riêng của khối quản trị.
-- `user/screens/` và `user/ui/`: screen cùng danh sách, bộ lọc và thao tác trạng
-  thái riêng của người dùng.
-- Todo không còn `shared/ui`; thay đổi UI một vai trò không tác động vai trò kia.
-
-### 4.10 `src/features/workschedule/`
-
-#### Nhánh admin
-
-- `admin/screens/`: toàn bộ điểm vào route lịch, tiện ích, lịch tháng, đơn từ và
-  thống kê của admin. `AdminWorkscheduleScreen` tự kiểm tra quyền quản lý lịch.
-- `admin/hooks/useWorkscheduleAdmin.ts`: thao tác policy, pending/all schedules,
-  duyệt/từ chối, heatmap, QR, attendance và report.
-- `admin/model/AdminWorkscheduleContext.tsx`: kho state của màn quản trị lịch.
-- `admin/ui/`: dashboard, policy, QR, duyệt lịch, duyệt đơn và báo cáo admin.
-
-#### Nhánh user
-
-- `user/screens/`: toàn bộ điểm vào route lịch, tiện ích, lịch tháng, đơn từ và
-  thống kê của user; mỗi file chứa giao diện thực, không phải wrapper.
-- `user/ui/`: editor ngày và bộ chọn tuần riêng của người dùng.
-
-#### Nhánh dùng chung
-
-- `shared/hooks/usePersonalWorkschedule.ts`: tải policy, lịch và chấm công cá nhân.
-- `shared/hooks/useWorkRequests.ts`: tạo và tải các đơn từ của người đang đăng nhập.
-- `shared/config/workRequestConfig.ts`: nhãn và metadata thuần của các loại đơn.
-- `shared/ui/AttendanceScannerModal.tsx`: quét QR chấm công toàn ứng dụng.
-- `shared/utils/date.ts`: xử lý ngày, tuần, policy và định dạng tiếng Việt.
-
-### 4.11 `src/shared/`
-
-- `hooks/useColorScheme.ts`: dùng color scheme gốc của React Native trên mobile.
-- `hooks/useColorScheme.web.ts`: đợi web hydrate rồi mới trả color scheme, tránh
-  giao diện server/client không khớp khi static rendering.
-
-### 4.12 `src/utils/`
-
-- `axios.ts`: tạo Axios instance chung, đặt timeout và header `Accept`.
-- `ip.ts`: tạo `ipNR`, `socketUrl`, `socketPath` từ biến môi trường hoặc môi
-  trường Expo/Android Emulator.
-- `apiHelper.ts`: `getAuthHeader(token)` tạo Bearer header;
-  `getApiErrorMessage` đọc message lỗi Axios và trả fallback dễ hiển thị.
-
-### 4.13 `assets/images/`
-
-- `icon.png`: icon ứng dụng chính.
-- `splash-icon.png`: ảnh màn hình splash.
-- `favicon.png`: favicon bản web.
-- `android-icon-foreground.png`: lớp trước của adaptive icon Android.
-- `android-icon-background.png`: lớp nền của adaptive icon Android.
-- `android-icon-monochrome.png`: icon đơn sắc Android.
-- `bg1.png`: ảnh nền được `UserHomeScreen` sử dụng.
-
-### 4.14 `docs/`
-
-- `docs/chat-flow.md`: tài liệu Chat được viết từ kiến trúc cũ. Phần khái niệm
-  REST/Socket vẫn hữu ích nhưng một số tên context và đường dẫn đã cũ; khi đọc
-  hãy ưu tiên source hiện tại và phần Chat trong README này.
-
-### 4.15 File cấu hình ở thư mục gốc
-
-- `.env.example`: mẫu các biến môi trường cần cấu hình.
-- `.gitignore`: danh sách file sinh tự động hoặc bí mật không commit vào Git.
-- `app.json`: cấu hình Expo: tên app, scheme, icon, splash, Android/iOS/web,
-  plugin, typed routes và React Compiler.
-- `package.json`: dependency và các npm script của dự án.
-- `package-lock.json`: khóa đúng phiên bản dependency để mọi máy cài giống nhau;
-  không sửa tay.
-- `tsconfig.json`: bật TypeScript strict và alias `@/*` trỏ từ root dự án.
-- `babel.config.js`: Babel preset của Expo, tích hợp NativeWind và Reanimated.
-- `metro.config.js`: cấu hình Metro đọc NativeWind từ `global.css`.
-- `tailwind.config.js`: cấu hình class Tailwind/NativeWind.
-- `global.css`: khai báo Tailwind base, components và utilities.
-- `eslint.config.js`: cấu hình ESLint Expo và bỏ qua thư mục build `dist`.
-- `expo-env.d.ts`: khai báo type môi trường Expo Router cho TypeScript.
-- `nativewind-env.d.ts`: khai báo type NativeWind cho prop `className`.
-- `scripts/reset-project.js`: script mẫu của Expo để đưa dự án về trạng thái
-  trắng. **Không chạy trong dự án hiện tại** vì nó có thể di chuyển hoặc xóa
-  thư mục `app`.
-- `src/README.md`: bản quy tắc kiến trúc rút gọn dành cho lúc phát triển.
-- `README.md`: tài liệu tổng thể mà bạn đang đọc.
-
-### 4.16 Thư mục được sinh tự động
-
-- `node_modules/`: package được npm cài; không sửa và không commit.
-- `.expo/`: cache/trạng thái Expo trên máy local.
-- `dist/`: kết quả `expo export`; có thể tạo lại, không viết source tại đây.
-
-## 5. Luồng Auth chi tiết
-
-### Đăng nhập
-
-```text
-login.tsx
-  → loginUser(email, password)
-  → backend gửi OTP
-  → router.push(/verify?email=...)
-  → verifyOtp(email, otp)
-  → saveAuthSession(token)
+/login
+  → POST /auth/login, backend gửi OTP
+  → /verify
+  → POST /auth/verify
+  → lưu access token + refresh token
   → cập nhật AuthSessionContext
-  → redirect theo role
+  → chuyển home theo role
 ```
 
-### Khởi động lại ứng dụng
+- Web lưu token bằng AsyncStorage.
+- Native lưu token bằng SecureStore.
+- Khi request trả `401`, interceptor dùng refresh token và retry đúng một lần.
+- Nhiều lỗi `401` đồng thời dùng chung một request refresh.
+- User object không persist; app mở lại sẽ gọi `GET /user/me`.
+
+## Điều hướng chính
+
+Mỗi tính năng chính có route tương ứng ở cả hai khu:
 
 ```text
-AuthSessionProvider
-  → getStoredToken()
-  → getUserProfile(token)
-  → normalizeUser(response)
-  → setUser + setIsAuth(true)
+/<area>/home
+/<area>/chat
+/<area>/todo
+/<area>/canteen
+/<area>/directory
+/<area>/profile
+/<area>/workschedule
+/<area>/utilities
 ```
 
-### Đăng xuất
+Trong đó `<area>` là `admin` hoặc `user`. Các route con của tiện ích gồm
+`calendar`, `overview`, `requests` và `requests/create`. Bảng ánh xạ đầy đủ đến
+từng route file/screen nằm trong tài liệu kiến trúc.
 
-```text
-ProfileScreen
-  → logoutUser()
-  → clearAuthSession()
-  → xóa user/isAuth trong context
-  → router.replace(/login)
-```
+## Thêm hoặc sửa tính năng
 
-## 6. Luồng REST API
+1. Sửa type/payload tại `src/services/<domain>/constant.ts`.
+2. Sửa endpoint tại `src/services/<domain>/*.service.ts`.
+3. Tạo hoặc sửa screen/UI riêng trong nhánh `admin` và/hoặc `user`.
+4. Chỉ đưa phần trung lập về vai trò vào `shared`.
+5. Tạo route mỏng trong `app/(main)/<area>/`.
+6. Thêm route constant nếu đường dẫn được dùng ở nhiều nơi.
+7. Kiểm tra lint, TypeScript và bundle trước khi commit.
 
-Ví dụ người dùng cập nhật trạng thái Todo:
-
-```text
-TodoTaskListCard
-  → callback của UserTodoScreen hoặc AdminTodoScreen
-  → getToken()
-  → updateTodoStatus(token, taskId, status)
-  → axios.patch(url, payload, getAuthHeader(token))
-  → backend
-  → loadTasks() để tải lại giao diện
-```
-
-Nguyên tắc:
-
-- UI không tự viết URL backend.
-- URL và Axios nằm trong `*.service.ts`.
-- Dữ liệu/type nằm trong `constant.ts` cùng nghiệp vụ.
-- Token được truyền rõ ràng vào service.
-- Lỗi Axios được chuyển thành text bằng `getApiErrorMessage`.
-
-## 7. Luồng Chat realtime
-
-REST API chịu trách nhiệm tải/tạo dữ liệu; Socket.IO chịu trách nhiệm báo thay
-đổi tức thời:
-
-```text
-Mở UserChatScreen hoặc AdminChatScreen
-  ├── getAllUsers(token)
-  ├── getChats(token)
-  └── ChatSocketContext kết nối socket
-
-Chọn chat
-  → getChatMessages(token, chatId)
-
-Gửi tin
-  → sendChatMessage(...)
-  → cập nhật danh sách local
-  → socket phát newMessage cho client liên quan
-```
-
-Các event chính: `newMessage`, `userTyping`, `userTypingStop`, `messagesSeen`,
-`getOnlineUsers`.
-
-## 8. Cách thêm một route mới
-
-Ví dụ thêm `/user/notification`:
-
-1. Tạo giao diện thật tại `src/features/notification/...`.
-2. Tạo `app/(main)/user/notification.tsx` và return giao diện đó.
-3. Nếu admin cũng dùng, tạo route admin mỏng trỏ vào cùng component.
-4. Thêm đường dẫn vào `src/application/navigation/routes.ts` nếu nhiều nơi cần
-   điều hướng đến nó.
-5. Không đặt gọi API hoặc state lớn trong file route.
-
-## 9. Cách thêm một endpoint mới
-
-Ví dụ thêm API hủy Todo:
-
-1. Nếu cần type/payload mới, thêm vào `src/services/todo/constant.ts`.
-2. Thêm một hàm rõ tên trong `src/services/todo/todo.service.ts`.
-
-```ts
-export async function cancelTodoTask(token: string, taskId: string) {
-  return axios.patch(
-    `${ipNR}/todo/${encodeURIComponent(taskId)}/cancel`,
-    {},
-    getAuthHeader(token),
-  );
-}
-```
-
-3. Import hàm đó tại View hoặc hook cần dùng.
-4. Lấy token bằng `useAuthSession().getToken()`.
-5. Gọi lại hàm load sau khi request thành công nếu cần đồng bộ UI.
-
-## 10. Cách tìm code khi sửa lỗi
-
-- Sai URL hoặc payload: xem `src/services/<nghiệp vụ>/*.service.ts`.
-- Sai type/label/trạng thái: xem `src/services/<nghiệp vụ>/constant.ts`.
-- Sai redirect hoặc URL frontend: xem `app/` và `application/navigation`.
-- User vào nhầm khu admin/user: xem `application/access`.
-- Sai loading, Alert hoặc trình tự gọi request: xem hook hoặc View chính.
-- Sai bố cục/hiển thị riêng theo vai trò: xem
-  `features/<nghiệp vụ>/<admin|user>/`; phần dùng chung xem
-  `features/<nghiệp vụ>/shared/`.
-- Chat không realtime: xem `ChatSocketContext.tsx` và listener trong
-  `UserChatScreen.tsx` hoặc `AdminChatScreen.tsx`.
-- Lịch admin không đồng bộ: xem `AdminWorkscheduleContext.tsx`.
-
-## 11. Kiểm tra trước khi commit
+## Kiểm tra trước khi commit
 
 ```bash
 npm run lint
@@ -578,9 +199,5 @@ npx tsc --noEmit
 EXPO_PUBLIC_API_URL=http://localhost:3000/api npx expo export --platform web
 ```
 
-- `lint`: kiểm tra import, React hook và quy tắc code.
-- `tsc`: kiểm tra type mà không tạo file build.
-- `expo export`: kiểm tra Metro bundle và toàn bộ route có build được không.
-
-Không sửa source trong `dist/` hoặc `node_modules/` vì hai thư mục này đều có
-thể được tạo lại.
+Không sửa source trong `dist/`, `.expo/` hoặc `node_modules/`; đây là các thư
+mục được sinh lại.
