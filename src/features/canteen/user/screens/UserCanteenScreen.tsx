@@ -475,6 +475,8 @@ export default function UserCanteenScreen() {
         </View>
 
         <View className="mt-4 flex-row rounded-2xl bg-slate-100 p-1">
+          {/* Conditional NativeWind shadows can surface a false navigation
+              context error in development, so selection uses border/background. */}
           {(
             [
               ["menu", "Thực đơn"],
@@ -482,9 +484,13 @@ export default function UserCanteenScreen() {
             ] as const
           ).map(([value, label]) => (
             <Pressable
+              accessibilityRole="tab"
+              accessibilityState={{ selected: tab === value }}
               key={value}
-              className={`flex-1 items-center rounded-xl py-2.5 ${
-                tab === value ? "bg-white shadow-sm" : ""
+              className={`flex-1 items-center rounded-xl border py-2.5 ${
+                tab === value
+                  ? "border-rose-100 bg-white"
+                  : "border-transparent bg-slate-100"
               }`}
               onPress={() => setTab(value)}
             >

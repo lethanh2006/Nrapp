@@ -915,10 +915,11 @@ backend trả về.
 
 1. Production: bắt buộc có và dùng `EXPO_PUBLIC_API_URL`; thiếu biến thì throw
    ngay khi module được load.
-2. Development trên Android Emulator: luôn dùng
-   `http://10.0.2.2:<port><path>`, kể cả khi có `EXPO_PUBLIC_API_URL`.
-3. Development trên nền tảng khác: ưu tiên `EXPO_PUBLIC_API_URL` nếu có.
-4. Không có URL cấu hình: dùng host URI của Expo, cuối cùng fallback localhost.
+2. Development trên mọi nền tảng: ưu tiên `EXPO_PUBLIC_API_URL` nếu có.
+3. Không có URL cấu hình trên Android Emulator: dùng
+   `http://10.0.2.2:<port><path>`.
+4. Không có URL cấu hình trên nền tảng khác: dùng host URI của Expo, cuối cùng
+   fallback localhost.
 
 Biến môi trường:
 

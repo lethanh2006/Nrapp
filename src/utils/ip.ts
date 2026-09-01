@@ -71,10 +71,7 @@ if (!configuredUrl && !__DEV__) {
   throw new Error("EXPO_PUBLIC_API_URL must be configured for production builds");
 }
 
-const apiUrl =
-  __DEV__ && isAndroidEmulator()
-    ? getDevelopmentUrl()
-    : configuredUrl || getDevelopmentUrl();
+const apiUrl = configuredUrl || getDevelopmentUrl();
 
 export const ipNR = removeTrailingSlash(apiUrl);
 

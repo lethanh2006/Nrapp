@@ -138,8 +138,10 @@ EXPO_PUBLIC_SOCKET_PATH=/socket.io
 ```
 
 - Production bắt buộc có `EXPO_PUBLIC_API_URL`.
-- Android Emulator ở development dùng `10.0.2.2` với
-  `EXPO_PUBLIC_API_PORT`/`EXPO_PUBLIC_API_PATH`.
+- Mọi nền tảng, gồm Android Emulator, ưu tiên `EXPO_PUBLIC_API_URL` khi biến này
+  được cấu hình.
+- Android Emulator chỉ dùng `10.0.2.2` với
+  `EXPO_PUBLIC_API_PORT`/`EXPO_PUBLIC_API_PATH` khi thiếu URL cấu hình.
 - Thiết bị thật cần truy cập được IP máy đang chạy Gateway.
 - Nếu không đặt `EXPO_PUBLIC_SOCKET_URL`, app suy ra Socket origin từ API URL.
 - Biến `EXPO_PUBLIC_*` được đóng gói vào client, không đặt secret trong đó.
