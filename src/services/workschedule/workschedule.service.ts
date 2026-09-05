@@ -95,24 +95,24 @@ export async function getWorkPolicy(token: string) {
   );
 }
 
-export async function getMySchedules(token: string, week?: string) {
+export async function getMySchedules(token: string, month?: string) {
   return axios.get<{ data: IScheduleRequest[] }>(
     `${ipNR}/workschedule/schedule/my`,
     {
       ...getAuthHeader(token),
-      params: week ? { week } : {},
+      params: month ? { month } : {},
     },
   );
 }
 
 export async function createScheduleRequest(
   token: string,
-  weekStart: string,
+  month: string,
   entries: IScheduleEntry[],
 ) {
   return axios.post<{ data: IScheduleRequest }>(
     `${ipNR}/workschedule/schedule/requests`,
-    { week_start: weekStart, entries },
+    { month, entries },
     getAuthHeader(token),
   );
 }
@@ -150,12 +150,12 @@ export async function updateWorkPolicy(
   );
 }
 
-export async function getPendingSchedules(token: string, week?: string) {
+export async function getPendingSchedules(token: string, month?: string) {
   return axios.get<{ data: AdminScheduleRequest[] }>(
     `${ipNR}/workschedule/schedule/pending`,
     {
       ...getAuthHeader(token),
-      params: week ? { week } : {},
+      params: month ? { month } : {},
     },
   );
 }
@@ -205,12 +205,12 @@ export async function approveManySchedules(token: string, ids: string[]) {
   );
 }
 
-export async function getScheduleHeatmap(token: string, week?: string) {
+export async function getScheduleHeatmap(token: string, month?: string) {
   return axios.get<{ data: AdminHeatmapRow[] }>(
     `${ipNR}/workschedule/schedule/heatmap`,
     {
       ...getAuthHeader(token),
-      params: week ? { week } : {},
+      params: month ? { month } : {},
     },
   );
 }

@@ -25,7 +25,9 @@ module.exports = defineConfig([
             {
               group: [
                 '@/src/features/*/shared/screens/**',
+                '!@/src/features/workschedule/shared/screens/**',
                 '@/src/features/*/shared/ui/**',
+                '!@/src/features/workschedule/shared/ui/**',
               ],
               message:
                 'Giao diện admin phải nằm trong nhánh admin, không dùng screen hoặc UI từ shared.',
@@ -53,7 +55,9 @@ module.exports = defineConfig([
             {
               group: [
                 '@/src/features/*/shared/screens/**',
+                '!@/src/features/workschedule/shared/screens/**',
                 '@/src/features/*/shared/ui/**',
+                '!@/src/features/workschedule/shared/ui/**',
               ],
               message:
                 'Giao diện user phải nằm trong nhánh user, không dùng screen hoặc UI từ shared.',

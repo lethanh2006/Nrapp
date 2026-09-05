@@ -37,13 +37,33 @@ export function usePersonalWorkschedule() {
     }
   }, [getToken]);
 
+  const getRegistrationData = useCallback(async () => {
+    try {
+      const token = await getToken();
+      if (!token) return null;
+      const [schedules, policy] = await Promise.all([
+        fetchMySchedules(token),
+        getWorkPolicy(token),
+      ]);
+      return {
+        schedules: Array.isArray(schedules.data.data)
+          ? schedules.data.data
+          : [],
+        policy: policy.data.data || null,
+      };
+    } catch (error) {
+      showError(error, "Không thể tải dữ liệu đăng ký lịch tháng");
+      return null;
+    }
+  }, [getToken, showError]);
+
   const getMySchedules = useCallback(
-    async (week?: string): Promise<IScheduleRequest[]> => {
+    async (month?: string): Promise<IScheduleRequest[]> => {
       try {
         setLoading(true);
         const token = await getToken();
         if (!token) return [];
-        const { data } = await fetchMySchedules(token, week);
+        const { data } = await fetchMySchedules(token, month);
         return Array.isArray(data.data) ? data.data : [];
       } catch (error) {
         showError(error, "Không thể tải danh sách lịch");
@@ -74,16 +94,13 @@ export function usePersonalWorkschedule() {
   );
 
   const sendScheduleRequest = useCallback(
-    async (
-      weekStart: string,
-      entries: IScheduleEntry[],
-    ): Promise<boolean> => {
+    async (month: string, entries: IScheduleEntry[]): Promise<boolean> => {
       try {
         setLoading(true);
         const token = await getToken();
         if (!token) return false;
 
-        await createScheduleRequest(token, weekStart, entries);
+        await createScheduleRequest(token, month, entries);
         Alert.alert("Thành công", "Đã nộp lịch để chờ duyệt");
         return true;
       } catch (error) {
@@ -136,6 +153,7 @@ export function usePersonalWorkschedule() {
 
   return {
     loading,
+    getRegistrationData,
     getPolicy,
     getMySchedules,
     getMonthlyOverview,

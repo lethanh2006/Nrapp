@@ -21,7 +21,8 @@ export interface IScheduleEntry {
 export interface IScheduleRequest {
   _id: string;
   employee_id: unknown;
-  week_start: string;
+  month?: string;
+  week_start?: string;
   status: RequestStatus;
   submitted_at?: string;
   reviewed_by?: string;
@@ -31,6 +32,7 @@ export interface IScheduleRequest {
 }
 
 export interface IWorkPolicy {
+  schedule_month?: string | null;
   registration_start: string;
   registration_end: string;
   locked?: boolean;
@@ -38,6 +40,7 @@ export interface IWorkPolicy {
 
 export interface IMonthlyScheduleEntry extends IScheduleEntry {
   schedule_request_id: string;
+  month?: string;
   week_start?: string;
   request_status: RequestStatus;
   reject_reason?: string;
@@ -127,7 +130,8 @@ export interface AdminEmployeeProfile {
 export interface AdminScheduleRequest {
   _id: string;
   employee_id: string;
-  week_start: string;
+  month?: string;
+  week_start?: string;
   status: RequestStatus;
   submitted_at?: string;
   reviewed_by?: string;
@@ -164,6 +168,7 @@ export interface AdminHeatmapRow {
 }
 
 export interface WorkscheduleQuery {
+  month?: string;
   week?: string;
   status?: string;
   from?: string;
