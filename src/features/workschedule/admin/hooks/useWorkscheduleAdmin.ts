@@ -90,12 +90,12 @@ export function useWorkscheduleAdmin() {
   );
 
   const getPendingSchedules = useCallback(
-    async (week?: string, silent = false): Promise<AdminScheduleRequest[]> => {
+    async (month?: string, silent = false): Promise<AdminScheduleRequest[]> => {
       try {
         setLoading(true);
         const token = await getToken();
         if (!token) return [];
-        const { data } = await fetchPendingSchedules(token, week);
+        const { data } = await fetchPendingSchedules(token, month);
         return Array.isArray(data.data) ? data.data : [];
       } catch (error) {
         showError(error, "Không thể tải danh sách chờ duyệt", silent);
@@ -205,12 +205,12 @@ export function useWorkscheduleAdmin() {
   );
 
   const getHeatmap = useCallback(
-    async (week?: string, silent = false): Promise<AdminHeatmapRow[]> => {
+    async (month?: string, silent = false): Promise<AdminHeatmapRow[]> => {
       try {
         setLoading(true);
         const token = await getToken();
         if (!token) return [];
-        const { data } = await getScheduleHeatmap(token, week);
+        const { data } = await getScheduleHeatmap(token, month);
         return Array.isArray(data.data) ? data.data : [];
       } catch (error) {
         showError(error, "Không thể tải heatmap", silent);

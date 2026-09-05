@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useMemo, useEffect } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo, useEffect, useRef } from "react";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import {
@@ -14,7 +14,13 @@ import type {
   WorkPeriod,
 } from "@/src/services/workschedule/constant";
 import { canManageWorkSchedule } from "@/src/application/access/roles";
-import { toLocalDateKey } from "@/src/features/workschedule/shared/utils/date";
+import {
+  getScheduleDateKey,
+  getScheduleToday,
+  monthDate,
+  toLocalDateKey,
+  toMonthKey,
+} from "@/src/features/workschedule/shared/utils/date";
 
 type RequestStatus = "all" | "pending" | "approved" | "rejected";
 type ReportRange = "7d" | "30d";
@@ -34,37 +40,8 @@ const startOfDay = (date: Date) => {
   return result;
 };
 
-const addDays = (date: Date, offset: number) => {
-  const result = new Date(date);
-  result.setDate(result.getDate() + offset);
-  return result;
-};
-
-const getIsoWeekMonday = (date: Date) => {
-  const result = startOfDay(date);
-  const day = result.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  result.setDate(result.getDate() + diff);
-  return result;
-};
-
-const getIsoWeekString = (date: Date) => {
-  const current = startOfDay(date);
-  current.setDate(current.getDate() + 3 - ((current.getDay() + 6) % 7));
-  const firstThursday = new Date(current.getFullYear(), 0, 4);
-  const weekNumber =
-    1 +
-    Math.round(
-      ((current.getTime() - firstThursday.getTime()) / 86400000 -
-        3 +
-        ((firstThursday.getDay() + 6) % 7)) /
-        7,
-    );
-  return `${current.getFullYear()}-W${String(weekNumber).padStart(2, "0")}`;
-};
-
 const getReportRange = (range: ReportRange) => {
-  const to = startOfDay(new Date());
+  const to = startOfDay(getScheduleToday());
   const from = new Date(to);
   from.setDate(from.getDate() - (range === "7d" ? 6 : 29));
   return {
@@ -82,12 +59,12 @@ const formatDateString = (dateVal: string | Date | undefined | null) => {
   if (!dateVal) return "";
   const d = new Date(dateVal);
   if (isNaN(d.getTime())) return "";
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-  const hh = String(d.getHours()).padStart(2, "0");
-  const min = String(d.getMinutes()).padStart(2, "0");
-  return `${yyyy}-${mm}-${dd} ${hh}:${min}`;
+  const time = d.toLocaleTimeString("en-GB", {
+    timeZone: "Asia/Ho_Chi_Minh",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+  return `${getScheduleDateKey(d)} ${time}`;
 };
 
 export interface AdminContextValue {
@@ -104,12 +81,12 @@ export interface AdminContextValue {
   handleSavePolicy: () => Promise<void>;
   handleLockPolicy: () => Promise<void>;
 
-  // Week selection
-  currentWeek: string;
-  selectedWeekOffset: number;
-  setSelectedWeekOffset: React.Dispatch<React.SetStateAction<number>>;
-  selectedWeek: string;
-  selectedWeekLabel: string;
+  // Month selection
+  currentMonth: string;
+  selectedMonthOffset: number;
+  setSelectedMonthOffset: React.Dispatch<React.SetStateAction<number>>;
+  selectedMonth: string;
+  selectedMonthLabel: string;
 
   // Requests
   pendingSchedules: AdminScheduleRequest[];
@@ -181,17 +158,16 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     deleteRequest,
   } = useWorkscheduleAdmin();
 
-  const currentWeek = useMemo(() => getIsoWeekString(new Date()), []);
-  const [selectedWeekOffset, setSelectedWeekOffset] = useState(0);
-  const selectedWeek = useMemo(
-    () => getIsoWeekString(addDays(getIsoWeekMonday(new Date()), selectedWeekOffset * 7)),
-    [selectedWeekOffset]
-  );
-  const selectedWeekLabel = useMemo(
-    () => getIsoWeekMonday(addDays(getIsoWeekMonday(new Date()), selectedWeekOffset * 7)).toLocaleDateString("vi-VN"),
-    [selectedWeekOffset]
-  );
+  const currentMonth = toMonthKey(getScheduleToday());
+  const [selectedMonthOffset, setSelectedMonthOffset] = useState(0);
+  const selectedMonth = useMemo(() => {
+    const date = monthDate(currentMonth);
+    date.setMonth(date.getMonth() + selectedMonthOffset);
+    return toMonthKey(date);
+  }, [currentMonth, selectedMonthOffset]);
+  const selectedMonthLabel = `Tháng ${Number(selectedMonth.slice(5))}/${selectedMonth.slice(0, 4)}`;
 
+  const loadRequestRef = useRef(0);
   const [policyDraft, setPolicyDraft] = useState({
     registration_start: "",
     registration_end: "",
@@ -222,6 +198,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
   const loadAdminData = useCallback(async (showRefreshing = false) => {
     if (!user || !canManageWorkSchedule(user.role)) return;
+    const loadRequestId = ++loadRequestRef.current;
 
     if (showRefreshing) setRefreshing(true);
 
@@ -235,24 +212,24 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       reportData,
     ] = await Promise.all([
       getPolicy(true),
-      getPendingSchedules(undefined, true),
-      getAllSchedules({ week: selectedWeek, status: requestFilter }, true),
-      getHeatmap(selectedWeek, true),
+      getPendingSchedules(selectedMonth, true),
+      getAllSchedules({ month: selectedMonth, status: requestFilter }, true),
+      getHeatmap(selectedMonth, true),
       getTodayAttendance(true),
       getReport(reportWindow, true),
     ]);
 
-    const approvedCurrentWeek = await getAllSchedules({ week: currentWeek, status: "approved" }, true);
+    const approvedCurrentMonth = await getAllSchedules({ month: currentMonth, status: "approved" }, true);
     const approvedDetails = await Promise.all(
-      approvedCurrentWeek.map((request) => getScheduleDetail(request._id, true))
+      approvedCurrentMonth.map((request) => getScheduleDetail(request._id, true))
     );
 
-    const todayKey = toLocalDateKey(new Date());
+    const todayKey = toLocalDateKey(getScheduleToday());
     const expected = approvedDetails.filter(Boolean).flatMap((request) => {
       const item = request as AdminScheduleRequest;
       const employeeId = String(item.employee?._id || item.employee?.id || item.employee_id || item._id);
       return (item.entries || [])
-        .filter((entry) => entry.date.startsWith(todayKey) && entry.type === "office")
+        .filter((entry) => getScheduleDateKey(entry.date) === todayKey && entry.type === "office")
         .map((entry) => ({
           requestId: item._id,
           employeeId,
@@ -262,6 +239,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
         }));
     });
 
+    if (loadRequestId !== loadRequestRef.current) return;
     setPolicy(policyData);
     if (policyData) {
       setPolicyDraft({
@@ -283,7 +261,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
     if (showRefreshing) setRefreshing(false);
   }, [
-    currentWeek, getPolicy, getPendingSchedules, getAllSchedules, getHeatmap, getTodayAttendance, getReport, getScheduleDetail, requestFilter, reportRange, selectedWeek, user
+    currentMonth, getPolicy, getPendingSchedules, getAllSchedules, getHeatmap, getTodayAttendance, getReport, getScheduleDetail, requestFilter, reportRange, selectedMonth, user
   ]);
 
   useEffect(() => {
@@ -326,8 +304,8 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       return;
     }
 
-    const start = new Date(startStr);
-    const end = new Date(endStr);
+    const start = new Date(`${startStr.replace(" ", "T")}:00+07:00`);
+    const end = new Date(`${endStr.replace(" ", "T")}:59+07:00`);
 
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       Alert.alert("Lỗi", "Ngày giờ nhập vào không hợp lệ");
@@ -336,6 +314,16 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
     if (start >= end) {
       Alert.alert("Lỗi", "Thời gian bắt đầu phải trước thời gian kết thúc");
+      return;
+    }
+
+    if (startStr.slice(0, 7) !== endStr.slice(0, 7)) {
+      Alert.alert("Chỉ mở một tháng", "Ngày bắt đầu và kết thúc phải nằm trong cùng một tháng.");
+      return;
+    }
+    const todayKey = toLocalDateKey(getScheduleToday());
+    if (startStr.slice(0, 10) < todayKey || endStr.slice(0, 10) < todayKey) {
+      Alert.alert("Ngày đã qua", "Chọn thời gian từ hôm nay trở đi để mở đợt đăng ký.");
       return;
     }
 
@@ -364,8 +352,6 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     if (!policy) return;
     setSavingPolicy(true);
     const updated = await updatePolicy({
-      registration_start: policy.registration_start,
-      registration_end: policy.registration_end,
       locked: true,
     });
     setSavingPolicy(false);
@@ -471,7 +457,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const value: AdminContextValue = {
     appLoading, initialLoading, refreshing, user,
     policy, policyDraft, setPolicyDraft, savingPolicy, handleSavePolicy, handleLockPolicy,
-    currentWeek, selectedWeekOffset, setSelectedWeekOffset, selectedWeek, selectedWeekLabel,
+    currentMonth, selectedMonthOffset, setSelectedMonthOffset, selectedMonth, selectedMonthLabel,
     pendingSchedules, allSchedules, requestFilter, setRequestFilter, selectedPendingIds, togglePendingSelection,
     handleApprove, handleBulkApprove, handleReject, handleDelete, rejectingRequestId, setRejectingRequestId, rejectReason, setRejectReason, busyRequestId, bulkBusy,
     qrBusy, generatedQr, qrRemaining, handleGenerateQr,

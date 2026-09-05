@@ -3,9 +3,10 @@ import type { AdminScheduleRequest } from "@/src/features/workschedule/admin/hoo
 import { useAdminData } from "@/src/features/workschedule/admin/model/AdminWorkscheduleContext";
 import AdminScheduleForm from "@/src/features/workschedule/admin/ui/AdminScheduleForm";
 import type { EntryType, IScheduleEntry, WorkPeriod } from "@/src/services/workschedule/constant";
+import { getScheduleDateKey, getScheduleToday, toLocalDateKey } from "@/src/features/workschedule/shared/utils/date";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import { Ionicons } from "@expo/vector-icons";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from "react-native";
 
 type RequestStatus = "all" | "pending" | "approved" | "rejected";
@@ -53,9 +54,10 @@ export function AdminRequestManager() {
     setRejectReason,
     busyRequestId,
     bulkBusy,
-    selectedWeekLabel,
-    selectedWeekOffset,
-    setSelectedWeekOffset,
+    selectedMonth,
+    selectedMonthLabel,
+    selectedMonthOffset,
+    setSelectedMonthOffset,
     handleAdminUpdateEntries,
   } = useAdminData();
   const { getScheduleDetail } = useWorkscheduleAdmin();
@@ -65,6 +67,13 @@ export function AdminRequestManager() {
   const [editEntries, setEditEntries] = useState<IScheduleEntry[]>([]);
   const [savedEntries, setSavedEntries] = useState<IScheduleEntry[]>([]);
   const [isEditing, setIsEditing] = useState(false);
+  const activeDetailId = useRef<string | null>(null);
+
+  useEffect(() => {
+    activeDetailId.current = null;
+    setExpandedId(null);
+    setIsEditing(false);
+  }, [selectedMonth, requestFilter]);
 
   const visiblePendingIds = useMemo(
     () => allSchedules.filter((request) => request.status === "pending").map((request) => request._id),
@@ -84,17 +93,20 @@ export function AdminRequestManager() {
 
   const handleToggleExpand = async (request: AdminScheduleRequest) => {
     if (expandedId === request._id) {
+      activeDetailId.current = null;
       setExpandedId(null);
       setIsEditing(false);
       setRejectingRequestId(null);
       return;
     }
 
+    activeDetailId.current = request._id;
     setExpandedId(request._id);
     setLoadingDetailId(request._id);
     setIsEditing(false);
     setRejectingRequestId(null);
     const detail = await getScheduleDetail(request._id);
+    if (activeDetailId.current !== request._id) return;
     setLoadingDetailId(null);
 
     if (!detail) {
@@ -111,14 +123,19 @@ export function AdminRequestManager() {
     field: "type" | "period" | "note",
     value: string,
   ) => {
-    setEditEntries((previous) =>
-      previous.map((entry) => {
-        if (!entry.date.startsWith(date)) return entry;
-        if (field === "type") return { ...entry, type: value as EntryType };
-        if (field === "period") return { ...entry, period: value as WorkPeriod };
-        return { ...entry, note: value };
-      }),
-    );
+    if (date < toLocalDateKey(getScheduleToday()) || !date.startsWith(selectedMonth)) return;
+    setEditEntries((previous) => {
+      const existing = previous.find((entry) => getScheduleDateKey(entry.date) === date);
+      const entry: IScheduleEntry = existing || { date, type: "day_off", period: "full_day", note: "" };
+      const next = field === "type"
+        ? { ...entry, type: value as EntryType }
+        : field === "period"
+          ? { ...entry, period: value as WorkPeriod }
+          : { ...entry, note: value };
+      return existing
+        ? previous.map((item) => getScheduleDateKey(item.date) === date ? next : item)
+        : [...previous, next].sort((a, b) => a.date.localeCompare(b.date));
+    });
   };
 
   const handleSave = async (id: string) => {
@@ -142,7 +159,7 @@ export function AdminRequestManager() {
         : "";
     Alert.alert(
       "Xóa yêu cầu lịch?",
-      `Xóa lịch tuần ${formatDate(request.week_start)} của ${employee}?${approvedWarning} Hành động này không thể hoàn tác.`,
+      `Xóa ${request.month ? `lịch tháng ${Number(request.month.slice(5))}/${request.month.slice(0, 4)}` : `lịch cũ từ ${formatDate(request.week_start)}`} của ${employee}?${approvedWarning} Hành động này không thể hoàn tác.`,
       [
         { text: "Giữ lại", style: "cancel" },
         {
@@ -179,22 +196,22 @@ export function AdminRequestManager() {
 
         <View className="mt-4 flex-row items-center rounded-2xl bg-slate-50 p-1">
           <Pressable
-            accessibilityLabel="Xem tuần trước"
+            accessibilityLabel="Xem tháng trước"
             className="h-10 w-10 items-center justify-center rounded-xl bg-white"
-            onPress={() => setSelectedWeekOffset((previous) => previous - 1)}
+            onPress={() => setSelectedMonthOffset((previous) => previous - 1)}
           >
             <Ionicons name="chevron-back" size={18} color="#475569" />
           </Pressable>
-          <Pressable className="flex-1 items-center" onPress={() => setSelectedWeekOffset(0)}>
+          <Pressable className="flex-1 items-center" onPress={() => setSelectedMonthOffset(0)}>
             <Text className="text-[10px] font-black uppercase tracking-wider text-red-600">
-              {selectedWeekOffset === 0 ? "Tuần hiện tại" : selectedWeekOffset < 0 ? "Tuần trước" : "Tuần sau"}
+              {selectedMonthOffset === 0 ? "Tháng hiện tại" : "Về tháng hiện tại"}
             </Text>
-            <Text className="mt-0.5 text-sm font-black text-slate-900">Từ {selectedWeekLabel}</Text>
+            <Text className="mt-0.5 text-sm font-black text-slate-900">{selectedMonthLabel}</Text>
           </Pressable>
           <Pressable
-            accessibilityLabel="Xem tuần sau"
+            accessibilityLabel="Xem tháng sau"
             className="h-10 w-10 items-center justify-center rounded-xl bg-white"
-            onPress={() => setSelectedWeekOffset((previous) => previous + 1)}
+            onPress={() => setSelectedMonthOffset((previous) => previous + 1)}
           >
             <Ionicons name="chevron-forward" size={18} color="#475569" />
           </Pressable>
@@ -230,7 +247,7 @@ export function AdminRequestManager() {
             >
               {allVisibleSelected ? <Ionicons name="checkmark" size={13} color="#fff" /> : null}
             </View>
-            <Text className="ml-2 text-xs font-bold text-slate-700">Chọn tất cả tuần này</Text>
+            <Text className="ml-2 text-xs font-bold text-slate-700">Chọn tất cả tháng này</Text>
           </Pressable>
           <Pressable
             className={`ml-auto rounded-xl px-3 py-2 ${
@@ -254,7 +271,7 @@ export function AdminRequestManager() {
             </View>
             <Text className="mt-3 text-sm font-black text-slate-700">Không có lịch phù hợp</Text>
             <Text className="mt-1 text-center text-xs leading-5 text-slate-500">
-              Hãy đổi tuần hoặc trạng thái để xem các yêu cầu khác.
+              Hãy đổi tháng hoặc trạng thái để xem các yêu cầu khác.
             </Text>
           </View>
         ) : (
@@ -263,6 +280,7 @@ export function AdminRequestManager() {
               const expanded = expandedId === request._id;
               const selected = selectedPendingIds.includes(request._id);
               const rejecting = rejectingRequestId === request._id;
+              const canEdit = Boolean(request.month && request.month >= toLocalDateKey(getScheduleToday()).slice(0, 7));
               const status = requestStatusMeta[request.status] || requestStatusMeta.pending;
               return (
                 <View
@@ -290,7 +308,9 @@ export function AdminRequestManager() {
                             {formatEmployee(request.employee)}
                           </Text>
                           <Text className="mt-1 text-xs text-slate-500">
-                            Tuần từ {formatDate(request.week_start)}
+                            {request.month
+                              ? `Tháng ${Number(request.month.slice(5))}/${request.month.slice(0, 4)}`
+                              : `Lịch cũ từ ${formatDate(request.week_start)} · Chỉ xem`}
                           </Text>
                         </View>
                         <View className={`rounded-full px-2.5 py-1 ${status.box}`}>
@@ -322,21 +342,21 @@ export function AdminRequestManager() {
                             <Text className="text-xs font-black uppercase tracking-wider text-slate-500">
                               Chi tiết từng ngày
                             </Text>
-                            <Pressable
+                            {canEdit ? <Pressable
                               className={`rounded-xl px-3 py-2 ${isEditing ? "bg-red-600" : "bg-slate-100"}`}
                               disabled={busyRequestId === request._id}
                               onPress={() => (isEditing ? void handleSave(request._id) : setIsEditing(true))}
                             >
                               <Text className={`text-xs font-black ${isEditing ? "text-white" : "text-slate-700"}`}>
-                                {isEditing ? "Lưu thay đổi" : "Điều chỉnh"}
+                                {busyRequestId === request._id ? "Đang lưu..." : isEditing ? "Lưu thay đổi" : "Điều chỉnh"}
                               </Text>
-                            </Pressable>
+                            </Pressable> : null}
                           </View>
                           <AdminScheduleForm
                             entries={editEntries}
                             onChangeEntry={handleChangeEntry}
-                            readOnly={!isEditing}
-                            startDate={new Date(request.week_start)}
+                            readOnly={!isEditing || busyRequestId === request._id}
+                            month={request.month || selectedMonth}
                           />
                           {isEditing ? (
                             <Pressable className="mt-3 items-center py-2" onPress={handleCancelEdit}>

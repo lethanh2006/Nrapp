@@ -1,13 +1,20 @@
-import React from "react";
-import { Pressable, Text, TextInput, View } from "react-native";
+import { WorkMonthCalendar } from "@/src/features/workschedule/shared/ui/WorkMonthCalendar";
+import {
+  getScheduleDateKey,
+  getScheduleToday,
+  monthDate,
+  toLocalDateKey,
+} from "@/src/features/workschedule/shared/utils/date";
 import type {
   EntryType,
   IScheduleEntry,
   WorkPeriod,
 } from "@/src/services/workschedule/constant";
+import React, { useMemo, useState } from "react";
+import { Pressable, Text, TextInput, View } from "react-native";
 
 interface Props {
-  startDate: Date;
+  month: string;
   entries: IScheduleEntry[];
   onChangeEntry: (
     date: string,
@@ -17,122 +24,129 @@ interface Props {
   readOnly?: boolean;
 }
 
-const typeOptions: { value: EntryType; label: string; color: string }[] = [
-  { value: "office", label: "Lên cty", color: "bg-red-50 text-red-800" },
-  { value: "remote", label: "Từ xa", color: "bg-rose-50 text-rose-800" },
-  { value: "day_off", label: "Nghỉ", color: "bg-gray-100 text-gray-800" },
-  { value: "leave", label: "Phép", color: "bg-orange-100 text-orange-800" },
+const typeOptions: { value: EntryType; label: string }[] = [
+  { value: "office", label: "Tại công ty" },
+  { value: "remote", label: "Làm từ xa" },
+  { value: "day_off", label: "Ngày nghỉ" },
+  { value: "leave", label: "Nghỉ phép" },
 ];
-
-const dayNames = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 const periodOptions: { value: WorkPeriod; label: string }[] = [
   { value: "full_day", label: "Cả ngày" },
-  { value: "morning", label: "Sáng" },
-  { value: "afternoon", label: "Chiều" },
+  { value: "morning", label: "Buổi sáng" },
+  { value: "afternoon", label: "Buổi chiều" },
 ];
 
 export default function AdminScheduleForm({
-  startDate,
+  month,
   entries,
   onChangeEntry,
   readOnly = false,
 }: Props) {
-  const days = Array.from({ length: 7 }).map((_, i) => {
-    const d = new Date(startDate);
-    d.setDate(d.getDate() + i);
-    return d;
-  });
+  const today = getScheduleToday();
+  const todayKey = toLocalDateKey(today);
+  const [selectedDate, setSelectedDate] = useState(() =>
+    todayKey.startsWith(month) ? today : monthDate(month),
+  );
+  const selectedKey = toLocalDateKey(selectedDate);
+  const entriesByDate = useMemo(
+    () =>
+      Object.fromEntries(
+        entries.map((entry) => [getScheduleDateKey(entry.date), entry]),
+      ),
+    [entries],
+  );
+  const entry: Partial<IScheduleEntry> = entriesByDate[selectedKey] || {
+    type: "day_off",
+    period: "full_day",
+    note: "",
+  };
+  const past = selectedKey < todayKey;
+  const disabled = readOnly || past;
 
   return (
-    <View className="gap-4">
-      {days.map((date) => {
-        const dateStr = date.toISOString().split("T")[0];
-        const entry = entries.find((e) => e.date.startsWith(dateStr)) || {
-          date: dateStr,
-          type: "office",
-          period: "full_day",
-          note: "",
-        };
-
-        return (
-          <View
-            key={dateStr}
-            className="bg-white p-4 rounded-xl shadow-sm border border-gray-100"
-          >
-            <View className="flex-row items-center mb-3">
-              <View className="w-12 h-12 bg-red-50 rounded-lg items-center justify-center mr-3">
-                <Text className="text-xs text-red-600 font-bold">
-                  {dayNames[date.getDay()]}
+    <View>
+      <WorkMonthCalendar
+        visibleMonth={monthDate(month)}
+        selectedDate={selectedDate}
+        entriesByDate={entriesByDate}
+        tone="admin"
+        onSelectDate={setSelectedDate}
+        onChangeMonth={() => undefined}
+        minMonth={monthDate(month)}
+        maxMonth={monthDate(month)}
+        isDateDisabled={(date) => toLocalDateKey(date) < todayKey}
+      />
+      <View className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+        <Text className="text-sm font-bold capitalize text-slate-900">
+          {selectedDate.toLocaleDateString("vi-VN", {
+            weekday: "long",
+            day: "2-digit",
+            month: "2-digit",
+          })}
+        </Text>
+        <Text className="mb-3 mt-1 text-xs leading-5 text-slate-500">
+          {past
+            ? "Ngày đã qua được giữ nguyên, không thể điều chỉnh."
+            : readOnly
+              ? "Chọn Điều chỉnh để cập nhật lịch tháng này."
+              : "Chạm ngày trên bảng để thay đổi nơi làm và ca làm."}
+        </Text>
+        <View className="flex-row flex-wrap gap-2">
+          {typeOptions.map((option) => {
+            const selected = entry.type === option.value;
+            return (
+              <Pressable
+                key={option.value}
+                accessibilityRole="button"
+                accessibilityState={{ selected, disabled }}
+                disabled={disabled}
+                onPress={() => onChangeEntry(selectedKey, "type", option.value)}
+                className={`rounded-xl border px-3 py-2.5 ${selected ? "border-red-200 bg-red-50" : "border-slate-200 bg-white"} ${disabled ? "opacity-60" : ""}`}
+              >
+                <Text
+                  className={`text-xs font-bold ${selected ? "text-red-700" : "text-slate-600"}`}
+                >
+                  {option.label}
                 </Text>
-                <Text className="text-lg text-red-900 font-bold">
-                  {date.getDate()}
-                </Text>
-              </View>
-              <Text className="text-base font-medium flex-1">
-                Tháng {date.getMonth() + 1}, {date.getFullYear()}
-              </Text>
-            </View>
-
-            <View className="flex-row flex-wrap gap-2 mb-3">
-              {typeOptions.map((opt) => {
-                const isSelected = entry.type === opt.value;
-                return (
-                  <Pressable
-                    key={opt.value}
-                    disabled={readOnly}
-                    onPress={() => onChangeEntry(dateStr, "type", opt.value)}
-                    className={`px-3 py-1.5 rounded-lg border ${
-                      isSelected
-                        ? "border-red-500 bg-red-50"
-                        : "border-gray-200 bg-white"
-                    } ${readOnly ? "opacity-70" : ""}`}
+              </Pressable>
+            );
+          })}
+        </View>
+        {entry.type !== "day_off" ? (
+          <View className="mt-3 flex-row rounded-xl bg-slate-200/60 p-1">
+            {periodOptions.map((option) => {
+              const selected = (entry.period || "full_day") === option.value;
+              return (
+                <Pressable
+                  key={option.value}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected, disabled }}
+                  disabled={disabled}
+                  onPress={() =>
+                    onChangeEntry(selectedKey, "period", option.value)
+                  }
+                  className={`flex-1 items-center rounded-lg py-2.5 ${selected ? "bg-white" : "bg-transparent"} ${disabled ? "opacity-60" : ""}`}
+                >
+                  <Text
+                    className={`text-[11px] font-bold ${selected ? "text-red-700" : "text-slate-500"}`}
                   >
-                    <Text
-                      className={`text-sm font-medium ${
-                        isSelected ? "text-red-700" : "text-gray-600"
-                      }`}
-                    >
-                      {opt.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            <View className="mb-3 flex-row rounded-lg bg-gray-100 p-1">
-              {periodOptions.map((option) => {
-                const selected = (entry.period || "full_day") === option.value;
-                return (
-                  <Pressable
-                    className={`flex-1 items-center rounded-md py-2 ${
-                      selected ? "bg-white" : "bg-transparent"
-                    } ${readOnly ? "opacity-70" : ""}`}
-                    disabled={readOnly}
-                    key={option.value}
-                    onPress={() => onChangeEntry(dateStr, "period", option.value)}
-                  >
-                    <Text
-                      className={`text-xs font-bold ${
-                        selected ? "text-red-700" : "text-gray-500"
-                      }`}
-                    >
-                      {option.label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-
-            <TextInput
-              className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-800"
-              placeholder="Ghi chú (tùy chọn)"
-              value={entry.note}
-              editable={!readOnly}
-              onChangeText={(text) => onChangeEntry(dateStr, "note", text)}
-            />
+                    {option.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
           </View>
-        );
-      })}
+        ) : null}
+        <TextInput
+          className={`mt-3 rounded-xl border border-slate-200 bg-white p-3 text-sm text-slate-800 ${disabled ? "opacity-60" : ""}`}
+          placeholder="Ghi chú (không bắt buộc)"
+          placeholderTextColor="#94a3b8"
+          maxLength={200}
+          value={entry.note || ""}
+          editable={!disabled}
+          onChangeText={(text) => onChangeEntry(selectedKey, "note", text)}
+        />
+      </View>
     </View>
   );
 }
