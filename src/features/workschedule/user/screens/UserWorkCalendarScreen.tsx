@@ -1,5 +1,6 @@
 import { usePersonalWorkschedule } from "@/src/features/workschedule/shared/hooks/usePersonalWorkschedule";
-import { toLocalDateKey } from "@/src/features/workschedule/shared/utils/date";
+import { WorkMonthCalendar, calendarPeriodMeta } from "@/src/features/workschedule/shared/ui/WorkMonthCalendar";
+import { getScheduleDateKey, getScheduleToday, toLocalDateKey, toMonthKey } from "@/src/features/workschedule/shared/utils/date";
 import type {
   IMonthlyScheduleEntry,
   IMonthlyScheduleOverview,
@@ -9,12 +10,7 @@ import { Ionicons } from "@expo/vector-icons";
 import { ScreenHeader } from "@/src/shared/ui/ScreenHeader";
 import { router, useFocusEffect } from "expo-router";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, Text, View } from "react-native";
-
-const WEEKDAYS = ["T2", "T3", "T4", "T5", "T6", "T7", "CN"];
-
-const monthKey = (date: Date) =>
-  `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+import { ScrollView, Text, View } from "react-native";
 
 const monthRange = (date: Date) => ({
   from: toLocalDateKey(new Date(date.getFullYear(), date.getMonth(), 1)),
@@ -47,23 +43,6 @@ const formatAttendanceTime = (value?: string) => {
       });
 };
 
-const periodMeta = (entry?: IMonthlyScheduleEntry) => {
-  if (!entry) return { background: "bg-white", dot: "bg-transparent", label: "Trống" };
-  if (entry.type === "leave") {
-    return { background: "bg-violet-100", dot: "bg-violet-500", label: "Nghỉ phép" };
-  }
-  if (entry.type === "day_off") {
-    return { background: "bg-slate-100", dot: "bg-slate-400", label: "Nghỉ" };
-  }
-  if (entry.period === "morning") {
-    return { background: "bg-yellow-100", dot: "bg-yellow-500", label: "Buổi sáng" };
-  }
-  if (entry.period === "afternoon") {
-    return { background: "bg-orange-100", dot: "bg-orange-500", label: "Buổi chiều" };
-  }
-  return { background: "bg-sky-100", dot: "bg-sky-500", label: "Cả ngày" };
-};
-
 const statusLabel: Record<string, string> = {
   pending: "Chờ duyệt",
   approved: "Đã duyệt",
@@ -73,7 +52,7 @@ const statusLabel: Record<string, string> = {
 export default function UserWorkCalendarScreen() {
   const { getMonthlyOverview, getMyAttendance } = usePersonalWorkschedule();
   const [visibleMonth, setVisibleMonth] = useState(() => {
-    const value = new Date();
+    const value = getScheduleToday();
     value.setDate(1);
     value.setHours(0, 0, 0, 0);
     return value;
@@ -81,16 +60,17 @@ export default function UserWorkCalendarScreen() {
   const [overview, setOverview] = useState<IMonthlyScheduleOverview | null>(null);
   const [attendance, setAttendance] = useState<PersonalAttendanceRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedDay, setSelectedDay] = useState(() => new Date().getDate());
+  const [selectedDate, setSelectedDate] = useState(() => getScheduleToday());
   const loadRequestRef = useRef(0);
 
   const loadData = useCallback(async () => {
     const requestId = ++loadRequestRef.current;
     setLoading(true);
     setAttendance([]);
+    setOverview(null);
     const range = monthRange(visibleMonth);
     const [scheduleData, attendanceData] = await Promise.all([
-      getMonthlyOverview(monthKey(visibleMonth)),
+      getMonthlyOverview(toMonthKey(visibleMonth)),
       getMyAttendance(range.from, range.to),
     ]);
     if (requestId !== loadRequestRef.current) return;
@@ -111,36 +91,18 @@ export default function UserWorkCalendarScreen() {
   const entriesByDate = useMemo(() => {
     const result: Record<string, IMonthlyScheduleEntry> = {};
     (overview?.entries || []).forEach((entry) => {
-      result[toLocalDateKey(new Date(entry.date))] = entry;
+      result[getScheduleDateKey(entry.date)] = entry;
     });
     return result;
   }, [overview]);
 
-  const days = useMemo(() => {
-    const year = visibleMonth.getFullYear();
-    const month = visibleMonth.getMonth();
-    const count = new Date(year, month + 1, 0).getDate();
-    const leading = (new Date(year, month, 1).getDay() + 6) % 7;
-    return [
-      ...Array.from({ length: leading }, () => null),
-      ...Array.from({ length: count }, (_, index) => index + 1),
-    ];
-  }, [visibleMonth]);
-
-  const selectedDate = new Date(
-    visibleMonth.getFullYear(),
-    visibleMonth.getMonth(),
-    selectedDay,
-  );
   const selectedEntry = entriesByDate[toLocalDateKey(selectedDate)];
-  const selectedMeta = periodMeta(selectedEntry);
+  const selectedMeta = calendarPeriodMeta(selectedEntry);
 
   const changeMonth = (offset: number) => {
-    setVisibleMonth(previous => {
-      const next = new Date(previous.getFullYear(), previous.getMonth() + offset, 1);
-      setSelectedDay(1);
-      return next;
-    });
+    const next = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth() + offset, 1);
+    setVisibleMonth(next);
+    setSelectedDate(next);
   };
 
   const statItems = [
@@ -163,77 +125,14 @@ export default function UserWorkCalendarScreen() {
       />
 
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 32 }}>
-        <View className="rounded-3xl border border-slate-200 bg-white p-4">
-          <View className="mb-4 flex-row items-center justify-between">
-            <Pressable
-              className="h-10 w-10 items-center justify-center rounded-xl bg-slate-50"
-              onPress={() => changeMonth(-1)}
-            >
-              <Ionicons name="chevron-back" size={20} color="#475569" />
-            </Pressable>
-            <Text className="text-base font-black text-slate-900">
-              Tháng {visibleMonth.getMonth() + 1}/{visibleMonth.getFullYear()}
-            </Text>
-            <Pressable
-              className="h-10 w-10 items-center justify-center rounded-xl bg-slate-50"
-              onPress={() => changeMonth(1)}
-            >
-              <Ionicons name="chevron-forward" size={20} color="#475569" />
-            </Pressable>
-          </View>
-
-          {loading ? (
-            <View className="h-64 items-center justify-center">
-              <ActivityIndicator color="#2563eb" />
-            </View>
-          ) : (
-            <>
-              <View className="mb-2 flex-row">
-                {WEEKDAYS.map(day => (
-                  <Text className="w-[14.285%] text-center text-[10px] font-black text-slate-400" key={day}>
-                    {day}
-                  </Text>
-                ))}
-              </View>
-              <View className="flex-row flex-wrap">
-                {days.map((day, index) => {
-                  if (!day) return <View className="h-12 w-[14.285%]" key={`blank-${index}`} />;
-                  const date = new Date(visibleMonth.getFullYear(), visibleMonth.getMonth(), day);
-                  const entry = entriesByDate[toLocalDateKey(date)];
-                  const meta = periodMeta(entry);
-                  const selected = selectedDay === day;
-                  return (
-                    <View className="h-12 w-[14.285%] items-center justify-center" key={day}>
-                      <Pressable
-                        className={`h-10 w-10 items-center justify-center rounded-full ${meta.background} ${
-                          selected ? "border-2 border-slate-900" : "border border-transparent"
-                        } ${entry?.request_status === "rejected" ? "opacity-40" : ""}`}
-                        onPress={() => setSelectedDay(day)}
-                      >
-                        <Text className="text-xs font-bold text-slate-800">{day}</Text>
-                        {entry ? <View className={`mt-0.5 h-1.5 w-1.5 rounded-full ${meta.dot}`} /> : null}
-                      </Pressable>
-                    </View>
-                  );
-                })}
-              </View>
-            </>
-          )}
-
-          <View className="mt-4 flex-row flex-wrap border-t border-slate-100 pt-3">
-            {[
-              ["bg-sky-500", "Cả ngày"],
-              ["bg-yellow-500", "Sáng"],
-              ["bg-orange-500", "Chiều"],
-              ["bg-violet-500", "Nghỉ phép"],
-            ].map(([color, label]) => (
-              <View className="mb-2 w-1/2 flex-row items-center" key={label}>
-                <View className={`mr-2 h-2.5 w-2.5 rounded-full ${color}`} />
-                <Text className="text-[11px] text-slate-600">{label}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
+        <WorkMonthCalendar
+          visibleMonth={visibleMonth}
+          selectedDate={selectedDate}
+          entriesByDate={entriesByDate}
+          onSelectDate={setSelectedDate}
+          onChangeMonth={changeMonth}
+          loading={loading}
+        />
 
         <View className="mt-4 flex-row flex-wrap justify-between">
           {statItems.map(item => (
