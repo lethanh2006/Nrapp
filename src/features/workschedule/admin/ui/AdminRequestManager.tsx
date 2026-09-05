@@ -281,6 +281,7 @@ export function AdminRequestManager() {
               const selected = selectedPendingIds.includes(request._id);
               const rejecting = rejectingRequestId === request._id;
               const canEdit = Boolean(request.month && request.month >= toLocalDateKey(getScheduleToday()).slice(0, 7));
+              const canDelete = Boolean(request.month) && !savedEntries.some(entry => getScheduleDateKey(entry.date) < toLocalDateKey(getScheduleToday()));
               const status = requestStatusMeta[request.status] || requestStatusMeta.pending;
               return (
                 <View
@@ -429,7 +430,9 @@ export function AdminRequestManager() {
 
                           <Pressable
                             className="mt-3 flex-row items-center justify-center rounded-xl border border-red-100 bg-red-50 py-3 disabled:opacity-50"
-                            disabled={busyRequestId === request._id || isEditing}
+                            accessibilityRole="button"
+                            accessibilityState={{ disabled: !canDelete || busyRequestId === request._id || isEditing }}
+                            disabled={!canDelete || busyRequestId === request._id || isEditing}
                             onPress={() => confirmDelete(request)}
                           >
                             {busyRequestId === request._id ? (
@@ -440,7 +443,7 @@ export function AdminRequestManager() {
                             <Text className="ml-2 text-xs font-black text-red-600">
                               {busyRequestId === request._id
                                 ? "Đang xử lý..."
-                                : "Xóa yêu cầu lịch"}
+                                : !canDelete ? "Giữ lịch sử · Không thể xóa" : "Xóa yêu cầu lịch"}
                             </Text>
                           </Pressable>
                         </>
