@@ -20,7 +20,7 @@ export default function UserWorkscheduleUtilitiesScreen() {
   const utilities: UtilityItem[] = [
     {
       title: "Đăng ký lịch làm",
-      description: "Chọn nơi làm và ca sáng, chiều hoặc cả ngày",
+      description: "Chọn ngày và ca làm trong tháng đang mở đăng ký",
       icon: "calendar-outline",
       color: "#2563eb",
       background: "bg-blue-50",

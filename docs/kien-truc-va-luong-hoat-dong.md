@@ -151,7 +151,7 @@ Nrapp/
 | `services/chat/constant.ts` | Chat/message/image types và MIME helper |
 | `services/todo/todo.service.ts` | CRUD, giao và đổi trạng thái task |
 | `services/todo/constant.ts` | Task type, filter, pagination, transition và metadata UI |
-| `services/workschedule/workschedule.service.ts` | Lịch tuần, policy, đơn nhân sự, QR, attendance và báo cáo |
+| `services/workschedule/workschedule.service.ts` | Lịch tháng, policy, đơn nhân sự, QR, attendance và báo cáo |
 | `services/workschedule/constant.ts` | Toàn bộ type/payload/response của workschedule |
 | `services/canteen/canteen.service.ts` | Menu, order và hàng đợi bếp |
 | `services/canteen/category.service.ts` | CRUD danh mục món |
@@ -393,7 +393,7 @@ trong screen, chưa có key trong `routes.ts`.
 | `/user/canteen` | `app/(main)/user/canteen.tsx` | `UserCanteenScreen` |
 | `/user/directory` | `app/(main)/user/directory.tsx` | `UserDirectoryScreen` |
 | `/user/profile` | `app/(main)/user/profile.tsx` | `UserProfileScreen` |
-| `/user/workschedule` | `app/(main)/user/workschedule/index.tsx` | Đăng ký lịch tuần |
+| `/user/workschedule` | `app/(main)/user/workschedule/index.tsx` | Đăng ký lịch tháng |
 | `/user/utilities` | `app/(main)/user/utilities/index.tsx` | Tiện ích nhân sự |
 | `/user/utilities/calendar` | `app/(main)/user/utilities/calendar.tsx` | Lịch và chấm công cá nhân |
 | `/user/utilities/overview` | `app/(main)/user/utilities/overview.tsx` | Thống kê cá nhân theo tháng |
@@ -488,8 +488,8 @@ Cashier/waiter vẫn ở giao diện admin nhưng không gọi dashboard quản 
 `src/features/home/user/screens/UserHomeScreen.tsx`:
 
 1. `useFocusEffect` gọi `usePersonalWorkschedule().getMySchedules()`.
-2. Tìm request có `week_start` trùng thứ Hai của tuần hiện tại.
-3. Tách entry hôm nay và ngày mai.
+2. Lấy các entry thuộc lịch đã được duyệt (gồm dữ liệu tuần cũ).
+3. Tách entry hôm nay và ngày mai theo ngày Việt Nam, kể cả khi sang tháng mới.
 4. Render loại lịch `office`, `remote`, `day_off`, `leave`.
 5. Nếu chưa có lịch, dẫn đến `/user/workschedule` để đăng ký.
 
@@ -757,7 +757,7 @@ Ba khái niệm khác nhau:
 
 | Khái niệm | Dữ liệu | Ví dụ |
 | --- | --- | --- |
-| Lịch tuần | `IScheduleRequest` + `IScheduleEntry[]` | Office/remote theo từng ngày |
+| Lịch tháng | `IScheduleRequest` + `IScheduleEntry[]` | Office/remote theo từng ngày |
 | Đơn nhân sự | `IWorkRequest` | Nghỉ, muộn, về sớm, OT, công tác, remote |
 | Chấm công | `AdminAttendanceRecord` | Check-in/check-out QR hoặc tự động theo lịch |
 
@@ -765,8 +765,8 @@ Ba khái niệm khác nhau:
 
 | Vị trí | Trách nhiệm |
 | --- | --- |
-| `user/screens/UserWorkscheduleScreen.tsx` | Đăng ký lịch tuần |
-| `user/ui/UserWeekPicker.tsx` | Chọn một trong các tuần được phép |
+| `user/screens/UserWorkscheduleScreen.tsx` | Đăng ký lịch tháng |
+| `shared/ui/WorkMonthCalendar.tsx` | Bảng tháng dùng chung, màu ca và khóa ngày |
 | `user/ui/UserDayScheduleEditor.tsx` | Chọn office/remote, ca và ghi chú |
 | `user/screens/UserWorkscheduleUtilitiesScreen.tsx` | Menu tiện ích nhân sự |
 | `user/screens/UserWorkCalendarScreen.tsx` | Lịch tháng + lịch sử chấm công |
@@ -776,28 +776,25 @@ Ba khái niệm khác nhau:
 | `shared/hooks/usePersonalWorkschedule.ts` | API lịch/chấm công cá nhân |
 | `shared/hooks/useWorkRequests.ts` | API đơn của chính tài khoản |
 | `shared/config/workRequestConfig.ts` | Metadata sáu loại đơn |
-| `shared/utils/date.ts` | Tuần, date key và kiểm tra policy |
+| `shared/utils/date.ts` | Tháng, ngày Việt Nam và kiểm tra policy |
 | `shared/ui/AttendanceScannerModal.tsx` | Camera quét QR toàn app |
 
-#### Luồng user đăng ký lịch tuần
+#### Luồng user đăng ký lịch tháng
 
-1. Tải song song policy và toàn bộ lịch cá nhân khi screen được focus.
-2. `getAllowedWeekRange` tạo năm tuần từ tuần hiện tại đến `+28 ngày`; mặc
-   định chọn tuần kế tiếp.
-3. Ghép entry backend với `editedEntries` local theo key `YYYY-MM-DD`.
-4. Chỉ cho chọn `office` hoặc `remote`; ngày không chọn không được gửi.
-5. Có preset T2–T6, hoặc sửa từng ngày và ca.
-6. Không cho sửa ngày quá khứ, lịch pending/approved hoặc ngoài cửa đăng ký.
-7. Chưa từng gửi: POST schedule request.
-8. Bị từ chối: hiển thị lý do và POST resubmit sau khi sửa.
-9. Thành công: xóa draft của tuần, tải lại dữ liệu.
+1. Tải song song policy và lịch cá nhân; lỗi tải khóa đăng ký và hiện nút thử lại.
+2. `registration_start` và `registration_end` phải cùng tháng theo `Asia/Ho_Chi_Minh`;
+   backend trả `schedule_month` tương ứng. Thời gian này là cửa nhận đăng ký.
+3. Bảng chỉ hiển thị tháng đang mở; ngày làm có thể là bất kỳ ngày chưa qua trong tháng.
+4. Chạm ngày để chọn office/remote, ca và ghi chú; chọn nhanh T2–T6 cho toàn tháng.
+5. Ngày quá khứ tô xám và khóa. Lịch pending/approved chỉ xem. Ngày trống là ngày nghỉ.
+6. POST `{ month: "YYYY-MM", entries }` gửi một đơn cho tháng; lịch từ chối dùng resubmit.
+7. Gửi lại/điều chỉnh giữ nguyên entry đã qua, chỉ thay đổi ngày hiện tại hoặc tương lai.
+8. Thành công: xóa draft của tháng, tải lại dữ liệu. Lịch tuần cũ vẫn xem được;
+   ngày trùng lịch tuần pending/approved bị khóa để tránh đăng ký chồng.
 
-Policy đóng khi `locked=true`, thời gian sai, chưa tới `registration_start` hoặc
-đã quá `registration_end`.
-
-Nếu tải policy lỗi, `usePersonalWorkschedule.getPolicy()` trả `null` và
-`isRegistrationClosed(null)` hiện trả `false`; form vẫn mở để backend quyết
-định khi submit. Đây là hành vi fail-open cần nhớ khi debug chính sách đăng ký.
+Policy đóng khi thiếu hoặc không hợp lệ, `locked=true`, chưa tới ngày mở hoặc quá hạn.
+Khoảng như 29/10–02/11 bị từ chối tại backend; admin chọn khoảng trực tiếp trên bảng tháng.
+Xem [luồng lịch tháng](lich-lam-theo-thang.md) để biết contract và thứ tự cập nhật dịch vụ.
 
 #### Sáu loại đơn nhân sự
 
@@ -824,16 +821,16 @@ từ `AdminWorkRequestsScreen` hoặc `AdminWorkscheduleUtilitiesScreen`; chỉ 
 | `admin/screens/AdminWorkscheduleScreen.tsx` | Chọn dashboard quản lý hoặc lịch cá nhân theo quyền |
 | `admin/model/AdminWorkscheduleContext.tsx` | State tổng hợp dashboard quản lý |
 | `admin/hooks/useWorkscheduleAdmin.ts` | Bọc toàn bộ service quản trị |
-| `admin/ui/AdminRequestManager.tsx` | Duyệt/sửa/xóa lịch tuần |
+| `admin/ui/AdminRequestManager.tsx` | Duyệt/sửa/xóa lịch tháng |
 | `admin/ui/AdminWorkRequestManager.tsx` | Duyệt/từ chối đơn nhân sự |
 | `admin/ui/AdminPolicySection.tsx` | Mở/khóa khoảng đăng ký |
 | `admin/ui/AdminAttendanceQR.tsx` | Tạo QR 30 giây |
 | `admin/ui/AdminReportSummary.tsx` | Chấm công, thiếu mặt và báo cáo |
 | `admin/ui/AdminScheduleForm.tsx` | Sửa entry trong một request lịch |
 | `admin/ui/AdminDayScheduleEditor.tsx` | Editor ngày cho lịch cá nhân admin-area |
-| `admin/ui/AdminWeekPicker.tsx` | Chọn tuần cho lịch cá nhân admin-area |
+| `shared/screens/MonthlyRegistrationScreen.tsx` | Luồng đăng ký tháng dùng chung cho user và admin-area |
 | `admin/ui/AdminStatCard.tsx` | Thẻ số liệu dashboard/báo cáo |
-| `admin/screens/AdminWorkCalendarScreen.tsx` | Lịch/heatmap toàn hệ thống theo tuần |
+| `admin/screens/AdminWorkCalendarScreen.tsx` | Lịch/heatmap toàn hệ thống theo tháng |
 | `admin/screens/AdminMonthlyOverviewScreen.tsx` | Báo cáo toàn nhân sự theo tháng |
 | `admin/screens/AdminPersonalWorkscheduleScreen.tsx` | Lịch cá nhân cho admin-area không có quyền quản lý |
 
@@ -857,12 +854,12 @@ có thể duyệt lịch, xử lý đơn, tạo QR và xem báo cáo theo điề
 
 - Policy hiện tại.
 - Lịch chờ duyệt.
-- Danh sách lịch theo tuần/filter.
-- Heatmap theo tuần.
+- Danh sách lịch theo tháng/filter.
+- Heatmap theo tháng.
 - Chấm công hôm nay.
 - Báo cáo 7 hoặc 30 ngày.
 
-Sau đó context tải chi tiết các lịch approved của tuần hiện tại để tính người
+Sau đó context tải chi tiết các lịch approved của tháng hiện tại để tính người
 được kỳ vọng có mặt và so với bản ghi check-in. Các UI con dùng `useAdminData`
 thay vì tự gọi lại cùng API.
 
@@ -1077,8 +1074,8 @@ còn lại trong bảng được nối vào `UserCanteenScreen`, `AdminCanteenSc
 | POST | `/workschedule/requests/:id/reject` | `rejectWorkRequest` | Từ chối đơn |
 | GET | `/workschedule/policy` | `getWorkPolicy` | Đọc policy |
 | PATCH | `/workschedule/policy` | `updateWorkPolicy` | Sửa policy |
-| GET | `/workschedule/schedule/my` | `getMySchedules` | Lịch tuần cá nhân |
-| POST | `/workschedule/schedule/requests` | `createScheduleRequest` | Gửi lịch tuần |
+| GET | `/workschedule/schedule/my` | `getMySchedules` | Lịch tháng cá nhân |
+| POST | `/workschedule/schedule/requests` | `createScheduleRequest` | Gửi lịch tháng |
 | POST | `/workschedule/schedule/requests/:id/resubmit` | `resubmitScheduleRequest` | Gửi lại lịch bị từ chối |
 | GET | `/workschedule/attendance/my` | `getMyAttendance` | Chấm công cá nhân |
 | GET | `/workschedule/schedule/pending` | `getPendingSchedules` | Lịch chờ duyệt |
@@ -1087,7 +1084,7 @@ còn lại trong bảng được nối vào `UserCanteenScreen`, `AdminCanteenSc
 | POST | `/workschedule/schedule/requests/:id/approve` | `approveSchedule` | Duyệt lịch |
 | POST | `/workschedule/schedule/requests/:id/reject` | `rejectSchedule` | Từ chối lịch |
 | POST | `/workschedule/schedule/requests/bulk-approve` | `approveManySchedules` | Duyệt hàng loạt |
-| GET | `/workschedule/schedule/heatmap` | `getScheduleHeatmap` | Heatmap tuần |
+| GET | `/workschedule/schedule/heatmap` | `getScheduleHeatmap` | Heatmap tháng |
 | PATCH | `/workschedule/schedule/requests/:id` | `updateAdminSchedule` | Admin sửa entries |
 | DELETE | `/workschedule/schedule/requests/:id` | `deleteScheduleRequest` | Xóa request lịch |
 | POST | `/workschedule/attendance/qr/generate` | `generateAttendanceQr` | Phát QR |

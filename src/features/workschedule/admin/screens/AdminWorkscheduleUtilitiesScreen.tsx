@@ -16,14 +16,14 @@ const ADMIN_TOOLS: {
 }[] = [
   {
     title: "Điều hành lịch làm",
-    description: "Duyệt đăng ký tuần, thiết lập chính sách và phát mã chấm công.",
+    description: "Duyệt đăng ký tháng, thiết lập chính sách và phát mã chấm công.",
     icon: "shield-checkmark-outline",
     route: APP_ROUTES.admin.workschedule,
     badge: "Vận hành",
   },
   {
     title: "Lịch toàn hệ thống",
-    description: "Theo dõi lịch đăng ký của nhân viên theo tuần và trạng thái.",
+    description: "Theo dõi lịch đăng ký của nhân viên theo tháng và trạng thái.",
     icon: "calendar-number-outline",
     route: "/(main)/admin/utilities/calendar" as Href,
     badge: "Nhân sự",

@@ -15,8 +15,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { usePersonalWorkschedule } from "@/src/features/workschedule/shared/hooks/usePersonalWorkschedule";
 import type {
   IScheduleEntry,
-  IScheduleRequest,
 } from "@/src/services/workschedule/constant";
+import { getScheduleDateKey, getScheduleToday, toLocalDateKey } from "@/src/features/workschedule/shared/utils/date";
 import { APP_ROUTES } from "@/src/application/navigation/routes";
 
 export default function UserHomeScreen() {
@@ -26,7 +26,7 @@ export default function UserHomeScreen() {
   const [todayDate, setTodayDate] = useState(new Date());
 
   const { getMySchedules, loading } = usePersonalWorkschedule();
-  const [currentWeekSchedule, setCurrentWeekSchedule] = useState<IScheduleRequest | null>(null);
+  const [scheduleEntries, setScheduleEntries] = useState<IScheduleEntry[]>([]);
   const [hasLoaded, setHasLoaded] = useState(false);
 
   useEffect(() => {
@@ -36,23 +36,6 @@ export default function UserHomeScreen() {
     return () => clearInterval(timer);
   }, []);
 
-  const getMonday = (d: Date) => {
-    const date = new Date(d);
-    const day = date.getDay();
-    const diff = date.getDate() - (day === 0 ? 6 : day - 1);
-    const monday = new Date(date.setDate(diff));
-    monday.setHours(0, 0, 0, 0);
-    return monday;
-  };
-
-  const isSameDay = (date1: Date, date2: Date) => {
-    return (
-      date1.getFullYear() === date2.getFullYear() &&
-      date1.getMonth() === date2.getMonth() &&
-      date1.getDate() === date2.getDate()
-    );
-  };
-
   useFocusEffect(
     useCallback(() => {
       let isActive = true;
@@ -60,13 +43,9 @@ export default function UserHomeScreen() {
         const schedules = await getMySchedules();
         if (!isActive) return;
 
-        const thisWeekMonday = getMonday(new Date());
-        const found = schedules.find((s) => {
-          const sDate = new Date(s.week_start);
-          return isSameDay(sDate, thisWeekMonday);
-        });
-
-        setCurrentWeekSchedule(found || null);
+        setScheduleEntries(schedules
+          .filter(schedule => schedule.status === "approved")
+          .flatMap(schedule => schedule.entries || []));
         setHasLoaded(true);
       };
 
@@ -97,7 +76,9 @@ export default function UserHomeScreen() {
     return `${dayName}, ${day} THÁNG ${month < 10 ? "0" + month : month}`;
   };
 
-  const tomorrow = new Date(todayDate.getTime() + 24 * 60 * 60 * 1000);
+  const today = getScheduleToday(todayDate);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
 
   const renderScheduleBox = (entry: IScheduleEntry | undefined) => {
     if (!entry) {
@@ -191,8 +172,8 @@ export default function UserHomeScreen() {
     }
   };
 
-  const todayEntry = currentWeekSchedule?.entries?.find(e => isSameDay(new Date(e.date), todayDate));
-  const tomorrowEntry = currentWeekSchedule?.entries?.find(e => isSameDay(new Date(e.date), tomorrow));
+  const todayEntry = scheduleEntries.find(e => getScheduleDateKey(e.date) === getScheduleDateKey(todayDate));
+  const tomorrowEntry = scheduleEntries.find(e => getScheduleDateKey(e.date) === toLocalDateKey(tomorrow));
 
   return (
     <ScrollView
@@ -261,7 +242,7 @@ export default function UserHomeScreen() {
         </View>
       </ImageBackground>
 
-      {!currentWeekSchedule && hasLoaded ? (
+      {!todayEntry && !tomorrowEntry && hasLoaded ? (
         <View
           className="mx-4 bg-white rounded-3xl p-5 -mt-8 shadow-md border border-slate-100 items-center justify-center min-h-[110px]"
           style={{
@@ -270,7 +251,7 @@ export default function UserHomeScreen() {
         >
           <Ionicons name="calendar-outline" size={28} color="#94a3b8" className="mb-1.5" />
           <Text className="text-slate-500 text-xs font-bold text-center">
-            Bạn không có lịch trong tuần này
+            Chưa có lịch đã duyệt cho hôm nay và ngày mai
           </Text>
           <Pressable
             onPress={() => router.push(areaRoutes.workschedule)}
