@@ -19,6 +19,7 @@ import type {
 import { AppAlert } from "@/src/shared/ui/AppAlert";
 import { ScreenHeader } from "@/src/shared/ui/ScreenHeader";
 import { Ionicons } from "@expo/vector-icons";
+import { useNavigation, usePreventRemove } from "@react-navigation/native";
 import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -71,6 +72,7 @@ export function MonthlyRegistrationScreen({
   const requestRef = useRef(0);
   const savingRef = useRef(false);
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
   const accent = tone === "admin" ? "#dc2626" : "#2563eb";
   const buttonClass = tone === "admin" ? "bg-red-600" : "bg-blue-600";
   const month = getRegistrationMonth(policy);
@@ -293,19 +295,17 @@ export function MonthlyRegistrationScreen({
       ],
     );
   };
-  const handleBack = () => {
-    if (submitting) return;
-    if (unsaved && !readOnly) {
-      AppAlert.alert(
-        "Rời trang đăng ký?",
-        "Những ngày đang chọn chưa được gửi duyệt.",
-        [
-          { text: "Ở lại", style: "cancel" },
-          { text: "Rời trang", onPress: onBack },
-        ],
-      );
-    } else onBack();
-  };
+  usePreventRemove(submitting || (unsaved && !readOnly), ({ data }) => {
+    if (savingRef.current) return;
+    AppAlert.alert(
+      "Rời trang đăng ký?",
+      "Những ngày đang chọn chưa được gửi duyệt.",
+      [
+        { text: "Ở lại", style: "cancel" },
+        { text: "Rời trang", onPress: () => navigation.dispatch(data.action) },
+      ],
+    );
+  });
 
   return (
     <View className="flex-1 bg-slate-50">
@@ -313,7 +313,7 @@ export function MonthlyRegistrationScreen({
         title="Đăng ký lịch làm"
         subtitle="Chọn ngày trong tháng và gửi quản lý duyệt"
         tone={tone}
-        onBack={handleBack}
+        onBack={onBack}
       />
       {loading ? (
         <View className="flex-1 items-center justify-center">
