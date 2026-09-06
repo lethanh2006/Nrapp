@@ -22,14 +22,29 @@ Lịch tuần cũ giữ nguyên để xem lại. Những ngày trùng lịch tu�
 - `POST /workschedule/schedule/requests/:id/resubmit` và `PATCH /workschedule/schedule/requests/:id`: `{ "entries": [...] }`, giữ nguyên entry quá khứ.
 - Danh sách cá nhân, danh sách quản lý và heatmap dùng query `month=YYYY-MM`. Danh sách quản lý trả kèm `entries` để hiển thị chi tiết từng ngày trên bảng tháng.
 
+Mở phần cấu hình chỉ để xem, không tự đổi ngày bắt đầu hoặc hạn đăng ký. Admin chọn **Chỉnh sửa** để sửa; **Hủy chỉnh sửa** khôi phục cấu hình đã lưu. Đổi tháng ở danh sách duyệt không làm mất bản nháp cấu hình.
+
+Khi rời trang đăng ký có thay đổi chưa gửi, ứng dụng cho chọn **Ở lại** hoặc **Rời trang**. Gửi lỗi vẫn giữ các ngày đã chọn để thử lại; gửi thành công chuyển sang trạng thái chờ duyệt.
+
 BE kiểm tra lại tháng, hạn đăng ký và ngày quá khứ cho mọi vai trò. Không có dữ liệu policy hoặc lỗi tải dữ liệu thì FE khóa gửi và cho tải lại.
 
 ## Cập nhật và kiểm tra
+
+Backend lịch cần MongoDB **replica set hoặc Atlas** để lưu lịch và chấm công trong cùng transaction; MongoDB standalone không được hỗ trợ.
 
 Cập nhật `backend/workschedule`, `backend/gateway` và `Nrapp` cùng đợt vì payload tạo lịch đổi từ `week_start` sang `month`. Cấu hình cũ vắt tháng cần được admin mở lại thành một đợt hợp lệ. Dữ liệu lịch tuần không tự biến thành lịch tháng. Khi khởi động, dịch vụ tạo unique index theo `(employee_id, month)` rồi bỏ unique index tuần cũ; cần triển khai các instance dịch vụ lịch cùng phiên bản. Chấm công tự động của lịch tháng gắn với ID yêu cầu để không ảnh hưởng chấm công lịch tuần cũ.
 
 - Nrapp: `npx tsc --noEmit`, `npm run lint`, `node --test scripts/workschedule-date.test.cjs`.
 - Chạy thêm test ngày với `TZ=America/Los_Angeles` để kiểm tra thiết bị ở múi giờ khác.
 - Backend lịch: `npm test -- --runInBand`, `npm run build`, `npm run lint`.
+- Kiểm tra tích hợp: chạy `npm run test:e2e` tại `backend/workschedule` với Docker đang chạy và dependency của Gateway đã cài. Bài kiểm tra dùng Gateway, dịch vụ lịch và MongoDB replica set thật trong môi trường riêng; xác thực/danh bạ dùng dữ liệu giả lập, không ghi vào database đang sử dụng.
 - Gateway: `npm run build`, `node --test dist/modules/workschedule/dto/monthly-schedule.dto.test.js`.
 - Thử trên thiết bị: mở đợt cùng tháng, chọn nhanh/ngày riêng, gửi và gửi lại; ngày quá khứ xám; ngày khác tháng không xuất hiện trong lựa chọn.
+
+## Kiểm tra giao diện trước khi phát hành
+
+- Admin mở cấu hình để xem: không có yêu cầu lưu tự động, ngày của đợt đã lưu không đổi. Chỉnh sửa rồi chuyển sang danh sách duyệt và quay lại: bản nháp còn nguyên. Hủy chỉnh sửa khôi phục đúng đợt đã lưu.
+- User chọn nhanh ngày làm, bấm Trang chủ rồi chọn Ở lại: các ngày đã chọn còn nguyên. Chọn Rời trang mới thoát. Sau khi gửi thành công, thoát không hiện cảnh báo bản nháp.
+- Trên màn hình hẹp, bảng đủ bảy cột, ngày quá khứ xám, nút gửi không bị thanh điều hướng che. Kiểm tra thêm thao tác quay lại hệ thống trên Android/iOS.
+
+Kiểm tra ngày 06/09/2026: backend đạt 49 test; Gateway đạt 3 test DTO; kiểm tra tích hợp với MongoDB riêng đạt. Luồng xem/sửa/hủy cấu hình, giữ bản nháp khi chuyển tab, cảnh báo rời trang và gửi lịch tháng đã chạy đạt trên Chrome ở kích thước 390 × 844 với API giả lập. Kiểm tra trình duyệt không thay thế kiểm tra trên thiết bị Android/iOS.
