@@ -35,13 +35,14 @@ export interface WorkMonthCalendarProps {
   tone?: "default" | "admin";
   showLegend?: boolean;
   loading?: boolean;
+  readOnly?: boolean;
 }
 
 /** One month grid for registration, policy selection and calendar overviews. */
 export function WorkMonthCalendar({
   visibleMonth, selectedDate, entriesByDate = {}, onSelectDate, onChangeMonth,
   minMonth, maxMonth, isDateDisabled, highlightedDates = [], dayCountsByDate,
-  tone = "default", showLegend = true, loading = false,
+  tone = "default", showLegend = true, loading = false, readOnly = false,
 }: WorkMonthCalendarProps) {
   const year = visibleMonth.getFullYear();
   const month = visibleMonth.getMonth();
@@ -105,11 +106,11 @@ export function WorkMonthCalendar({
               date.toLocaleDateString("vi-VN", { weekday: "long", day: "numeric", month: "numeric", year: "numeric" }),
               today ? "Hôm nay" : "", count !== undefined ? `${count} người có lịch` : meta.label,
               location, entry?.request_status ? STATUS_LABELS[entry.request_status] : "",
-              inRange ? "Trong khoảng đã chọn" : "", disabled ? "Không thể chọn ngày này" : "",
+              inRange ? "Trong khoảng đã chọn" : "", disabled || readOnly ? "Không thể chọn ngày này" : "",
             ].filter(Boolean).join(", ");
             return (
               <Pressable key={dateKey} accessibilityRole="button" accessibilityLabel={label}
-                accessibilityState={{ selected, disabled }} disabled={disabled}
+                accessibilityState={{ selected, disabled: disabled || readOnly }} disabled={disabled || readOnly}
                 className="h-12 w-[14.285%] items-center justify-center"
                 onPress={() => onSelectDate(date)}
               >

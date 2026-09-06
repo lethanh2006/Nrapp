@@ -78,7 +78,9 @@ export interface AdminContextValue {
   policyDraft: { registration_start: string; registration_end: string; locked: boolean; };
   setPolicyDraft: React.Dispatch<React.SetStateAction<{ registration_start: string; registration_end: string; locked: boolean; }>>;
   savingPolicy: boolean;
-  handleSavePolicy: () => Promise<void>;
+  editingPolicy: boolean;
+  cancelPolicyEdit: () => void;
+  handleSavePolicy: () => Promise<boolean>;
   handleLockPolicy: () => Promise<void>;
 
   // Month selection
@@ -168,12 +170,30 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const selectedMonthLabel = `Tháng ${Number(selectedMonth.slice(5))}/${selectedMonth.slice(0, 4)}`;
 
   const loadRequestRef = useRef(0);
-  const [policyDraft, setPolicyDraft] = useState({
+  const [policyDraft, setPolicyDraftState] = useState({
     registration_start: "",
     registration_end: "",
     locked: true,
   });
   const [policy, setPolicy] = useState<IWorkPolicy | null>(null);
+  const [editingPolicy, setEditingPolicy] = useState(false);
+  const editingPolicyRef = useRef(false);
+  const policyWriteRef = useRef(0);
+  const savingPolicyRef = useRef(false);
+  const setPolicyDraft = useCallback<React.Dispatch<React.SetStateAction<typeof policyDraft>>>((value) => {
+    editingPolicyRef.current = true;
+    setEditingPolicy(true);
+    setPolicyDraftState(value);
+  }, []);
+  const cancelPolicyEdit = () => {
+    editingPolicyRef.current = false;
+    setEditingPolicy(false);
+    setPolicyDraftState({
+      registration_start: formatDateString(policy?.registration_start),
+      registration_end: formatDateString(policy?.registration_end),
+      locked: policy?.locked ?? true,
+    });
+  };
 
   const [pendingSchedules, setPendingSchedules] = useState<AdminScheduleRequest[]>([]);
   const [allSchedules, setAllSchedules] = useState<AdminScheduleRequest[]>([]);
@@ -199,6 +219,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   const loadAdminData = useCallback(async (showRefreshing = false) => {
     if (!user || !canManageWorkSchedule(user.role)) return;
     const loadRequestId = ++loadRequestRef.current;
+    const policyVersion = policyWriteRef.current;
 
     if (showRefreshing) setRefreshing(true);
 
@@ -240,13 +261,16 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     });
 
     if (loadRequestId !== loadRequestRef.current) return;
-    setPolicy(policyData);
-    if (policyData) {
-      setPolicyDraft({
-        registration_start: formatDateString(policyData.registration_start),
-        registration_end: formatDateString(policyData.registration_end),
-        locked: policyData.locked ?? true,
-      });
+    if (policyData && policyVersion === policyWriteRef.current) {
+      setPolicy(policyData);
+      // List refreshes and approval actions must not erase an open policy edit.
+      if (!editingPolicyRef.current) {
+        setPolicyDraftState({
+          registration_start: formatDateString(policyData.registration_start),
+          registration_end: formatDateString(policyData.registration_end),
+          locked: policyData.locked ?? true,
+        });
+      }
     }
     setPendingSchedules(pendingData);
     setAllSchedules(allData);
@@ -294,6 +318,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
   }, [checkedInMap, todayExpected]);
 
   const handleSavePolicy = async () => {
+    if (savingPolicyRef.current) return false;
     const startStr = policyDraft.registration_start.trim();
     const endStr = policyDraft.registration_end.trim();
 
@@ -301,7 +326,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
     const dateRegex = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/;
     if (!dateRegex.test(startStr) || !dateRegex.test(endStr)) {
       Alert.alert("Lỗi", "Thời gian phải có định dạng YYYY-MM-DD HH:mm (Ví dụ: 2026-05-22 17:00)");
-      return;
+      return false;
     }
 
     const start = new Date(`${startStr.replace(" ", "T")}:00+07:00`);
@@ -309,22 +334,22 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       Alert.alert("Lỗi", "Ngày giờ nhập vào không hợp lệ");
-      return;
+      return false;
     }
 
     if (start >= end) {
       Alert.alert("Lỗi", "Thời gian bắt đầu phải trước thời gian kết thúc");
-      return;
+      return false;
     }
 
     if (startStr.slice(0, 7) !== endStr.slice(0, 7)) {
       Alert.alert("Chỉ mở một tháng", "Ngày bắt đầu và kết thúc phải nằm trong cùng một tháng.");
-      return;
+      return false;
     }
     const todayKey = toLocalDateKey(getScheduleToday());
     if (startStr.slice(0, 10) < todayKey || endStr.slice(0, 10) < todayKey) {
       Alert.alert("Ngày đã qua", "Chọn thời gian từ hôm nay trở đi để mở đợt đăng ký.");
-      return;
+      return false;
     }
 
     const payload = {
@@ -333,31 +358,45 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
       locked: policyDraft.locked,
     };
 
+    savingPolicyRef.current = true;
+    policyWriteRef.current += 1;
     setSavingPolicy(true);
     const updated = await updatePolicy(payload);
+    policyWriteRef.current += 1;
+    savingPolicyRef.current = false;
     setSavingPolicy(false);
 
     if (updated) {
       setPolicy(updated);
-      setPolicyDraft({
+      editingPolicyRef.current = false;
+      setEditingPolicy(false);
+      setPolicyDraftState({
         registration_start: formatDateString(updated.registration_start),
         registration_end: formatDateString(updated.registration_end),
         locked: updated.locked ?? true,
       });
       Alert.alert("Thành công", "Đã cập nhật chính sách làm việc");
+      return true;
     }
+    return false;
   };
 
   const handleLockPolicy = async () => {
-    if (!policy) return;
+    if (!policy || savingPolicyRef.current) return;
+    savingPolicyRef.current = true;
+    policyWriteRef.current += 1;
     setSavingPolicy(true);
     const updated = await updatePolicy({
       locked: true,
     });
+    policyWriteRef.current += 1;
+    savingPolicyRef.current = false;
     setSavingPolicy(false);
     if (updated) {
       setPolicy(updated);
-      setPolicyDraft({
+      editingPolicyRef.current = false;
+      setEditingPolicy(false);
+      setPolicyDraftState({
         registration_start: formatDateString(updated.registration_start),
         registration_end: formatDateString(updated.registration_end),
         locked: true,
@@ -456,7 +495,7 @@ export function AdminProvider({ children }: { children: React.ReactNode }) {
 
   const value: AdminContextValue = {
     appLoading, initialLoading, refreshing, user,
-    policy, policyDraft, setPolicyDraft, savingPolicy, handleSavePolicy, handleLockPolicy,
+    policy, policyDraft, setPolicyDraft, savingPolicy, editingPolicy, cancelPolicyEdit, handleSavePolicy, handleLockPolicy,
     currentMonth, selectedMonthOffset, setSelectedMonthOffset, selectedMonth, selectedMonthLabel,
     pendingSchedules, allSchedules, requestFilter, setRequestFilter, selectedPendingIds, togglePendingSelection,
     handleApprove, handleBulkApprove, handleReject, handleDelete, rejectingRequestId, setRejectingRequestId, rejectReason, setRejectReason, busyRequestId, bulkBusy,

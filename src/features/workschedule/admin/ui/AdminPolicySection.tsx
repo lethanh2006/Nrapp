@@ -24,6 +24,8 @@ export function AdminPolicySection() {
     policyDraft,
     setPolicyDraft,
     savingPolicy,
+    editingPolicy,
+    cancelPolicyEdit,
     handleSavePolicy,
     handleLockPolicy,
   } = useAdminData();
@@ -33,7 +35,7 @@ export function AdminPolicySection() {
   const currentMonth = today.slice(0, 7);
   const draftMonth = policyDraft.registration_start.slice(0, 7);
   const selectedMonth =
-    /^\d{4}-\d{2}$/.test(draftMonth) && draftMonth >= currentMonth
+    /^\d{4}-\d{2}$/.test(draftMonth) && (!editingPolicy || draftMonth >= currentMonth)
       ? draftMonth
       : currentMonth;
   const startDay = policyDraft.registration_start.slice(0, 10);
@@ -62,7 +64,7 @@ export function AdminPolicySection() {
     const first = monthDate(selectedMonth);
     first.setMonth(first.getMonth() + offset);
     const month = toMonthKey(first);
-    if (month < currentMonth || savingPolicy) return;
+    if (month < currentMonth || savingPolicy || !editingPolicy) return;
     const last = new Date(first.getFullYear(), first.getMonth() + 1, 0);
     setPolicyDraft({
       registration_start: `${month === currentMonth ? today : toLocalDateKey(first)} 00:00`,
@@ -73,7 +75,7 @@ export function AdminPolicySection() {
   };
 
   const selectDay = (day: string) => {
-    if (day < today || day.slice(0, 7) !== selectedMonth || savingPolicy)
+    if (day < today || day.slice(0, 7) !== selectedMonth || savingPolicy || !editingPolicy)
       return;
     setPolicyDraft((previous) => {
       const start =
@@ -99,13 +101,21 @@ export function AdminPolicySection() {
   };
 
   const beginEditing = () => {
-    if (
-      startDay < today ||
-      startDay.slice(0, 7) !== endDay.slice(0, 7) ||
-      !startDay
-    )
-      selectMonth(0);
-    else setPolicyDraft((previous) => ({ ...previous, locked: false }));
+    if (savingPolicy) return;
+    const editMonth = selectedMonth < currentMonth ? currentMonth : selectedMonth;
+    const first = monthDate(editMonth);
+    const last = new Date(first.getFullYear(), first.getMonth() + 1, 0);
+    const start = startDay.startsWith(editMonth) && startDay >= today
+      ? startDay : editMonth === currentMonth ? today : toLocalDateKey(first);
+    // Preserve a valid existing deadline when reopening an ongoing registration.
+    const end = endDay.startsWith(editMonth) && endDay >= start
+      ? endDay : toLocalDateKey(last);
+    setPolicyDraft({
+      registration_start: `${start} 00:00`,
+      registration_end: `${end} 23:59`,
+      locked: false,
+    });
+    setSelection("start");
   };
 
   return (
@@ -113,10 +123,7 @@ export function AdminPolicySection() {
       <Pressable
         accessibilityRole="button"
         accessibilityState={{ expanded: isOpen }}
-        onPress={() => {
-          if (!isOpen && (startDay < today || !activeMonth)) beginEditing();
-          setIsOpen(!isOpen);
-        }}
+        onPress={() => setIsOpen(!isOpen)}
         className="flex-row items-center gap-3 p-5"
       >
         <View className="flex-1">
@@ -148,8 +155,9 @@ export function AdminPolicySection() {
       {isOpen ? (
         <View className="border-t border-slate-100 p-4">
           <Text className="mb-4 text-xs leading-5 text-slate-500">
-            Mỗi đợt chỉ nhận lịch của một tháng. Ngày đã qua được tô xám và
-            không thể chọn.
+            {editingPolicy
+              ? "Chọn thời gian nhận lịch trong một tháng. Ngày đã qua được tô xám và không thể chọn."
+              : "Thời gian nhận lịch đã lưu. Chọn Chỉnh sửa hoặc Mở đợt đăng ký để thay đổi."}
           </Text>
           <WorkMonthCalendar
             visibleMonth={monthDate(selectedMonth)}
@@ -161,10 +169,12 @@ export function AdminPolicySection() {
             }
             onSelectDate={(day) => selectDay(toLocalDateKey(day))}
             onChangeMonth={selectMonth}
-            minMonth={monthDate(currentMonth)}
+            minMonth={monthDate(editingPolicy && !savingPolicy ? currentMonth : selectedMonth)}
+            maxMonth={editingPolicy && !savingPolicy ? undefined : monthDate(selectedMonth)}
             isDateDisabled={(day) =>
-              toLocalDateKey(day) < today || savingPolicy || policyDraft.locked
+              toLocalDateKey(day) < today || savingPolicy
             }
+            readOnly={!editingPolicy}
             highlightedDates={highlightedDates}
             showLegend={false}
             tone="admin"
@@ -176,9 +186,9 @@ export function AdminPolicySection() {
                 accessibilityRole="button"
                 accessibilityState={{
                   selected: selection === field,
-                  disabled: policyDraft.locked || savingPolicy,
+                  disabled: !editingPolicy || savingPolicy,
                 }}
-                disabled={policyDraft.locked || savingPolicy}
+                disabled={!editingPolicy || savingPolicy}
                 onPress={() => setSelection(field)}
                 className={`flex-1 rounded-2xl border p-3 ${selection === field ? "border-red-200 bg-red-50" : "border-slate-200 bg-slate-50"}`}
               >
@@ -192,19 +202,19 @@ export function AdminPolicySection() {
             ))}
           </View>
           <Text className="mt-3 text-xs leading-5 text-slate-500">
-            {policyDraft.locked
-              ? "Chọn Mở đợt đăng ký để thiết lập tháng và thời gian."
+            {!editingPolicy
+              ? "Các ngày trên bảng chỉ để xem. Mở chỉnh sửa khi cần thay đổi đợt đăng ký."
               : `Chạm ngày trên bảng để chọn ${selection === "start" ? "ngày bắt đầu" : "ngày kết thúc"}. Trong đợt này, nhân viên được đăng ký các ngày chưa qua của ${monthLabel(selectedMonth).toLowerCase()}.`}
           </Text>
           <View className="mt-4 flex-row gap-3">
-            {policyDraft.locked ? (
+            {!editingPolicy ? (
               <Pressable
                 disabled={savingPolicy}
                 className="flex-1 items-center rounded-2xl bg-red-600 py-3.5"
                 onPress={beginEditing}
               >
                 <Text className="text-sm font-bold text-white">
-                  Mở đợt đăng ký
+                  {policy?.locked === false ? "Chỉnh sửa" : "Mở đợt đăng ký"}
                 </Text>
               </Pressable>
             ) : (
@@ -218,7 +228,16 @@ export function AdminPolicySection() {
                 </Text>
               </Pressable>
             )}
-            {policy && !policy.locked ? (
+            {editingPolicy ? (
+              <Pressable
+                accessibilityRole="button"
+                disabled={savingPolicy}
+                className="items-center justify-center rounded-2xl bg-slate-100 px-4 py-3.5"
+                onPress={cancelPolicyEdit}
+              >
+                <Text className="text-sm font-bold text-slate-700">Hủy chỉnh sửa</Text>
+              </Pressable>
+            ) : policy && !policy.locked ? (
               <Pressable
                 disabled={savingPolicy}
                 className="items-center justify-center rounded-2xl bg-slate-100 px-4 py-3.5"
