@@ -146,6 +146,25 @@ EXPO_PUBLIC_SOCKET_PATH=/socket.io
 - Nếu không đặt `EXPO_PUBLIC_SOCKET_URL`, app suy ra Socket origin từ API URL.
 - Biến `EXPO_PUBLIC_*` được đóng gói vào client, không đặt secret trong đó.
 
+## Cập nhật ứng dụng không cần build lại APK
+
+Dự án dùng EAS Update để phát hành thay đổi JavaScript/TypeScript, giao diện và
+asset qua mạng. Mỗi lần push vào nhánh `main`, workflow
+`.github/workflows/eas-update.yml` tự xuất bản bản Android mới lên channel
+`production`. Ứng dụng kiểm tra bản mới khi mở, chờ tối đa 5 giây để áp dụng
+ngay; nếu mạng chậm, bản đã tải sẽ được dùng ở lần mở tiếp theo.
+
+Repository cần có Actions secret `EXPO_TOKEN`, được tạo tại Expo access tokens.
+Không commit token vào source.
+
+Người dùng phải cài APK `1.0.2` hoặc mới hơn một lần để có `expo-updates`.
+APK `1.0.0`/`1.0.1` không thể tự nhận OTA. Khi chỉ sửa JS/TS/UI/asset,
+giữ nguyên `expo.version` để bản cập nhật khớp runtime của APK đã cài.
+
+EAS Update không thay thế APK khi có thay đổi native. Khi thêm hoặc nâng cấp
+native module, đổi quyền Android, icon/splash, package ID hoặc Expo SDK, cần tăng
+`expo.version` và `android.versionCode`, sau đó build và phát hành APK mới.
+
 ## Xác thực và token
 
 ```text

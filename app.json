@@ -2,18 +2,29 @@
   "expo": {
     "name": "Nrapp",
     "slug": "Nrapp",
-    "version": "1.0.1",
+    "version": "1.0.2",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "nrapp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 5000,
+      "requestHeaders": {
+        "expo-channel-name": "production"
+      },
+      "url": "https://u.expo.dev/eaf7d9ee-207c-412e-a280-75b22d0c5e7b"
+    },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "package": "vn.id.thanhlelmtp2006.nrapp",
-      "versionCode": 2,
+      "versionCode": 3,
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
@@ -49,6 +60,13 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "eaf7d9ee-207c-412e-a280-75b22d0c5e7b"
+      }
+    },
+    "owner": "thanhle23102006"
   }
 }
