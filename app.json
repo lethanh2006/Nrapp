@@ -12,7 +12,8 @@
       "supportsTablet": true
     },
     "android": {
-      "usesCleartextTraffic": true,
+      "package": "vn.id.thanhlelmtp2006.nrapp",
+      "versionCode": 1,
       "softwareKeyboardLayoutMode": "resize",
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
