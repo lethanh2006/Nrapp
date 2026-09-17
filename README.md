@@ -146,6 +146,27 @@ EXPO_PUBLIC_SOCKET_PATH=/socket.io
 - Nếu không đặt `EXPO_PUBLIC_SOCKET_URL`, app suy ra Socket origin từ API URL.
 - Biến `EXPO_PUBLIC_*` được đóng gói vào client, không đặt secret trong đó.
 
+## APK cài thử trên điện thoại Android
+
+Build bản `preview` bằng `eas build --platform android --profile preview` và chia sẻ
+đúng link **APK** do EAS trả về. File `.aab` của bản `production` dành cho Google
+Play, không thể bấm để cài trực tiếp. Cấu hình build hiện chỉ đóng gói thư viện
+ARM cho điện thoại (`armeabi-v7a`, `arm64-v8a`), đồng thời bật R8, thu gọn
+tài nguyên và nén thư viện native để giảm dung lượng tải. Máy giả lập x86/x86_64
+cần build riêng với kiến trúc tương ứng.
+
+Khi thay APK đã cài, phải dùng cùng khóa ký và `versionCode` không thấp hơn bản
+trên máy. Không trộn APK build ở máy cá nhân với APK EAS vì hai bản có thể dùng
+khóa ký khác nhau. Nếu Android báo không thể cài đặt, hãy kiểm tra file đã tải
+đủ dung lượng và dùng `adb install -r ten-file.apk` để xem mã lỗi cụ thể.
+`INSTALL_FAILED_UPDATE_INCOMPATIBLE` là lỗi khác khóa ký; khi không có khóa cũ,
+cần gỡ bản cũ rồi cài bản mới (dữ liệu app trên máy sẽ bị xóa).
+
+Nếu phát hành qua website, link tải cần trỏ thẳng tới file APK, trả đúng
+`Content-Length` và hỗ trợ tải tiếp bằng HTTP Range; tránh đưa file vào Git
+repository hoặc phục vụ qua trang trung gian có giới hạn băng thông. Kiểm tra
+SHA-256 sau khi tải để phát hiện file bị cắt hoặc hỏng.
+
 ## Cập nhật ứng dụng không cần build lại APK
 
 Dự án dùng EAS Update để phát hành thay đổi JavaScript/TypeScript, giao diện và
