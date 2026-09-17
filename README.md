@@ -1,5 +1,13 @@
 # Nrapp
 
+## Tải ứng dụng Android
+
+**[Tải APK mới nhất](https://github.com/lethanh2006/Nrapp/releases/latest/download/Nrapp.apk)**
+
+Bản 1.0.3: khoảng 31,5 MB, Android 7.0 trở lên. Tải xong mở file `.apk`
+và cho phép cài ứng dụng từ trình duyệt nếu Android yêu cầu.
+[Thông tin bản phát hành mới nhất](https://github.com/lethanh2006/Nrapp/releases/latest).
+
 Nrapp là frontend Expo/React Native kết nối với Service Gateway cho các nghiệp
 vụ nội bộ: xác thực OTP, danh bạ, hồ sơ, chat realtime, công việc, căn tin,
 lịch làm, đơn nhân sự và chấm công QR.
