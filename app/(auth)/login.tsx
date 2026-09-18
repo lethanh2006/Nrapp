@@ -11,6 +11,7 @@ import {
   loginWithGoogle,
   saveAuthSession,
 } from "@/src/services/auth/auth.service";
+import { configureGoogleSignin } from "@/src/services/auth/google-signin";
 import { normalizeUser } from "@/src/shared/model/normalize-user";
 import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import { ipNR } from "@/src/utils/ip";
@@ -105,6 +106,11 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
+      // Configure again immediately before sign-in. This avoids a race on
+      // real devices where the screen can be pressed before RootLayout's
+      // useEffect has completed.
+      configureGoogleSignin();
+
       await GoogleSignin.hasPlayServices({
         showPlayServicesUpdateDialog: true,
       });
