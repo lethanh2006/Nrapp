@@ -32,7 +32,7 @@ export default function AdminOrderSummaryCard({
 
   return (
     <View
-      className="mb-3 overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm"
+      className="mb-3 overflow-hidden rounded-3xl border border-slate-100 bg-white"
       style={{ elevation: 2 }}
     >
       <View className="flex-row items-start justify-between border-b border-slate-100 px-4 py-3.5">

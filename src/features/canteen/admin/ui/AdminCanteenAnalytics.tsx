@@ -70,7 +70,7 @@ export default function AdminCanteenAnalytics({ refreshKey = 0 }: Props) {
   return (
     <View>
       <View
-        className="mb-4 overflow-hidden rounded-3xl border border-red-100 bg-white p-4 shadow-sm"
+        className="mb-4 overflow-hidden rounded-3xl border border-red-100 bg-white p-4"
         style={{ elevation: 2 }}
       >
         <View className="absolute -right-10 -top-12 h-28 w-28 rounded-full bg-red-50" />

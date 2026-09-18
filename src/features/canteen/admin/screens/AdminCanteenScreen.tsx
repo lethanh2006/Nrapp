@@ -486,7 +486,7 @@ export default function AdminCanteenScreen() {
         <View className="flex-row">
           {canConfirm ? (
             <Pressable
-              className="mr-2 flex-1 items-center rounded-2xl bg-red-600 py-3 disabled:opacity-50"
+              className="mr-2 flex-1 items-center rounded-2xl bg-red-600 py-3"
               disabled={actionKey !== null}
               onPress={() => runOrderAction("confirm", order)}
             >
@@ -499,7 +499,7 @@ export default function AdminCanteenScreen() {
           ) : null}
           {canComplete ? (
             <Pressable
-              className="mr-2 flex-1 items-center rounded-2xl bg-emerald-600 py-3 disabled:opacity-50"
+              className="mr-2 flex-1 items-center rounded-2xl bg-emerald-600 py-3"
               disabled={actionKey !== null}
               onPress={() => runOrderAction("complete", order)}
             >
@@ -518,7 +518,7 @@ export default function AdminCanteenScreen() {
           ) : null}
           {canCancel ? (
             <Pressable
-              className="flex-1 items-center rounded-2xl border border-rose-200 bg-rose-50 py-3 disabled:opacity-50"
+              className="flex-1 items-center rounded-2xl border border-rose-200 bg-rose-50 py-3"
               disabled={actionKey !== null}
               onPress={() => confirmCancel(order)}
             >
@@ -537,14 +537,20 @@ export default function AdminCanteenScreen() {
   return (
     <View className="flex-1 bg-slate-50">
       <View
-        className="overflow-hidden border-b border-red-800 bg-red-900 px-4 pb-5 pt-4 shadow-sm"
+        className="overflow-hidden border-b border-red-800 bg-red-900 px-4 pb-5 pt-4"
         style={{ elevation: 3 }}
       >
-        <View className="absolute -right-12 -top-16 h-40 w-40 rounded-full bg-red-500/20" />
-        <View className="absolute -bottom-16 left-8 h-32 w-32 rounded-full bg-white/5" />
+        <View
+          className="absolute -right-12 -top-16 h-40 w-40 rounded-full"
+          style={{ backgroundColor: "rgba(239, 68, 68, 0.2)" }}
+        />
+        <View
+          className="absolute -bottom-16 left-8 h-32 w-32 rounded-full"
+          style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
+        />
         <View className="flex-row items-center">
           <View
-            className="h-12 w-12 items-center justify-center rounded-2xl bg-red-600 shadow-sm"
+            className="h-12 w-12 items-center justify-center rounded-2xl bg-red-600"
             style={{ elevation: 2 }}
           >
             <Ionicons name="storefront" size={24} color="white" />
@@ -557,7 +563,13 @@ export default function AdminCanteenScreen() {
               Vận hành căn tin
             </Text>
           </View>
-          <View className="items-center rounded-2xl border border-white/15 bg-white/10 px-3 py-2">
+          <View
+            className="items-center rounded-2xl border px-3 py-2"
+            style={{
+              borderColor: "rgba(255, 255, 255, 0.15)",
+              backgroundColor: "rgba(255, 255, 255, 0.1)",
+            }}
+          >
             <Ionicons name="person-circle-outline" size={20} color="#fecaca" />
             <Text className="mt-1 text-[9px] font-bold text-red-100">
               {getRoleLabel(user?.role)}
@@ -570,7 +582,10 @@ export default function AdminCanteenScreen() {
             <Text className="text-sm font-black text-white">
               {activeTab.label}
             </Text>
-            <Text className="mt-1 text-xs leading-5 text-red-100/70">
+            <Text
+              className="mt-1 text-xs leading-5 text-red-100"
+              style={{ color: "rgba(254, 202, 202, 0.7)" }}
+            >
               {activeTab.description}
             </Text>
           </View>
@@ -600,7 +615,7 @@ export default function AdminCanteenScreen() {
                   accessibilityRole="tab"
                   accessibilityState={{ selected }}
                   key={value}
-                  className={`min-w-[88px] items-center rounded-2xl border px-3 py-2.5 shadow-sm active:opacity-80 ${
+                  className={`min-w-[88px] items-center rounded-2xl border px-3 py-2.5 ${
                     selected
                       ? "border-red-600 bg-red-600"
                       : "border-slate-100 bg-white"
@@ -646,7 +661,7 @@ export default function AdminCanteenScreen() {
           <>
             <View className="mb-4 flex-row" style={{ gap: 8 }}>
               <View
-                className="flex-1 overflow-hidden rounded-2xl border border-slate-100 bg-white p-3 shadow-sm"
+                className="flex-1 overflow-hidden rounded-2xl border border-slate-100 bg-white p-3"
                 style={{ elevation: 2 }}
               >
                 <View className="absolute left-0 top-0 h-full w-1 bg-blue-500" />
@@ -659,7 +674,7 @@ export default function AdminCanteenScreen() {
                 </Text>
               </View>
               <View
-                className="flex-1 overflow-hidden rounded-2xl border border-slate-100 bg-white p-3 shadow-sm"
+                className="flex-1 overflow-hidden rounded-2xl border border-slate-100 bg-white p-3"
                 style={{ elevation: 2 }}
               >
                 <View className="absolute left-0 top-0 h-full w-1 bg-red-500" />
@@ -672,7 +687,7 @@ export default function AdminCanteenScreen() {
                 </Text>
               </View>
               <View
-                className="flex-1 overflow-hidden rounded-2xl border border-slate-100 bg-white p-3 shadow-sm"
+                className="flex-1 overflow-hidden rounded-2xl border border-slate-100 bg-white p-3"
                 style={{ elevation: 2 }}
               >
                 <View className="absolute left-0 top-0 h-full w-1 bg-emerald-500" />
@@ -739,7 +754,7 @@ export default function AdminCanteenScreen() {
               <View className="mt-2 flex-row">
                 <Pressable
                   accessibilityLabel="Mở trang đơn hàng trước"
-                  className="mr-2 flex-1 items-center rounded-2xl border border-slate-200 bg-white py-3 disabled:opacity-40"
+                  className="mr-2 flex-1 items-center rounded-2xl border border-slate-200 bg-white py-3"
                   disabled={page <= 1}
                   onPress={() => setPage((current) => Math.max(1, current - 1))}
                 >
@@ -747,7 +762,7 @@ export default function AdminCanteenScreen() {
                 </Pressable>
                 <Pressable
                   accessibilityLabel="Mở trang đơn hàng sau"
-                  className="flex-1 items-center rounded-2xl bg-red-700 py-3 disabled:opacity-40"
+                  className="flex-1 items-center rounded-2xl bg-red-700 py-3"
                   disabled={page >= totalPages}
                   onPress={() =>
                     setPage((current) => Math.min(totalPages, current + 1))
@@ -799,7 +814,7 @@ export default function AdminCanteenScreen() {
         ) : (
           <>
             <View
-              className="mb-4 overflow-hidden rounded-3xl border border-red-100 bg-white p-4 shadow-sm"
+              className="mb-4 overflow-hidden rounded-3xl border border-red-100 bg-white p-4"
               style={{ elevation: 2 }}
             >
               <View className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-red-50" />
@@ -840,7 +855,7 @@ export default function AdminCanteenScreen() {
               <Pressable
                 accessibilityLabel="Nhận đơn ưu tiên tiếp theo"
                 accessibilityRole="button"
-                className="mt-3 min-h-12 flex-row items-center justify-center rounded-2xl bg-red-600 px-4 active:bg-red-700 disabled:opacity-50"
+                className="mt-3 min-h-12 flex-row items-center justify-center rounded-2xl bg-red-600 px-4 active:bg-red-700"
                 disabled={actionKey !== null || queue.length === 0}
                 onPress={() => runKitchenAction("next")}
               >
@@ -880,7 +895,7 @@ export default function AdminCanteenScreen() {
                         Điểm ưu tiên: {order.priorityScore}
                       </Text>
                       <Pressable
-                        className="items-center rounded-2xl bg-red-600 py-3 active:bg-red-700 disabled:opacity-50"
+                        className="items-center rounded-2xl bg-red-600 py-3 active:bg-red-700"
                         disabled={actionKey !== null}
                         onPress={() => runKitchenAction("cooking", order)}
                       >
@@ -915,7 +930,7 @@ export default function AdminCanteenScreen() {
                   showOwner
                   footer={
                     <Pressable
-                      className="items-center rounded-2xl bg-emerald-600 py-3 disabled:opacity-50"
+                      className="items-center rounded-2xl bg-emerald-600 py-3"
                       disabled={actionKey !== null}
                       onPress={() => runKitchenAction("ready", order)}
                     >

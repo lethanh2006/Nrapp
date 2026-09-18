@@ -398,7 +398,7 @@ export default function AdminMenuCatalog({ refreshKey = 0 }: Props) {
         </Pressable>
 
         <Pressable
-          className="mt-3 items-center rounded-2xl bg-red-600 py-3.5 disabled:opacity-50"
+          className="mt-3 items-center rounded-2xl bg-red-600 py-3.5"
           disabled={busyKey !== null}
           onPress={saveItem}
         >
@@ -414,7 +414,7 @@ export default function AdminMenuCatalog({ refreshKey = 0 }: Props) {
 
       <View className="mb-4 flex-row">
         <Pressable
-          className="mr-2 flex-1 flex-row items-center justify-center rounded-2xl border border-slate-200 bg-white py-3 disabled:opacity-50"
+          className="mr-2 flex-1 flex-row items-center justify-center rounded-2xl border border-slate-200 bg-white py-3"
           disabled={busyKey !== null}
           onPress={() => runHistoryAction("undo")}
         >
@@ -422,7 +422,7 @@ export default function AdminMenuCatalog({ refreshKey = 0 }: Props) {
           <Text className="ml-2 text-xs font-black text-slate-600">Hoàn tác</Text>
         </Pressable>
         <Pressable
-          className="mr-2 flex-1 flex-row items-center justify-center rounded-2xl border border-slate-200 bg-white py-3 disabled:opacity-50"
+          className="mr-2 flex-1 flex-row items-center justify-center rounded-2xl border border-slate-200 bg-white py-3"
           disabled={busyKey !== null}
           onPress={() => runHistoryAction("redo")}
         >
@@ -529,7 +529,7 @@ export default function AdminMenuCatalog({ refreshKey = 0 }: Props) {
                 <Text className="text-xs font-black text-white">Chỉnh sửa</Text>
               </Pressable>
               <Pressable
-                className="mr-2 flex-1 items-center rounded-xl border border-emerald-200 bg-emerald-50 py-2.5 disabled:opacity-50"
+                className="mr-2 flex-1 items-center rounded-xl border border-emerald-200 bg-emerald-50 py-2.5"
                 disabled={busyKey === `toggle:${item._id}`}
                 onPress={() => toggleAvailability(item)}
               >
@@ -543,7 +543,7 @@ export default function AdminMenuCatalog({ refreshKey = 0 }: Props) {
               </Pressable>
               <Pressable
                 accessibilityLabel={`Xóa ${item.name}`}
-                className="h-10 w-10 items-center justify-center rounded-xl bg-rose-50 disabled:opacity-50"
+                className="h-10 w-10 items-center justify-center rounded-xl bg-rose-50"
                 disabled={busyKey === `delete:${item._id}`}
                 onPress={() => confirmRemove(item)}
               >

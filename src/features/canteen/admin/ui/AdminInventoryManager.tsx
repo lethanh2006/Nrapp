@@ -321,7 +321,7 @@ export default function AdminInventoryManager({
   return (
     <View>
       <View
-        className="mb-4 overflow-hidden rounded-3xl border border-red-100 bg-white p-4 shadow-sm"
+        className="mb-4 overflow-hidden rounded-3xl border border-red-100 bg-white p-4"
         style={{ elevation: 2 }}
       >
         <View className="absolute -right-10 -top-12 h-28 w-28 rounded-full bg-red-50" />
@@ -436,7 +436,7 @@ export default function AdminInventoryManager({
                 value={supplier}
               />
               <Pressable
-                className="mt-3 items-center rounded-2xl bg-red-600 py-3.5 disabled:opacity-50"
+        className="mt-3 items-center rounded-2xl bg-red-600 py-3.5"
                 disabled={busyKey !== null}
                 onPress={createBatch}
               >
@@ -463,7 +463,7 @@ export default function AdminInventoryManager({
               value={consumeQuantity}
             />
             <Pressable
-              className="items-center justify-center rounded-2xl bg-amber-500 px-5 disabled:opacity-50"
+              className="items-center justify-center rounded-2xl bg-amber-500 px-5"
               disabled={busyKey !== null}
               onPress={consumeIngredient}
             >
@@ -519,7 +519,7 @@ export default function AdminInventoryManager({
           />
         </View>
         <Pressable
-          className="mt-3 items-center rounded-2xl bg-red-600 py-3.5 disabled:opacity-50"
+          className="mt-3 items-center rounded-2xl bg-red-600 py-3.5"
           disabled={busyKey !== null}
           onPress={saveIngredient}
         >
@@ -580,7 +580,7 @@ export default function AdminInventoryManager({
                 </Pressable>
                 <Pressable
                   accessibilityLabel={`Xóa ${ingredient.name}`}
-                  className="h-10 w-10 items-center justify-center rounded-xl bg-rose-50 disabled:opacity-40"
+                  className="h-10 w-10 items-center justify-center rounded-xl bg-rose-50"
                   disabled={busyKey !== null}
                   onPress={() => confirmRemove(ingredient)}
                 >

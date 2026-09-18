@@ -230,7 +230,7 @@ export default function AdminTableManager({
   return (
     <View>
       <View
-        className="mb-4 overflow-hidden rounded-3xl border border-red-100 bg-white p-4 shadow-sm"
+        className="mb-4 overflow-hidden rounded-3xl border border-red-100 bg-white p-4"
         style={{ elevation: 2 }}
       >
         <View className="absolute -right-10 -top-12 h-28 w-28 rounded-full bg-red-50" />
@@ -248,7 +248,7 @@ export default function AdminTableManager({
             value={partySize}
           />
           <Pressable
-            className="items-center justify-center rounded-2xl bg-red-600 px-5 active:bg-red-700 disabled:opacity-50"
+            className="items-center justify-center rounded-2xl bg-red-600 px-5 active:bg-red-700"
             disabled={busyKey !== null}
             onPress={allocateTables}
           >
@@ -301,7 +301,7 @@ export default function AdminTableManager({
             value={qrCodeUrl}
           />
           <Pressable
-            className="mt-3 items-center rounded-2xl bg-red-600 py-3.5 disabled:opacity-50"
+            className="mt-3 items-center rounded-2xl bg-red-600 py-3.5"
             disabled={busyKey !== null}
             onPress={saveTable}
           >
@@ -382,7 +382,7 @@ export default function AdminTableManager({
                 const selected = table.status === status;
                 return (
                   <Pressable
-                    className={`mr-2 flex-1 items-center rounded-xl border py-2.5 disabled:opacity-50 ${
+                    className={`mr-2 flex-1 items-center rounded-xl border py-2.5 ${
                       selected
                         ? "border-red-500 bg-red-50"
                         : "border-slate-200 bg-white"
@@ -416,7 +416,7 @@ export default function AdminTableManager({
                 </Pressable>
                 <Pressable
                   accessibilityLabel={`Xóa ${table.name}`}
-                  className="h-10 w-10 items-center justify-center rounded-xl bg-rose-50 disabled:opacity-40"
+                    className="h-10 w-10 items-center justify-center rounded-xl bg-rose-50"
                   disabled={busyKey !== null || table.status !== "empty"}
                   onPress={() => confirmRemove(table)}
                 >

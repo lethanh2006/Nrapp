@@ -251,7 +251,7 @@ export default function AdminCategoryManager({ refreshKey = 0 }: Props) {
           />
         </Pressable>
         <Pressable
-          className="mt-3 items-center rounded-2xl bg-red-600 py-3.5 disabled:opacity-50"
+          className="mt-3 items-center rounded-2xl bg-red-600 py-3.5"
           disabled={busyKey !== null}
           onPress={saveCategory}
         >
@@ -325,7 +325,7 @@ export default function AdminCategoryManager({ refreshKey = 0 }: Props) {
                 <Text className="text-xs font-black text-white">Chỉnh sửa</Text>
               </Pressable>
               <Pressable
-                className="mr-2 flex-1 items-center rounded-xl border border-emerald-200 bg-emerald-50 py-2.5 disabled:opacity-50"
+                className="mr-2 flex-1 items-center rounded-xl border border-emerald-200 bg-emerald-50 py-2.5"
                 disabled={busyKey === `toggle:${category._id}`}
                 onPress={() => toggleCategory(category)}
               >
@@ -339,7 +339,7 @@ export default function AdminCategoryManager({ refreshKey = 0 }: Props) {
               </Pressable>
               <Pressable
                 accessibilityLabel={`Xóa ${category.name}`}
-                className="h-10 w-10 items-center justify-center rounded-xl bg-rose-50 disabled:opacity-50"
+                className="h-10 w-10 items-center justify-center rounded-xl bg-rose-50"
                 disabled={busyKey === `delete:${category._id}`}
                 onPress={() => confirmRemove(category)}
               >

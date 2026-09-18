@@ -100,7 +100,7 @@ export default function AdminOrderFilters({
               activeCount ? `, ${activeCount} điều kiện đang áp dụng` : ""
             }`}
             accessibilityRole="button"
-            className="min-h-11 flex-row items-center rounded-2xl border border-red-200 bg-white px-3.5 shadow-sm active:bg-red-50"
+            className="min-h-11 flex-row items-center rounded-2xl border border-red-200 bg-white px-3.5 active:bg-red-50"
             onPress={openFilters}
             style={{ elevation: 2 }}
           >
@@ -155,7 +155,7 @@ export default function AdminOrderFilters({
             <Pressable
               accessibilityLabel="Xóa tất cả bộ lọc"
               accessibilityRole="button"
-              className="min-h-9 justify-center px-1 active:opacity-60"
+            className="min-h-9 justify-center px-1"
               onPress={() => onApply("ALL", "ALL")}
             >
               <Text className="text-[11px] font-black text-slate-500">
@@ -174,7 +174,10 @@ export default function AdminOrderFilters({
         transparent
         visible={visible}
       >
-        <View className="flex-1 justify-end bg-slate-950/45">
+        <View
+          className="flex-1 justify-end"
+          style={{ backgroundColor: "rgba(2, 6, 23, 0.45)" }}
+        >
           <Pressable
             accessibilityLabel="Đóng bộ lọc"
             className="flex-1"
@@ -222,7 +225,7 @@ export default function AdminOrderFilters({
                       <Pressable
                         accessibilityRole="radio"
                         accessibilityState={{ checked: selected }}
-                        className={`mb-2 min-h-14 flex-row items-center rounded-2xl border p-3 active:opacity-75 ${
+                        className={`mb-2 min-h-14 flex-row items-center rounded-2xl border p-3 ${
                           selected
                             ? "border-red-400 bg-red-50"
                             : "border-slate-200 bg-white"
@@ -265,7 +268,7 @@ export default function AdminOrderFilters({
                       <Pressable
                         accessibilityRole="radio"
                         accessibilityState={{ checked: selected }}
-                        className={`mb-2 min-h-14 flex-row items-center rounded-2xl border p-3 active:opacity-75 ${
+                        className={`mb-2 min-h-14 flex-row items-center rounded-2xl border p-3 ${
                           selected
                             ? "border-blue-400 bg-blue-50"
                             : "border-slate-200 bg-white"
@@ -317,7 +320,7 @@ export default function AdminOrderFilters({
               <Pressable
                 accessibilityLabel="Áp dụng bộ lọc đơn hàng"
                 accessibilityRole="button"
-                className="min-h-12 flex-[1.5] flex-row items-center justify-center rounded-2xl bg-red-600 px-4 shadow-sm active:bg-red-700"
+                className="min-h-12 flex-[1.5] flex-row items-center justify-center rounded-2xl bg-red-600 px-4 active:bg-red-700"
                 onPress={applyFilters}
                 style={{ elevation: 2 }}
               >
