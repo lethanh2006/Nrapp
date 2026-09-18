@@ -6,10 +6,20 @@ import {
   AuthPrimaryButton,
   AuthScreen,
 } from "@/src/features/auth/ui/AuthForm";
-import { loginUser } from "@/src/services/auth/auth.service";
+import {
+  loginUser,
+  loginWithGoogle,
+  saveAuthSession,
+} from "@/src/services/auth/auth.service";
+import { normalizeUser } from "@/src/shared/model/normalize-user";
 import { getApiErrorMessage } from "@/src/utils/apiHelper";
 import { ipNR } from "@/src/utils/ip";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
+import {
+  GoogleSignin,
+  isErrorWithCode,
+  isSuccessResponse,
+} from "@react-native-google-signin/google-signin";
 import { isAxiosError } from "axios";
 import { router, useLocalSearchParams } from "expo-router";
 import React, { useEffect, useState } from "react";
@@ -22,7 +32,13 @@ import {
 
 export default function LoginScreen() {
   const params = useLocalSearchParams<{ email?: string }>();
-  const { isAuth, loading: userLoading, user } = useAuthSession();
+  const {
+    isAuth,
+    loading: userLoading,
+    user,
+    setUser,
+    setIsAuth,
+  } = useAuthSession();
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState(
     typeof params.email === "string" ? params.email : "",
@@ -85,6 +101,64 @@ export default function LoginScreen() {
     }
   };
 
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+
+    try {
+      await GoogleSignin.hasPlayServices({
+        showPlayServicesUpdateDialog: true,
+      });
+
+      const response = await GoogleSignin.signIn();
+      if (!isSuccessResponse(response)) {
+        Alert.alert("Thông báo", "Bạn đã hủy đăng nhập Google.");
+        return;
+      }
+
+      const { idToken } = await GoogleSignin.getTokens();
+      if (!idToken) {
+        throw new Error("Google không trả về ID Token");
+      }
+
+      const { data } = await loginWithGoogle(idToken);
+      await saveAuthSession(data);
+      setUser(normalizeUser(data.user));
+      setIsAuth(true);
+    } catch (error: unknown) {
+      const nativeCode = isErrorWithCode(error) ? error.code : undefined;
+      const nativeMessage =
+        error instanceof Error && error.message
+          ? error.message
+          : typeof error === "object" && error !== null && "message" in error
+            ? String(error.message)
+            : undefined;
+
+      if (isAxiosError(error)) {
+        console.error("[GOOGLE_LOGIN] API error", {
+          code: error.code,
+          message: error.message,
+          status: error.response?.status,
+          responseData: error.response?.data,
+        });
+      } else {
+        console.error("[GOOGLE_LOGIN] Native error", {
+          code: nativeCode,
+          message: nativeMessage,
+          error,
+        });
+      }
+
+      const message = isAxiosError(error)
+        ? getApiErrorMessage(error, "Đăng nhập Google thất bại")
+        : [nativeCode, nativeMessage].filter(Boolean).join(": ") ||
+          "Đăng nhập Google thất bại";
+
+      Alert.alert("Lỗi", message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   if (userLoading) {
     return (
       <View className="flex-1 items-center justify-center bg-[#f4f7fb]">
@@ -131,6 +205,18 @@ export default function LoginScreen() {
           loading={loading}
           onPress={handleSubmit}
         />
+
+        <Pressable
+          className="mt-3 min-h-14 flex-row items-center justify-center rounded-2xl border border-slate-200 bg-white active:bg-slate-50"
+          onPress={handleGoogleLogin}
+          disabled={loading}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: loading }}
+        >
+          <Text className="text-base font-extrabold text-slate-800">
+            Tiếp tục với Google
+          </Text>
+        </Pressable>
 
         <View className="my-5 h-px bg-slate-100" />
 

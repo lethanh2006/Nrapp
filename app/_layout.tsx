@@ -9,6 +9,9 @@ import {
 } from "@react-navigation/native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
+import { Platform } from "react-native";
+import { useEffect } from "react";
 import { configureReanimatedLogger, ReanimatedLogLevel } from "react-native-reanimated";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import "../global.css";
@@ -20,6 +23,15 @@ configureReanimatedLogger({
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+
+  useEffect(() => {
+    if (Platform.OS === "web") return;
+
+    const webClientId = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID?.trim();
+    if (!webClientId) return;
+
+    GoogleSignin.configure({ webClientId });
+  }, []);
 
   return (
     <SafeAreaProvider>

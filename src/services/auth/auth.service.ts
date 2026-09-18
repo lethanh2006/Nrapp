@@ -31,6 +31,13 @@ export async function loginUser(payload: LoginPayload) {
   );
 }
 
+export async function loginWithGoogle(token: string) {
+  return axios.post<AuthSessionResponse>(
+    `${ipNR}/auth/login-google`,
+    { token },
+  );
+}
+
 export async function verifyOtp(payload: VerifyOtpPayload) {
   return axios.post<AuthSessionResponse>(`${ipNR}/auth/verify`, payload);
 }
