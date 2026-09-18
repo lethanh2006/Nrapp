@@ -76,7 +76,7 @@ export default function AdminTodoEditTaskForm({
   };
 
   return (
-    <View className="mt-3 rounded-2xl border border-red-100 bg-red-50/60 p-3">
+    <View className="mt-3 rounded-2xl border border-red-100 bg-red-50 p-3">
       <View className="mb-3 flex-row items-center">
         <Ionicons name="create-outline" size={16} color="#dc2626" />
         <Text className="ml-1.5 text-xs font-bold text-red-700">
@@ -164,14 +164,16 @@ export default function AdminTodoEditTaskForm({
         <Pressable
           onPress={onCancel}
           disabled={saving}
-          className="flex-1 items-center rounded-xl border border-slate-200 bg-white py-2.5 disabled:opacity-50"
+          className="flex-1 items-center rounded-xl border border-slate-200 bg-white py-2.5"
+          style={saving ? { opacity: 0.5 } : undefined}
         >
           <Text className="text-xs font-bold text-slate-600">Hủy sửa</Text>
         </Pressable>
         <Pressable
           onPress={submit}
           disabled={saving || !title.trim()}
-          className="flex-1 items-center rounded-xl bg-red-600 py-2.5 active:bg-red-700 disabled:opacity-50"
+          className="flex-1 items-center rounded-xl bg-red-600 py-2.5"
+          style={saving || !title.trim() ? { opacity: 0.5 } : undefined}
         >
           <Text className="text-xs font-bold text-white">
             {saving ? "Đang lưu..." : "Lưu thay đổi"}

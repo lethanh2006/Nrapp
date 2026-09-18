@@ -88,7 +88,7 @@ export default function AdminTodoCreateTaskCard({
   };
 
   return (
-    <View className="bg-white rounded-2xl p-5 border border-slate-100 shadow-sm">
+    <View className="rounded-2xl border border-slate-100 bg-white p-5" style={{ elevation: 2 }}>
       <View className="flex-row items-center mb-4">
         <View className="mr-2 rounded-lg bg-red-50 p-1.5">
           <Ionicons name="add-circle-outline" size={20} color="#dc2626" />
@@ -104,7 +104,7 @@ export default function AdminTodoCreateTaskCard({
         onChangeText={setTitle}
         placeholder="Nhập tiêu đề công việc..."
         placeholderTextColor="#94a3b8"
-        className="border border-slate-200 rounded-xl px-4 py-3 mb-4 text-slate-800 bg-slate-50/30 text-sm font-medium"
+        className="mb-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800"
       />
 
       <Text className="text-xs font-semibold text-slate-500 mb-1.5 ml-0.5">Mô tả công việc</Text>
@@ -113,7 +113,7 @@ export default function AdminTodoCreateTaskCard({
         onChangeText={setDescription}
         placeholder="Nhập mô tả chi tiết (tùy chọn)..."
         placeholderTextColor="#94a3b8"
-        className="border border-slate-200 rounded-xl px-4 py-3 mb-4 text-slate-800 bg-slate-50/30 text-sm font-medium"
+        className="mb-4 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-800"
         multiline
         numberOfLines={3}
         style={{ textAlignVertical: "top" }}
@@ -123,7 +123,7 @@ export default function AdminTodoCreateTaskCard({
         <Text className="text-xs font-semibold text-slate-500 ml-0.5">Hạn chót (Deadline)</Text>
         <Pressable
           onPress={openDeadlinePicker}
-          className="border border-slate-200 rounded-xl px-4 py-3 bg-slate-50/30 flex-row items-center justify-between"
+          className="flex-row items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
         >
           <View className="flex-row items-center">
             <Ionicons name="calendar-outline" size={18} color="#64748b" />
@@ -148,7 +148,7 @@ export default function AdminTodoCreateTaskCard({
       <View className="mb-4" style={{ gap: 8 }}>
         <Pressable
           onPress={() => setShowPriorityOptions((value) => !value)}
-          className="border border-slate-200 rounded-xl px-4 py-3 bg-slate-50/30 flex-row items-center justify-between"
+          className="flex-row items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3"
         >
           <View className="flex-row items-center">
             <Ionicons
@@ -170,7 +170,7 @@ export default function AdminTodoCreateTaskCard({
         </Pressable>
 
         {showPriorityOptions ? (
-          <View className="border border-slate-100 rounded-xl bg-white overflow-hidden shadow-sm">
+          <View className="overflow-hidden rounded-xl border border-slate-100 bg-white" style={{ elevation: 2 }}>
             {PRIORITY_OPTIONS.map((p) => {
               const isSelected = priority === p;
               const mapInfo = PRIORITY_MAP[p];
@@ -182,7 +182,7 @@ export default function AdminTodoCreateTaskCard({
                     setPriority(p);
                     setShowPriorityOptions(false);
                   }}
-                  className={`px-4 py-3 border-b border-slate-50 flex-row items-center justify-between ${isSelected ? "bg-slate-50/70" : "bg-white"}`}
+                  className={`flex-row items-center justify-between border-b border-slate-50 px-4 py-3 ${isSelected ? "bg-slate-50" : "bg-white"}`}
                 >
                   <View className="flex-row items-center">
                     <Ionicons
@@ -223,9 +223,9 @@ export default function AdminTodoCreateTaskCard({
         <View className="flex-row py-0.5" style={{ gap: 8 }}>
           <Pressable
             onPress={() => setCreateAssignee("")}
-            className={`px-3 py-2 rounded-xl border flex-row items-center ${
+              className={`flex-row items-center rounded-xl border px-3 py-2 ${
               createAssignee === ""
-                ? "border-red-600 bg-red-600 shadow-sm shadow-red-200"
+                ? "border-red-600 bg-red-600"
                 : "bg-white border-slate-200"
             }`}
           >
@@ -233,7 +233,7 @@ export default function AdminTodoCreateTaskCard({
               name="person-remove-outline"
               size={14}
               color={createAssignee === "" ? "#ffffff" : "#64748b"}
-              className="mr-1"
+              style={{ marginRight: 4 }}
             />
             <Text
               className={`text-xs font-semibold ml-1 ${
@@ -249,9 +249,9 @@ export default function AdminTodoCreateTaskCard({
               <Pressable
                 key={u._id}
                 onPress={() => setCreateAssignee(u._id)}
-                className={`px-3 py-2 rounded-xl border flex-row items-center ${
+                className={`flex-row items-center rounded-xl border px-3 py-2 ${
                   isSelected
-                    ? "border-red-600 bg-red-600 shadow-sm shadow-red-200"
+                    ? "border-red-600 bg-red-600"
                     : "bg-white border-slate-200"
                 }`}
               >
@@ -259,7 +259,7 @@ export default function AdminTodoCreateTaskCard({
                   name="person-outline"
                   size={14}
                   color={isSelected ? "#ffffff" : "#64748b"}
-                  className="mr-1"
+                  style={{ marginRight: 4 }}
                 />
                 <Text
                   className={`text-xs font-semibold ml-1 ${
@@ -277,17 +277,18 @@ export default function AdminTodoCreateTaskCard({
       <Pressable
         onPress={onCreateTask}
         disabled={creating}
-        className={`rounded-xl py-3.5 items-center flex-row justify-center ${
+        className={`flex-row items-center justify-center rounded-xl py-3.5 ${
           creating
             ? "bg-red-300"
-            : "bg-red-600 shadow-sm shadow-red-200 active:bg-red-700"
+            : "bg-red-600"
         }`}
+        style={!creating ? { elevation: 2 } : undefined}
       >
         {creating ? (
           <Text className="text-white font-bold text-sm">Đang tạo...</Text>
         ) : (
           <View className="flex-row items-center">
-            <Ionicons name="paper-plane-outline" size={16} color="#ffffff" className="mr-1.5" />
+            <Ionicons name="paper-plane-outline" size={16} color="#ffffff" style={{ marginRight: 6 }} />
             <Text className="text-white font-bold text-sm ml-1.5">Tạo công việc</Text>
           </View>
         )}

@@ -479,7 +479,10 @@ export function MonthlyRegistrationScreen({
         animationType="slide"
         onRequestClose={() => setEditorOpen(false)}
       >
-        <View className="flex-1 justify-end bg-black/40">
+        <View
+          className="flex-1 justify-end"
+          style={{ backgroundColor: "rgba(15, 23, 42, 0.42)" }}
+        >
           <Pressable
             accessibilityLabel="Đóng chi tiết ngày"
             accessibilityRole="button"
@@ -493,6 +496,9 @@ export function MonthlyRegistrationScreen({
               paddingBottom: Math.max(insets.bottom, 16),
             }}
           >
+            <View className="items-center pb-1 pt-3">
+              <View className="h-1.5 w-10 rounded-full bg-slate-200" />
+            </View>
             <ScrollView keyboardShouldPersistTaps="handled">
               <WorkDayScheduleEditor
                 date={selectedDate}

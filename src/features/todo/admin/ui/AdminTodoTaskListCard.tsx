@@ -85,12 +85,12 @@ export default function AdminTodoTaskListCard({
   }, [editingTaskId, tasks]);
 
   return (
-    <View className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm">
+    <View className="rounded-2xl border border-slate-100 bg-white p-4" style={{ elevation: 2 }}>
       <View className="flex-row items-center justify-between mb-4 pb-2 border-b border-slate-50">
         <View className="flex-row items-center">
           <View
             className={`mr-2 rounded-lg p-1.5 ${
-              isAdminArea ? "bg-red-50" : "bg-blue-500/10"
+              isAdminArea ? "bg-red-50" : "bg-blue-50"
             }`}
           >
             <Ionicons
@@ -146,7 +146,7 @@ export default function AdminTodoTaskListCard({
             return (
               <View
                 key={task._id}
-                className="border border-slate-100 rounded-2xl p-4 bg-slate-50/30"
+                className="rounded-2xl border border-slate-100 bg-slate-50 p-4"
               >
                 {/* Header: Title and Priority Badge */}
                 <View className="flex-row items-start justify-between">
@@ -178,13 +178,13 @@ export default function AdminTodoTaskListCard({
 
                 {/* Description */}
                 {!!task.description && (
-                  <Text className="text-xs text-slate-500 mt-2 bg-white/70 p-2.5 rounded-xl border border-slate-100 leading-relaxed">
+                  <Text className="mt-2 rounded-xl border border-slate-100 bg-white p-2.5 text-xs leading-relaxed text-slate-500">
                     {task.description}
                   </Text>
                 )}
 
                 {/* Workflow Path: Handoff and Assignee */}
-                <View className="flex-row items-center mt-3 bg-slate-50 p-2.5 rounded-xl border border-slate-100/50">
+                <View className="mt-3 flex-row items-center rounded-xl border border-slate-100 bg-slate-50 p-2.5">
                   <View className="flex-1 flex-row items-center">
                     <Ionicons
                       name="paper-plane-outline"
@@ -305,7 +305,8 @@ export default function AdminTodoTaskListCard({
                               onUpdateStatus(task._id, nextStatus)
                             }
                             disabled={updatingTaskId === task._id}
-                            className={`flex-row items-center rounded-xl border px-3 py-2 disabled:opacity-50 ${statusConfig.bgClass} ${statusConfig.borderClass}`}
+                            className={`flex-row items-center rounded-xl border px-3 py-2 ${statusConfig.bgClass} ${statusConfig.borderClass}`}
+                            style={updatingTaskId === task._id ? { opacity: 0.5 } : undefined}
                           >
                             <Ionicons
                               name={statusConfig.icon as any}
@@ -356,7 +357,7 @@ export default function AdminTodoTaskListCard({
                     ) : (
                       <Pressable
                         onPress={() => setEditingTaskId(task._id)}
-                        className="mb-3 flex-row items-center justify-center rounded-xl border border-red-100 bg-red-50 py-2.5 active:bg-red-100"
+                        className="mb-3 flex-row items-center justify-center rounded-xl border border-red-100 bg-red-50 py-2.5"
                       >
                         <Ionicons
                           name="create-outline"
@@ -394,7 +395,7 @@ export default function AdminTodoTaskListCard({
                                   }
                                   className={`flex-row items-center rounded-xl border px-3 py-1.5 ${
                                     isSelected
-                                      ? "border-red-600 bg-red-600 shadow-sm"
+                                      ? "border-red-600 bg-red-600"
                                       : "border-slate-200 bg-white"
                                   }`}
                                 >
@@ -426,8 +427,9 @@ export default function AdminTodoTaskListCard({
                           className={`mt-3 flex-row items-center justify-center rounded-xl py-3 ${
                             assigningTaskId === task._id
                               ? "bg-red-300"
-                              : "bg-red-600 shadow-sm active:bg-red-700"
+                              : "bg-red-600"
                           }`}
+                          style={assigningTaskId !== task._id ? { elevation: 2 } : undefined}
                         >
                           <Ionicons
                             name="person-add-outline"
@@ -455,8 +457,9 @@ export default function AdminTodoTaskListCard({
                         className={`items-center flex-row justify-center rounded-xl border border-rose-100 py-3 ${
                           deletingTaskId === task._id
                             ? "bg-rose-100"
-                            : "bg-rose-50 active:bg-rose-100"
-                        }`}
+                            : "bg-rose-50"
+                          }`}
+                          style={deletingTaskId === task._id ? { opacity: 0.6 } : undefined}
                       >
                         <Ionicons
                           name="trash-outline"

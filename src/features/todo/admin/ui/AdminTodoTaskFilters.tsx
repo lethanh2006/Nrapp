@@ -55,12 +55,12 @@ export default function AdminTodoTaskFilters({
   const safeTotalPages = Math.max(totalPages, 1);
 
   return (
-    <View className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
+    <View className="rounded-2xl border border-slate-100 bg-white p-4" style={{ elevation: 2 }}>
       <View className="mb-3 flex-row items-center justify-between">
         <View className="flex-row items-center">
           <View
             className={`mr-2 rounded-lg p-1.5 ${
-              isAdminArea ? "bg-red-50" : "bg-indigo-500/10"
+              isAdminArea ? "bg-red-50" : "bg-indigo-50"
             }`}
           >
             <Ionicons
@@ -78,7 +78,7 @@ export default function AdminTodoTaskFilters({
         ) : null}
       </View>
 
-      <View className="mb-3 flex-row items-center rounded-xl border border-slate-200 bg-slate-50/50 px-3">
+      <View className="mb-3 flex-row items-center rounded-xl border border-slate-200 bg-slate-50 px-3">
         <Ionicons name="search-outline" size={17} color="#94a3b8" />
         <TextInput
           value={searchInput}
@@ -93,9 +93,8 @@ export default function AdminTodoTaskFilters({
         <Pressable
           onPress={onApplySearch}
           disabled={loading}
-          className={`rounded-lg px-3 py-2 disabled:opacity-50 ${
-            isAdminArea ? "bg-red-600 active:bg-red-700" : "bg-slate-800"
-          }`}
+          className={`rounded-lg px-3 py-2 ${isAdminArea ? "bg-red-600" : "bg-slate-800"}`}
+          style={loading ? { opacity: 0.5 } : undefined}
         >
           <Text className="text-xs font-bold text-white">Tìm</Text>
         </Pressable>
@@ -159,16 +158,16 @@ export default function AdminTodoTaskFilters({
           <Pressable
             onPress={() => onChangePage(Math.max(1, page - 1))}
             disabled={loading || page <= 1}
-            className="flex-1 items-center rounded-xl border border-slate-200 bg-white py-2.5 disabled:opacity-40"
+            className="flex-1 items-center rounded-xl border border-slate-200 bg-white py-2.5"
+            style={loading || page <= 1 ? { opacity: 0.4 } : undefined}
           >
             <Text className="text-xs font-bold text-slate-600">Trang trước</Text>
           </Pressable>
           <Pressable
             onPress={() => onChangePage(Math.min(totalPages, page + 1))}
             disabled={loading || page >= totalPages}
-            className={`flex-1 items-center rounded-xl py-2.5 disabled:opacity-40 ${
-              isAdminArea ? "bg-red-600 active:bg-red-700" : "bg-slate-800"
-            }`}
+            className={`flex-1 items-center rounded-xl py-2.5 ${isAdminArea ? "bg-red-600" : "bg-slate-800"}`}
+            style={loading || page >= totalPages ? { opacity: 0.4 } : undefined}
           >
             <Text className="text-xs font-bold text-white">Trang sau</Text>
           </Pressable>

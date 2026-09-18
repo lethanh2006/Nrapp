@@ -65,11 +65,11 @@ export function WorkDayScheduleEditor({
   const hasWorkSelection = entry.type === "office" || entry.type === "remote";
 
   return (
-    <View className="mt-4 border-t border-slate-100 pt-4">
+    <View className="border-t border-slate-100 pt-4">
       <View className="mb-3 flex-row items-start justify-between">
         <View className="flex-1 pr-3">
           <Text className="text-[11px] font-black uppercase tracking-wider text-slate-500">
-            Thiết lập cho ngày
+            Lịch làm trong ngày
           </Text>
           <Text className="mt-1 text-lg font-black capitalize text-slate-900">
             {date.toLocaleDateString("vi-VN", {
@@ -111,37 +111,41 @@ export function WorkDayScheduleEditor({
         </View>
       ) : (
         <Text className="mb-3 text-xs leading-5 text-slate-500">
-          Chọn nơi làm và ca làm cho ngày này.
+          Chọn nơi làm việc và ca làm. Bạn có thể thay đổi trước khi gửi lịch.
         </Text>
       )}
 
+      <Text className="mb-2 text-xs font-black uppercase tracking-wider text-slate-500">
+        Nơi làm việc
+      </Text>
       <View className="flex-row flex-wrap justify-between">
         {WORK_OPTIONS.map((option) => {
           const selected = entry.type === option.value;
           return (
             <Pressable
-              className={`mb-3 w-[48.5%] rounded-2xl border p-3 ${
+              className={`mb-3 min-h-[124px] w-[48.5%] rounded-2xl border p-4 ${
                 selected ? option.selectedBox : "border-slate-200 bg-white"
-              } ${readOnly ? "opacity-60" : ""}`}
-              accessibilityRole="button"
-              accessibilityState={{ disabled: readOnly, selected }}
+              }`}
+              accessibilityRole="radio"
+              accessibilityState={{ checked: selected, disabled: readOnly }}
               disabled={readOnly}
               key={option.value}
               onPress={() => onChange("type", option.value)}
+              style={readOnly ? { opacity: 0.6 } : undefined}
             >
               <View className="mb-3 flex-row items-center justify-between">
-                <View className="h-9 w-9 items-center justify-center rounded-xl bg-white">
+                <View className="h-10 w-10 items-center justify-center rounded-xl bg-white">
                   <Ionicons name={option.icon} size={18} color={option.color} />
                 </View>
-                {selected ? (
-                  <Ionicons
-                    name="checkmark-circle"
-                    size={20}
-                    color={option.color}
-                  />
-                ) : (
-                  <View className="h-5 w-5 rounded-full border-2 border-slate-200" />
-                )}
+                <View className="h-6 w-6 items-center justify-center">
+                  {selected ? (
+                    <Ionicons
+                      name="checkmark-circle"
+                      size={23}
+                      color={option.color}
+                    />
+                  ) : null}
+                </View>
               </View>
               <Text className="text-sm font-black text-slate-800">
                 {option.label}
@@ -149,6 +153,14 @@ export function WorkDayScheduleEditor({
               <Text className="mt-0.5 text-[10px] leading-4 text-slate-500">
                 {option.description}
               </Text>
+              {selected ? (
+                <Text
+                  className="mt-2 text-[10px] font-black"
+                  style={{ color: option.color }}
+                >
+                  Đang chọn
+                </Text>
+              ) : null}
             </Pressable>
           );
         })}
@@ -157,9 +169,14 @@ export function WorkDayScheduleEditor({
       {hasWorkSelection ? (
         <View>
           {!readOnly ? (
-            <Pressable className="mb-3 items-center py-1" onPress={onClear}>
-              <Text className="text-xs font-bold text-slate-500">
-                Bỏ chọn ngày này
+            <Pressable
+              accessibilityRole="button"
+              className="mb-3 min-h-10 flex-row items-center justify-center rounded-xl border border-slate-200 bg-white px-3"
+              onPress={onClear}
+            >
+              <Ionicons name="calendar-clear-outline" size={16} color="#64748b" />
+              <Text className="ml-2 text-xs font-bold text-slate-600">
+                Đặt ngày này là ngày nghỉ
               </Text>
             </Pressable>
           ) : null}
@@ -177,12 +194,13 @@ export function WorkDayScheduleEditor({
                       selected
                         ? "border-blue-100 bg-white"
                         : "border-transparent bg-transparent"
-                    } ${readOnly ? "opacity-60" : ""}`}
-                    accessibilityRole="button"
-                    accessibilityState={{ disabled: readOnly, selected }}
+                    }`}
+                    accessibilityRole="radio"
+                    accessibilityState={{ checked: selected, disabled: readOnly }}
                     disabled={readOnly}
                     key={option.value}
                     onPress={() => onChange("period", option.value)}
+                    style={readOnly ? { opacity: 0.6 } : undefined}
                   >
                     <Text
                       className={`text-[11px] font-black ${
@@ -212,14 +230,13 @@ export function WorkDayScheduleEditor({
               </Text>
             </Text>
             <TextInput
-              className={`min-h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800 ${
-                readOnly ? "opacity-60" : ""
-              }`}
+              className="min-h-12 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-800"
               editable={!readOnly}
               maxLength={200}
               onChangeText={(text) => onChange("note", text)}
               placeholder="Ví dụ: họp với khách hàng lúc 9:00"
               placeholderTextColor="#94a3b8"
+              style={readOnly ? { opacity: 0.6 } : undefined}
               value={entry.note || ""}
             />
           </View>
