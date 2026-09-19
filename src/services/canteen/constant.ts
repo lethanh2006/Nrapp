@@ -8,10 +8,13 @@ export type OrderStatus =
   | "CANCELLED";
 
 export type OrderPaymentStatus = "PENDING" | "PAID" | "REFUNDED";
-export type CreateOrderPaymentMethod = "CASH" | "VIETQR";
+/** Phương thức được phép tạo đơn ở giai đoạn hiện tại. */
+export type CreateOrderPaymentMethod = "CASH";
 export type OrderPaymentMethod =
   | CreateOrderPaymentMethod
+  /** Giữ kiểu cũ để hiển thị an toàn các đơn lịch sử. */
   | "VNPAY"
+  | "VIETQR"
   | "MOMO";
 
 export interface MenuItemOption {
@@ -68,7 +71,7 @@ export interface CreateOrderItemInput {
 }
 
 export interface CreateOrderInput {
-  tableId?: string;
+  tableId: string;
   items: CreateOrderItemInput[];
   paymentMethod: CreateOrderPaymentMethod;
 }
@@ -114,6 +117,7 @@ export interface OrderListQuery {
   status?: OrderStatus;
   paymentStatus?: OrderPaymentStatus;
   userId?: string;
+  tableId?: string;
   from?: string;
   to?: string;
   page?: number;

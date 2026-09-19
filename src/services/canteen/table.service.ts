@@ -29,24 +29,13 @@ export interface CreateCanteenTableInput {
 
 export type UpdateCanteenTableInput = Partial<CreateCanteenTableInput>;
 
-export interface CanteenTableAllocation {
-  message: string;
-  allocationDetails: {
-    allocatedTableIds: string[];
-    totalCapacity: number;
-    partySize: number;
-    isMerged: boolean;
-    wasteCapacity: number;
-  };
-  tables: CanteenTable[];
-}
-
 export async function listCanteenTables(
+  token: string,
   params: CanteenAdminQuery = {},
 ): Promise<CanteenAdminList<CanteenTable>> {
   const { data } = await axios.get<CanteenListResponse<CanteenTable>>(
     `${ipNR}/canteen/tables`,
-    { params },
+    { ...getAuthHeader(token), params },
   );
   return normalizeCanteenAdminList(data);
 }
@@ -92,18 +81,6 @@ export async function updateCanteenTableStatus(
   const { data } = await axios.patch<CanteenTable>(
     `${ipNR}/canteen/tables/${encodeURIComponent(tableId)}/status`,
     { status },
-    getAuthHeader(token),
-  );
-  return data;
-}
-
-export async function allocateCanteenTables(
-  token: string,
-  partySize: number,
-) {
-  const { data } = await axios.post<CanteenTableAllocation>(
-    `${ipNR}/canteen/tables/allocate`,
-    { partySize },
     getAuthHeader(token),
   );
   return data;

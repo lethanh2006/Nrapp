@@ -1,11 +1,9 @@
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import {
-  formatDateTime,
   formatMoney,
   getCanteenErrorMessage,
 } from "@/src/features/canteen/shared/model/presentation";
 import UserOrderSummaryCard from "@/src/features/canteen/user/ui/UserOrderSummaryCard";
-import UserPaymentQrModal from "@/src/features/canteen/user/ui/UserPaymentQrModal";
 import {
   cancelCanteenOrder,
   createCanteenOrder,
@@ -15,25 +13,20 @@ import {
 } from "@/src/services/canteen/canteen.service";
 import type {
   CanteenOrder,
-  CreateOrderPaymentMethod,
   MenuGroup,
   MenuItem,
 } from "@/src/services/canteen/constant";
 import {
-  createPaymentQr,
-  getPaymentHistory,
-  getPaymentStatus,
-} from "@/src/services/payment/payment.service";
-import {
-  PAYMENT_STATUS_LABELS,
-  type PaymentRecord,
-} from "@/src/services/payment/constant";
+  listCanteenTables,
+  type CanteenTable,
+} from "@/src/services/canteen/table.service";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import { Ionicons } from "@expo/vector-icons";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
+  Modal,
   Pressable,
   RefreshControl,
   ScrollView,
@@ -43,7 +36,6 @@ import {
 } from "react-native";
 
 type UserCanteenTab = "menu" | "orders";
-
 type CartLine = {
   key: string;
   item: MenuItem;
@@ -51,14 +43,97 @@ type CartLine = {
   selectedOptionNames: string[];
 };
 
-const paymentStatusColor: Record<PaymentRecord["status"], string> = {
-  PENDING: "#d97706",
-  SUCCESS: "#059669",
-  FAILED: "#dc2626",
-  EXPIRED: "#64748b",
-  REVIEW_REQUIRED: "#7c3aed",
-  REFUNDED: "#475569",
-};
+function TablePicker({
+  tables,
+  selectedTableId,
+  onSelect,
+  compact = false,
+}: {
+  tables: CanteenTable[];
+  selectedTableId: string | null;
+  onSelect: (tableId: string) => void;
+  compact?: boolean;
+}) {
+  return (
+    <View
+      className={
+        compact ? "" : "rounded-[28px] border border-blue-100 bg-white p-4"
+      }
+    >
+      {!compact ? (
+        <View className="mb-4 flex-row items-start">
+          <View className="h-11 w-11 items-center justify-center rounded-2xl bg-blue-50">
+            <Ionicons name="grid-outline" size={22} color="#2563eb" />
+          </View>
+          <View className="ml-3 flex-1">
+            <Text className="text-lg font-black text-slate-900">
+              Chọn bàn trước khi gọi món
+            </Text>
+            <Text className="mt-1 text-xs leading-5 text-slate-500">
+              Bạn có thể gọi thêm món cho bàn đang dùng. Bàn được giữ trong đơn
+              để nhân viên xử lý nhanh hơn.
+            </Text>
+          </View>
+        </View>
+      ) : null}
+      {tables.length === 0 ? (
+        <View className="items-center rounded-2xl bg-slate-50 px-4 py-8">
+          <Ionicons name="grid-outline" size={30} color="#94a3b8" />
+          <Text className="mt-2 text-center text-xs font-semibold text-slate-500">
+            Chưa có bàn khả dụng. Vui lòng thử tải lại sau.
+          </Text>
+        </View>
+      ) : (
+        <View className="flex-row flex-wrap justify-between">
+          {tables.map((table) => {
+            const selected = table._id === selectedTableId;
+            const reserved = table.status === "reserved";
+            const occupied = table.status === "occupied";
+            return (
+              <Pressable
+                accessibilityLabel={`Chọn ${table.name}`}
+                accessibilityRole="button"
+                accessibilityState={{ disabled: reserved, selected }}
+                className={`mb-3 rounded-2xl border p-3 ${selected ? "border-blue-600 bg-blue-600" : reserved ? "border-slate-200 bg-slate-100 opacity-60" : occupied ? "border-amber-200 bg-amber-50" : "border-emerald-200 bg-emerald-50"}`}
+                disabled={reserved}
+                key={table._id}
+                onPress={() => onSelect(table._id)}
+                style={{ width: "48.5%" }}
+              >
+                <View className="flex-row items-center justify-between">
+                  <Ionicons
+                    color={
+                      selected ? "white" : occupied ? "#d97706" : "#059669"
+                    }
+                    name="restaurant-outline"
+                    size={19}
+                  />
+                  {selected ? (
+                    <Ionicons color="white" name="checkmark-circle" size={18} />
+                  ) : null}
+                </View>
+                <Text
+                  className={`mt-3 text-base font-black ${selected ? "text-white" : "text-slate-900"}`}
+                >
+                  {table.name}
+                </Text>
+                <Text
+                  className={`mt-1 text-[11px] font-bold ${selected ? "text-blue-100" : reserved ? "text-slate-500" : occupied ? "text-amber-700" : "text-emerald-700"}`}
+                >
+                  {reserved
+                    ? "Tạm khóa"
+                    : occupied
+                      ? "Đang dùng · gọi thêm được"
+                      : `Trống · ${table.capacity} chỗ`}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
+    </View>
+  );
+}
 
 export default function UserCanteenScreen() {
   const { isAuth, getToken } = useAuthSession();
@@ -69,25 +144,50 @@ export default function UserCanteenScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [menuLoading, setMenuLoading] = useState(true);
   const [searching, setSearching] = useState(false);
-  const [draftOptions, setDraftOptions] = useState<Record<string, string[]>>({});
-  const [cart, setCart] = useState<CartLine[]>([]);
-  const [paymentMethod, setPaymentMethod] =
-    useState<CreateOrderPaymentMethod>("CASH");
-  const [submitting, setSubmitting] = useState(false);
-
-  const [orders, setOrders] = useState<CanteenOrder[]>([]);
-  const [payments, setPayments] = useState<PaymentRecord[]>([]);
-  const [paymentHistoryError, setPaymentHistoryError] = useState<string | null>(
-    null,
+  const [tables, setTables] = useState<CanteenTable[]>([]);
+  const [tablesLoading, setTablesLoading] = useState(true);
+  const [tableError, setTableError] = useState<string | null>(null);
+  const [selectedTableId, setSelectedTableId] = useState<string | null>(null);
+  const [tablePickerVisible, setTablePickerVisible] = useState(false);
+  const [draftOptions, setDraftOptions] = useState<Record<string, string[]>>(
+    {},
   );
+  const [cart, setCart] = useState<CartLine[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [orders, setOrders] = useState<CanteenOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [cancelReasons, setCancelReasons] = useState<Record<string, string>>({});
+  const [cancelReasons, setCancelReasons] = useState<Record<string, string>>(
+    {},
+  );
   const [cancellingId, setCancellingId] = useState<string | null>(null);
 
-  const [qrVisible, setQrVisible] = useState(false);
-  const [activePayment, setActivePayment] = useState<PaymentRecord | null>(null);
-  const [paymentLoading, setPaymentLoading] = useState(false);
+  const selectTable = (tableId: string) => {
+    if (selectedTableId && selectedTableId !== tableId && cart.length > 0) {
+      Alert.alert("Đổi bàn?", "Giỏ hàng hiện tại sẽ được gửi sang bàn mới.", [
+        { text: "Giữ bàn", style: "cancel" },
+        {
+          text: "Đổi bàn",
+          onPress: () => {
+            setSelectedTableId(tableId);
+            setTablePickerVisible(false);
+          },
+        },
+      ]);
+      return;
+    }
+    setSelectedTableId(tableId);
+    setTablePickerVisible(false);
+  };
+
+  const selectedTable = useMemo(
+    () => tables.find((table) => table._id === selectedTableId) ?? null,
+    [selectedTableId, tables],
+  );
+  const tableNames = useMemo(
+    () => new Map(tables.map((table) => [table._id, table.name])),
+    [tables],
+  );
 
   const loadMenu = useCallback(async () => {
     try {
@@ -103,6 +203,37 @@ export default function UserCanteenScreen() {
     }
   }, []);
 
+  const loadTables = useCallback(async () => {
+    if (!isAuth) return;
+    try {
+      setTablesLoading(true);
+      const token = await getToken();
+      if (!token) return;
+      const result = await listCanteenTables(token, {
+        page: 1,
+        limit: 100,
+        sortBy: "name",
+        sortOrder: "asc",
+      });
+      setTables(result.data);
+      setSelectedTableId((current) =>
+        current &&
+        result.data.some(
+          (table) => table._id === current && table.status !== "reserved",
+        )
+          ? current
+          : null,
+      );
+      setTableError(null);
+    } catch (error) {
+      setTableError(
+        getCanteenErrorMessage(error, "Không tải được danh sách bàn"),
+      );
+    } finally {
+      setTablesLoading(false);
+    }
+  }, [getToken, isAuth]);
+
   const loadOrders = useCallback(
     async (showLoading = true) => {
       if (!isAuth) return;
@@ -110,24 +241,7 @@ export default function UserCanteenScreen() {
         if (showLoading) setOrdersLoading(true);
         const token = await getToken();
         if (!token) return;
-        const [orderResult, paymentResult] = await Promise.allSettled([
-          getMyCanteenOrders(token),
-          getPaymentHistory(token, 20),
-        ]);
-        if (orderResult.status === "rejected") throw orderResult.reason;
-        setOrders(orderResult.value);
-        if (paymentResult.status === "fulfilled") {
-          setPayments(paymentResult.value);
-          setPaymentHistoryError(null);
-        } else {
-          setPayments([]);
-          setPaymentHistoryError(
-            getCanteenErrorMessage(
-              paymentResult.reason,
-              "Không tải được lịch sử thanh toán",
-            ),
-          );
-        }
+        setOrders(await getMyCanteenOrders(token));
       } catch (error) {
         Alert.alert(
           "Lỗi",
@@ -142,11 +256,9 @@ export default function UserCanteenScreen() {
 
   useEffect(() => {
     void loadMenu();
-  }, [loadMenu]);
-
-  useEffect(() => {
+    void loadTables();
     void loadOrders();
-  }, [loadOrders]);
+  }, [loadMenu, loadOrders, loadTables]);
 
   useEffect(() => {
     const keyword = searchQuery.trim();
@@ -155,7 +267,6 @@ export default function UserCanteenScreen() {
       setSearching(false);
       return;
     }
-
     let active = true;
     const timer = setTimeout(async () => {
       try {
@@ -163,17 +274,15 @@ export default function UserCanteenScreen() {
         const items = await searchCanteenMenu(keyword);
         if (active) setSearchResults(items);
       } catch (error) {
-        if (active) {
+        if (active)
           Alert.alert(
             "Lỗi",
             getCanteenErrorMessage(error, "Không tìm kiếm được món ăn"),
           );
-        }
       } finally {
         if (active) setSearching(false);
       }
-    }, 350);
-
+    }, 300);
     return () => {
       active = false;
       clearTimeout(timer);
@@ -191,7 +300,7 @@ export default function UserCanteenScreen() {
     [cart],
   );
 
-  const toggleOption = (itemId: string, optionName: string) => {
+  const toggleOption = (itemId: string, optionName: string) =>
     setDraftOptions((current) => {
       const selected = current[itemId] ?? [];
       return {
@@ -201,23 +310,21 @@ export default function UserCanteenScreen() {
           : [...selected, optionName],
       };
     });
-  };
 
   const addToCart = (item: MenuItem) => {
     const selectedOptionNames = [...(draftOptions[item._id] ?? [])].sort();
     const key = `${item._id}:${selectedOptionNames.join("|")}`;
     setCart((current) => {
       const existing = current.find((line) => line.key === key);
-      if (existing) {
+      if (existing)
         return current.map((line) =>
           line.key === key ? { ...line, quantity: line.quantity + 1 } : line,
         );
-      }
       return [...current, { key, item, quantity: 1, selectedOptionNames }];
     });
   };
 
-  const changeCartQuantity = (key: string, change: number) => {
+  const changeCartQuantity = (key: string, change: number) =>
     setCart((current) =>
       current
         .map((line) =>
@@ -227,20 +334,23 @@ export default function UserCanteenScreen() {
         )
         .filter((line) => line.quantity > 0),
     );
-  };
 
   const submitOrder = async () => {
-    if (cart.length === 0) {
-      Alert.alert("Thông báo", "Giỏ hàng đang trống");
+    if (!selectedTableId) {
+      Alert.alert("Chưa chọn bàn", "Hãy chọn bàn trước khi gọi món.");
       return;
     }
-
+    if (cart.length === 0) {
+      Alert.alert("Giỏ hàng trống", "Thêm ít nhất một món trước khi đặt.");
+      return;
+    }
     try {
       setSubmitting(true);
       const token = await getToken();
       if (!token) return;
       const order = await createCanteenOrder(token, {
-        paymentMethod,
+        tableId: selectedTableId,
+        paymentMethod: "CASH",
         items: cart.map((line) => ({
           menuItemId: line.item._id,
           quantity: line.quantity,
@@ -253,11 +363,7 @@ export default function UserCanteenScreen() {
       await loadOrders(false);
       Alert.alert(
         "Đặt món thành công",
-        `Đơn ${order.orderNumber} đã được tạo. ${
-          order.paymentMethod === "VIETQR"
-            ? "Bạn có thể tạo mã QR trong mục Đơn của tôi."
-            : "Vui lòng thanh toán tiền mặt khi nhận món."
-        }`,
+        `Đơn ${order.orderNumber} đã ghi nhận tại ${selectedTable?.name ?? "bàn đã chọn"}. Thanh toán tiền mặt khi nhận món.`,
       );
     } catch (error) {
       Alert.alert(
@@ -270,20 +376,13 @@ export default function UserCanteenScreen() {
   };
 
   const performCancel = async (order: CanteenOrder) => {
-    if (order.paymentStatus === "PAID") {
-      Alert.alert(
-        "Không thể hủy",
-        "Đơn đã thanh toán không thể hủy từ ứng dụng.",
-      );
-      return;
-    }
     try {
       setCancellingId(order._id);
       const token = await getToken();
       if (!token) return;
       await cancelCanteenOrder(token, order._id, cancelReasons[order._id]);
       await loadOrders(false);
-      Alert.alert("Thành công", `Đã hủy đơn ${order.orderNumber}`);
+      Alert.alert("Đã hủy đơn", `Đơn ${order.orderNumber} đã được hủy.`);
     } catch (error) {
       Alert.alert(
         "Lỗi",
@@ -294,14 +393,7 @@ export default function UserCanteenScreen() {
     }
   };
 
-  const confirmCancel = (order: CanteenOrder) => {
-    if (order.paymentStatus === "PAID") {
-      Alert.alert(
-        "Không thể hủy",
-        "Đơn đã thanh toán không thể hủy từ ứng dụng.",
-      );
-      return;
-    }
+  const confirmCancel = (order: CanteenOrder) =>
     Alert.alert(
       "Xác nhận hủy đơn",
       `Bạn có chắc muốn hủy đơn ${order.orderNumber}?`,
@@ -310,59 +402,19 @@ export default function UserCanteenScreen() {
         {
           text: "Hủy đơn",
           style: "destructive",
-          onPress: () => performCancel(order),
+          onPress: () => void performCancel(order),
         },
       ],
     );
-  };
-
-  const openPayment = async (order: CanteenOrder) => {
-    setQrVisible(true);
-    setActivePayment(null);
-    setPaymentLoading(true);
-    try {
-      const token = await getToken();
-      if (!token) return;
-      setActivePayment(await createPaymentQr(token, order._id));
-    } catch (error) {
-      setQrVisible(false);
-      Alert.alert(
-        "Lỗi",
-        getCanteenErrorMessage(error, "Không tạo được mã VietQR"),
-      );
-    } finally {
-      setPaymentLoading(false);
-    }
-  };
-
-  const refreshPayment = async () => {
-    if (!activePayment) return;
-    setPaymentLoading(true);
-    try {
-      const token = await getToken();
-      if (!token) return;
-      setActivePayment(await getPaymentStatus(token, activePayment.paymentId));
-      await loadOrders(false);
-    } catch (error) {
-      Alert.alert(
-        "Lỗi",
-        getCanteenErrorMessage(
-          error,
-          "Không cập nhật được trạng thái thanh toán",
-        ),
-      );
-    } finally {
-      setPaymentLoading(false);
-    }
-  };
 
   const onRefresh = async () => {
     setRefreshing(true);
-    if (tab === "menu") await loadMenu();
-    else await loadOrders(false);
-    setRefreshing(false);
+    try {
+      await Promise.all([loadMenu(), loadTables(), loadOrders(false)]);
+    } finally {
+      setRefreshing(false);
+    }
   };
-
   const openCart = () => {
     setTab("menu");
     setTimeout(() => scrollRef.current?.scrollToEnd({ animated: true }), 50);
@@ -410,7 +462,6 @@ export default function UserCanteenScreen() {
             </View>
           </View>
         </View>
-
         {item.options?.length ? (
           <View className="border-t border-slate-100 px-3.5 pb-3.5 pt-3">
             <Text className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400">
@@ -421,18 +472,12 @@ export default function UserCanteenScreen() {
                 const selected = selectedOptions.includes(option.name);
                 return (
                   <Pressable
+                    className={`mb-2 mr-2 rounded-full border px-3 py-2 ${selected ? "border-rose-500 bg-rose-50" : "border-slate-200 bg-white"}`}
                     key={option.name}
-                    className={`mb-2 mr-2 rounded-full border px-3 py-2 ${
-                      selected
-                        ? "border-rose-500 bg-rose-50"
-                        : "border-slate-200 bg-white"
-                    }`}
                     onPress={() => toggleOption(item._id, option.name)}
                   >
                     <Text
-                      className={`text-xs font-bold ${
-                        selected ? "text-rose-600" : "text-slate-500"
-                      }`}
+                      className={`text-xs font-bold ${selected ? "text-rose-600" : "text-slate-500"}`}
                     >
                       {selected ? "✓ " : ""}
                       {option.name} +{formatMoney(option.price)}
@@ -447,6 +492,85 @@ export default function UserCanteenScreen() {
     );
   };
 
+  const renderCart = () => (
+    <View className="mt-2 rounded-[28px] border border-rose-100 bg-white p-4 shadow-sm">
+      <View className="mb-3 flex-row items-center justify-between">
+        <View>
+          <Text className="text-lg font-black text-slate-900">Giỏ hàng</Text>
+          <Text className="mt-1 text-xs font-semibold text-slate-400">
+            {selectedTable?.name} · Thanh toán tiền mặt
+          </Text>
+        </View>
+        <Pressable onPress={() => setCart([])}>
+          <Text className="text-xs font-bold text-slate-400">Xóa tất cả</Text>
+        </Pressable>
+      </View>
+      {cart.map((line) => (
+        <View
+          className="mb-3 flex-row items-center border-b border-slate-100 pb-3"
+          key={line.key}
+        >
+          <View className="flex-1 pr-3">
+            <Text className="text-sm font-black text-slate-800">
+              {line.item.name}
+            </Text>
+            {line.selectedOptionNames.length ? (
+              <Text className="mt-1 text-[11px] text-slate-400">
+                + {line.selectedOptionNames.join(", ")}
+              </Text>
+            ) : null}
+          </View>
+          <View className="flex-row items-center rounded-xl bg-slate-100 p-1">
+            <Pressable
+              className="h-8 w-8 items-center justify-center"
+              onPress={() => changeCartQuantity(line.key, -1)}
+            >
+              <Ionicons name="remove" size={16} color="#475569" />
+            </Pressable>
+            <Text className="w-7 text-center text-sm font-black text-slate-800">
+              {line.quantity}
+            </Text>
+            <Pressable
+              className="h-8 w-8 items-center justify-center"
+              onPress={() => changeCartQuantity(line.key, 1)}
+            >
+              <Ionicons name="add" size={16} color="#475569" />
+            </Pressable>
+          </View>
+        </View>
+      ))}
+      <View className="mt-1 flex-row items-center justify-between">
+        <View>
+          <Text className="text-[10px] font-bold uppercase text-slate-400">
+            Tạm tính
+          </Text>
+          <Text className="text-xl font-black text-rose-600">
+            {formatMoney(cartTotal)}
+          </Text>
+        </View>
+        <Pressable
+          className="flex-row items-center rounded-2xl bg-rose-600 px-5 py-3.5 active:bg-rose-700 disabled:opacity-50"
+          disabled={submitting}
+          onPress={submitOrder}
+        >
+          {submitting ? (
+            <ActivityIndicator color="white" size="small" />
+          ) : (
+            <Ionicons name="receipt" size={18} color="white" />
+          )}
+          <Text className="ml-2 text-sm font-black text-white">Gửi đơn</Text>
+        </Pressable>
+      </View>
+      <View className="mt-3 flex-row items-start rounded-2xl bg-amber-50 p-3">
+        <Ionicons name="cash-outline" size={17} color="#b45309" />
+        <Text className="ml-2 flex-1 text-[11px] leading-4 text-amber-800">
+          Bạn thanh toán tiền mặt khi nhận món. Admin sẽ xác nhận giao dịch trên
+          hệ thống.
+        </Text>
+      </View>
+    </View>
+  );
+
   return (
     <View className="flex-1 bg-slate-50">
       <View className="border-b border-slate-100 bg-white px-4 pb-3 pt-4">
@@ -457,7 +581,7 @@ export default function UserCanteenScreen() {
           <View className="ml-3 flex-1">
             <Text className="text-xl font-black text-slate-900">Căn tin</Text>
             <Text className="text-xs font-semibold text-slate-400">
-              Chọn món và theo dõi đơn hàng của bạn
+              Chọn bàn · chọn món · nhận món
             </Text>
           </View>
           {cart.length > 0 ? (
@@ -473,31 +597,39 @@ export default function UserCanteenScreen() {
             </Pressable>
           ) : null}
         </View>
-
-        <View className="mt-4 flex-row rounded-2xl bg-slate-100 p-1">
-          {/* Conditional NativeWind shadows can surface a false navigation
-              context error in development, so selection uses border/background. */}
+        {selectedTable ? (
+          <Pressable
+            className="mt-3 flex-row items-center rounded-2xl border border-blue-100 bg-blue-50 px-3 py-2.5"
+            onPress={() => setTablePickerVisible(true)}
+          >
+            <Ionicons name="location-outline" size={17} color="#2563eb" />
+            <View className="ml-2 flex-1">
+              <Text className="text-[10px] font-black uppercase text-blue-500">
+                Bàn đang chọn
+              </Text>
+              <Text className="mt-0.5 text-sm font-black text-blue-900">
+                {selectedTable.name}
+              </Text>
+            </View>
+            <Text className="text-xs font-black text-blue-700">Đổi bàn</Text>
+          </Pressable>
+        ) : null}
+        <View className="mt-3 flex-row rounded-2xl bg-slate-100 p-1">
           {(
             [
-              ["menu", "Thực đơn"],
+              ["menu", "Gọi món"],
               ["orders", "Đơn của tôi"],
             ] as const
           ).map(([value, label]) => (
             <Pressable
               accessibilityRole="tab"
               accessibilityState={{ selected: tab === value }}
+              className={`flex-1 items-center rounded-xl border py-2.5 ${tab === value ? "border-rose-100 bg-white" : "border-transparent bg-slate-100"}`}
               key={value}
-              className={`flex-1 items-center rounded-xl border py-2.5 ${
-                tab === value
-                  ? "border-rose-100 bg-white"
-                  : "border-transparent bg-slate-100"
-              }`}
               onPress={() => setTab(value)}
             >
               <Text
-                className={`text-xs font-black ${
-                  tab === value ? "text-rose-600" : "text-slate-500"
-                }`}
+                className={`text-xs font-black ${tab === value ? "text-rose-600" : "text-slate-500"}`}
               >
                 {label}
               </Text>
@@ -505,7 +637,6 @@ export default function UserCanteenScreen() {
           ))}
         </View>
       </View>
-
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ padding: 16, paddingBottom: 36 }}
@@ -516,307 +647,221 @@ export default function UserCanteenScreen() {
         showsVerticalScrollIndicator={false}
       >
         {tab === "menu" ? (
-          <>
-            <View className="mb-4 flex-row items-center rounded-2xl border border-slate-200 bg-white px-3">
-              <Ionicons name="search" size={19} color="#94a3b8" />
-              <TextInput
-                className="h-12 flex-1 px-2 text-sm font-semibold text-slate-800"
-                onChangeText={setSearchQuery}
-                placeholder="Tìm món ăn…"
-                placeholderTextColor="#94a3b8"
-                value={searchQuery}
-              />
-              {searching ? <ActivityIndicator size="small" color="#e11d48" /> : null}
-              {searchQuery ? (
-                <Pressable onPress={() => setSearchQuery("")}>
-                  <Ionicons name="close-circle" size={20} color="#94a3b8" />
-                </Pressable>
-              ) : null}
+          tablesLoading ? (
+            <View className="items-center py-20">
+              <ActivityIndicator size="large" color="#2563eb" />
+              <Text className="mt-3 text-xs font-semibold text-slate-400">
+                Đang tải bàn…
+              </Text>
             </View>
-
-            {menuLoading ? (
-              <View className="items-center py-20">
-                <ActivityIndicator size="large" color="#e11d48" />
-              </View>
-            ) : searchResults ? (
-              <View>
-                <Text className="mb-3 text-base font-black text-slate-800">
-                  Kết quả tìm kiếm ({searchResults.length})
+          ) : tableError ? (
+            <View className="items-center rounded-3xl bg-white px-5 py-12">
+              <Ionicons
+                name="cloud-offline-outline"
+                size={38}
+                color="#94a3b8"
+              />
+              <Text className="mt-3 text-center text-sm font-black text-slate-700">
+                Chưa tải được danh sách bàn
+              </Text>
+              <Text className="mt-2 text-center text-xs leading-5 text-slate-500">
+                {tableError}
+              </Text>
+              <Pressable
+                className="mt-4 rounded-2xl bg-blue-600 px-5 py-3"
+                onPress={() => void loadTables()}
+              >
+                <Text className="text-xs font-black text-white">Thử lại</Text>
+              </Pressable>
+            </View>
+          ) : !selectedTableId ? (
+            <TablePicker
+              tables={tables}
+              selectedTableId={selectedTableId}
+              onSelect={selectTable}
+            />
+          ) : (
+            <>
+              <View className="mb-4 flex-row items-center rounded-2xl border border-emerald-100 bg-emerald-50 p-3">
+                <Ionicons name="checkmark-circle" size={19} color="#059669" />
+                <Text className="ml-2 flex-1 text-xs font-bold leading-5 text-emerald-800">
+                  Đã chọn {selectedTable?.name}. Bây giờ chọn món bạn muốn gọi.
                 </Text>
-                {searchResults.map(renderMenuItem)}
-                {searchResults.length === 0 ? (
-                  <View className="items-center rounded-3xl bg-white py-12">
-                    <Ionicons name="search-outline" size={38} color="#cbd5e1" />
-                    <Text className="mt-3 text-sm font-semibold text-slate-400">
-                      Không tìm thấy món phù hợp
-                    </Text>
-                  </View>
+              </View>
+              <View className="mb-4 flex-row items-center rounded-2xl border border-slate-200 bg-white px-3">
+                <Ionicons name="search" size={19} color="#94a3b8" />
+                <TextInput
+                  className="h-12 flex-1 px-2 text-sm font-semibold text-slate-800"
+                  onChangeText={setSearchQuery}
+                  placeholder="Tìm món ăn…"
+                  placeholderTextColor="#94a3b8"
+                  value={searchQuery}
+                />
+                {searching ? (
+                  <ActivityIndicator size="small" color="#e11d48" />
+                ) : null}
+                {searchQuery ? (
+                  <Pressable onPress={() => setSearchQuery("")}>
+                    <Ionicons name="close-circle" size={20} color="#94a3b8" />
+                  </Pressable>
                 ) : null}
               </View>
-            ) : (
-              menuGroups.map((group) => (
-                <View key={group.category._id} className="mb-3">
-                  <Text className="mb-1 text-lg font-black text-slate-900">
-                    {group.category.name}
+              {menuLoading ? (
+                <View className="items-center py-20">
+                  <ActivityIndicator size="large" color="#e11d48" />
+                </View>
+              ) : searchResults ? (
+                <View>
+                  <Text className="mb-3 text-base font-black text-slate-800">
+                    Kết quả tìm kiếm ({searchResults.length})
                   </Text>
-                  {group.category.description ? (
-                    <Text className="mb-3 text-xs leading-5 text-slate-400">
-                      {group.category.description}
-                    </Text>
+                  {searchResults.map(renderMenuItem)}
+                  {searchResults.length === 0 ? (
+                    <View className="items-center rounded-3xl bg-white py-12">
+                      <Ionicons
+                        name="search-outline"
+                        size={38}
+                        color="#cbd5e1"
+                      />
+                      <Text className="mt-3 text-sm font-semibold text-slate-400">
+                        Không tìm thấy món phù hợp
+                      </Text>
+                    </View>
                   ) : null}
-                  {group.items.map(renderMenuItem)}
-                </View>
-              ))
-            )}
-
-            {cart.length > 0 ? (
-              <View className="mt-2 rounded-[28px] border border-rose-100 bg-white p-4 shadow-sm">
-                <View className="mb-3 flex-row items-center justify-between">
-                  <Text className="text-lg font-black text-slate-900">Giỏ hàng</Text>
-                  <Pressable onPress={() => setCart([])}>
-                    <Text className="text-xs font-bold text-slate-400">Xóa tất cả</Text>
-                  </Pressable>
-                </View>
-
-                {cart.map((line) => (
-                  <View
-                    key={line.key}
-                    className="mb-3 flex-row items-center border-b border-slate-100 pb-3"
-                  >
-                    <View className="flex-1 pr-3">
-                      <Text className="text-sm font-black text-slate-800">
-                        {line.item.name}
-                      </Text>
-                      {line.selectedOptionNames.length ? (
-                        <Text className="mt-1 text-[11px] text-slate-400">
-                          + {line.selectedOptionNames.join(", ")}
-                        </Text>
-                      ) : null}
-                    </View>
-                    <View className="flex-row items-center rounded-xl bg-slate-100 p-1">
-                      <Pressable
-                        className="h-8 w-8 items-center justify-center"
-                        onPress={() => changeCartQuantity(line.key, -1)}
-                      >
-                        <Ionicons name="remove" size={16} color="#475569" />
-                      </Pressable>
-                      <Text className="w-7 text-center text-sm font-black text-slate-800">
-                        {line.quantity}
-                      </Text>
-                      <Pressable
-                        className="h-8 w-8 items-center justify-center"
-                        onPress={() => changeCartQuantity(line.key, 1)}
-                      >
-                        <Ionicons name="add" size={16} color="#475569" />
-                      </Pressable>
-                    </View>
-                  </View>
-                ))}
-
-                <Text className="mb-2 text-[10px] font-black uppercase tracking-wider text-slate-400">
-                  Phương thức thanh toán
-                </Text>
-                <View className="flex-row">
-                  {(["CASH", "VIETQR"] as const).map((method) => (
-                    <Pressable
-                      key={method}
-                      className={`mr-2 flex-1 rounded-2xl border px-3 py-3 ${
-                        paymentMethod === method
-                          ? "border-rose-500 bg-rose-50"
-                          : "border-slate-200 bg-white"
-                      }`}
-                      onPress={() => setPaymentMethod(method)}
-                    >
-                      <Text
-                        className={`text-center text-xs font-black ${
-                          paymentMethod === method
-                            ? "text-rose-600"
-                            : "text-slate-500"
-                        }`}
-                      >
-                        {method === "CASH" ? "Tiền mặt" : "VietQR"}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-
-                <View className="mt-4 flex-row items-center justify-between">
-                  <View>
-                    <Text className="text-[10px] font-bold uppercase text-slate-400">
-                      Tạm tính
-                    </Text>
-                    <Text className="text-xl font-black text-rose-600">
-                      {formatMoney(cartTotal)}
-                    </Text>
-                  </View>
-                  <Pressable
-                    className="flex-row items-center rounded-2xl bg-rose-600 px-5 py-3.5 active:bg-rose-700 disabled:opacity-50"
-                    disabled={submitting}
-                    onPress={submitOrder}
-                  >
-                    {submitting ? (
-                      <ActivityIndicator color="white" size="small" />
-                    ) : (
-                      <Ionicons name="receipt" size={18} color="white" />
-                    )}
-                    <Text className="ml-2 text-sm font-black text-white">
-                      Đặt món
-                    </Text>
-                  </Pressable>
-                </View>
-                <Text className="mt-3 text-[10px] leading-4 text-slate-400">
-                  Giá cuối cùng và ưu đãi được máy chủ tính lại khi tạo đơn.
-                </Text>
-              </View>
-            ) : null}
-          </>
-        ) : (
-          <>
-            {ordersLoading ? (
-              <View className="items-center py-20">
-                <ActivityIndicator size="large" color="#e11d48" />
-              </View>
-            ) : orders.length === 0 ? (
-              <View className="items-center rounded-3xl bg-white py-14">
-                <Ionicons name="receipt-outline" size={42} color="#cbd5e1" />
-                <Text className="mt-3 text-sm font-semibold text-slate-400">
-                  Bạn chưa có đơn hàng nào
-                </Text>
-                <Pressable
-                  className="mt-4 rounded-2xl bg-rose-600 px-5 py-3"
-                  onPress={() => setTab("menu")}
-                >
-                  <Text className="text-xs font-black text-white">Chọn món ngay</Text>
-                </Pressable>
-              </View>
-            ) : (
-              orders.map((order) => (
-                <UserOrderSummaryCard
-                  key={order._id}
-                  order={order}
-                  footer={
-                    (order.status === "CREATED" &&
-                      order.paymentStatus !== "PAID") ||
-                    (order.paymentMethod === "VIETQR" &&
-                      order.paymentStatus !== "PAID" &&
-                      order.status !== "CANCELLED") ? (
-                      <View>
-                        {order.status === "CREATED" ? (
-                          <View>
-                            <TextInput
-                              className="mb-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-700"
-                              maxLength={500}
-                              onChangeText={(reason) =>
-                                setCancelReasons((current) => ({
-                                  ...current,
-                                  [order._id]: reason,
-                                }))
-                              }
-                              placeholder="Lý do hủy (không bắt buộc)"
-                              placeholderTextColor="#94a3b8"
-                              value={cancelReasons[order._id] ?? ""}
-                            />
-                            <Pressable
-                              className="mb-2 items-center rounded-2xl border border-rose-200 bg-rose-50 py-2.5 disabled:opacity-50"
-                              disabled={cancellingId === order._id}
-                              onPress={() => confirmCancel(order)}
-                            >
-                              {cancellingId === order._id ? (
-                                <ActivityIndicator color="#e11d48" size="small" />
-                              ) : (
-                                <Text className="text-xs font-black text-rose-600">
-                                  Hủy đơn
-                                </Text>
-                              )}
-                            </Pressable>
-                          </View>
-                        ) : null}
-                        {order.paymentMethod === "VIETQR" ? (
-                          <Pressable
-                            className="flex-row items-center justify-center rounded-2xl bg-blue-600 py-3 active:bg-blue-700"
-                            onPress={() => openPayment(order)}
-                          >
-                            <Ionicons name="qr-code" size={18} color="white" />
-                            <Text className="ml-2 text-xs font-black text-white">
-                              Tạo / xem mã VietQR
-                            </Text>
-                          </Pressable>
-                        ) : null}
-                      </View>
-                    ) : undefined
-                  }
-                />
-              ))
-            )}
-
-            <View className="mt-3">
-              <Text className="mb-3 text-base font-black text-slate-800">
-                Lịch sử thanh toán
-              </Text>
-              {paymentHistoryError ? (
-                <View className="rounded-3xl border border-amber-100 bg-amber-50 p-5">
-                  <Text className="text-center text-xs font-semibold leading-5 text-amber-700">
-                    {paymentHistoryError}
-                  </Text>
-                </View>
-              ) : payments.length === 0 ? (
-                <View className="rounded-3xl bg-white p-5">
-                  <Text className="text-center text-xs font-semibold text-slate-400">
-                    Chưa có giao dịch VietQR
-                  </Text>
                 </View>
               ) : (
-                payments.map((payment) => (
-                  <Pressable
-                    key={payment.paymentId}
-                    className="mb-2 rounded-2xl border border-slate-100 bg-white p-3.5"
-                    onPress={() => {
-                      setPaymentLoading(false);
-                      setActivePayment(payment);
-                      setQrVisible(true);
-                    }}
-                  >
-                    <View className="flex-row items-center justify-between">
-                      <View className="flex-1 pr-3">
-                        <Text className="text-sm font-black text-slate-800">
-                          {formatMoney(payment.amount)}
-                        </Text>
-                        <Text className="mt-1 text-[11px] text-slate-400">
-                          {formatDateTime(payment.createdAt)}
-                        </Text>
-                      </View>
-                      <View className="flex-row items-center">
-                        <Text
-                          className="text-xs font-black"
-                          style={{ color: paymentStatusColor[payment.status] }}
-                        >
-                          {PAYMENT_STATUS_LABELS[payment.status]}
-                        </Text>
-                        <Ionicons
-                          name="chevron-forward"
-                          size={16}
-                          color="#94a3b8"
-                        />
-                      </View>
-                    </View>
-                    <Text className="mt-2 text-[10px] text-slate-400">
-                      Đơn: {payment.orderId} · GD: {payment.paymentId}
+                menuGroups.map((group) => (
+                  <View key={group.category._id} className="mb-3">
+                    <Text className="mb-1 text-lg font-black text-slate-900">
+                      {group.category.name}
                     </Text>
-                  </Pressable>
+                    {group.category.description ? (
+                      <Text className="mb-3 text-xs leading-5 text-slate-400">
+                        {group.category.description}
+                      </Text>
+                    ) : null}
+                    {group.items.map(renderMenuItem)}
+                  </View>
                 ))
               )}
+              {cart.length > 0 ? renderCart() : null}
+            </>
+          )
+        ) : ordersLoading ? (
+          <View className="items-center py-20">
+            <ActivityIndicator size="large" color="#e11d48" />
+          </View>
+        ) : orders.length === 0 ? (
+          <View className="items-center rounded-3xl bg-white py-14">
+            <Ionicons name="receipt-outline" size={42} color="#cbd5e1" />
+            <Text className="mt-3 text-sm font-semibold text-slate-400">
+              Bạn chưa có đơn hàng nào
+            </Text>
+            <Pressable
+              className="mt-4 rounded-2xl bg-rose-600 px-5 py-3"
+              onPress={() => setTab("menu")}
+            >
+              <Text className="text-xs font-black text-white">
+                Chọn món ngay
+              </Text>
+            </Pressable>
+          </View>
+        ) : (
+          <>
+            <View className="mb-4 flex-row items-start rounded-2xl border border-amber-100 bg-amber-50 p-3">
+              <Ionicons name="cash-outline" size={18} color="#b45309" />
+              <Text className="ml-2 flex-1 text-xs leading-5 text-amber-800">
+                Tất cả đơn mới đều thanh toán tiền mặt. Khi đã thu tiền, admin
+                sẽ cập nhật trạng thái đã thanh toán.
+              </Text>
             </View>
+            {orders.map((order) => (
+              <UserOrderSummaryCard
+                key={order._id}
+                order={order}
+                tableName={
+                  order.tableId ? tableNames.get(order.tableId) : undefined
+                }
+                footer={
+                  order.status === "CREATED" &&
+                  order.paymentStatus === "PENDING" ? (
+                    <View>
+                      <TextInput
+                        className="mb-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-700"
+                        maxLength={500}
+                        onChangeText={(reason) =>
+                          setCancelReasons((current) => ({
+                            ...current,
+                            [order._id]: reason,
+                          }))
+                        }
+                        placeholder="Lý do hủy (không bắt buộc)"
+                        placeholderTextColor="#94a3b8"
+                        value={cancelReasons[order._id] ?? ""}
+                      />
+                      <Pressable
+                        className="items-center rounded-2xl border border-rose-200 bg-rose-50 py-2.5 disabled:opacity-50"
+                        disabled={cancellingId === order._id}
+                        onPress={() => confirmCancel(order)}
+                      >
+                        {cancellingId === order._id ? (
+                          <ActivityIndicator color="#e11d48" size="small" />
+                        ) : (
+                          <Text className="text-xs font-black text-rose-600">
+                            Hủy đơn
+                          </Text>
+                        )}
+                      </Pressable>
+                    </View>
+                  ) : undefined
+                }
+              />
+            ))}
           </>
         )}
       </ScrollView>
-
-      <UserPaymentQrModal
-        loading={paymentLoading}
-        onClose={() => setQrVisible(false)}
-        onRefresh={refreshPayment}
-        payment={activePayment}
-        visible={qrVisible}
-      />
+      <Modal
+        animationType="slide"
+        transparent
+        visible={tablePickerVisible}
+        onRequestClose={() => setTablePickerVisible(false)}
+      >
+        <View
+          className="flex-1 justify-end"
+          style={{ backgroundColor: "rgba(2, 6, 23, 0.45)" }}
+        >
+          <Pressable
+            className="flex-1"
+            onPress={() => setTablePickerVisible(false)}
+          />
+          <View className="max-h-[82%] rounded-t-[32px] bg-white px-4 pb-6 pt-4">
+            <View className="mb-4 flex-row items-center justify-between">
+              <View>
+                <Text className="text-lg font-black text-slate-900">
+                  Đổi bàn
+                </Text>
+                <Text className="mt-1 text-xs text-slate-400">
+                  Chọn bàn trống hoặc bàn đang dùng
+                </Text>
+              </View>
+              <Pressable
+                className="h-10 w-10 items-center justify-center rounded-full bg-slate-100"
+                onPress={() => setTablePickerVisible(false)}
+              >
+                <Ionicons name="close" size={20} color="#475569" />
+              </Pressable>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              <TablePicker
+                compact
+                tables={tables}
+                selectedTableId={selectedTableId}
+                onSelect={selectTable}
+              />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

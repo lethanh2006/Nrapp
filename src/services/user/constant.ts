@@ -1,12 +1,4 @@
-export const KNOWN_APP_ROLES = [
-  "admin",
-  "manager",
-  "chef",
-  "cashier",
-  "waiter",
-  "user",
-  "vip",
-] as const;
+export const KNOWN_APP_ROLES = ["admin", "user"] as const;
 
 export type KnownAppRole = (typeof KNOWN_APP_ROLES)[number];
 export type AppRole = KnownAppRole | (string & {});

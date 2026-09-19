@@ -1,4 +1,7 @@
-import { canManageWorkSchedule } from "@/src/application/access/roles";
+import {
+  canManageWorkSchedule,
+  getRoleLabel,
+} from "@/src/application/access/roles";
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import {
   AdminProvider,
@@ -32,12 +35,6 @@ const TABS: { key: TabType; label: string; icon: IconName }[] = [
   { key: "system", label: "Vận hành", icon: "qr-code-outline" },
   { key: "reports", label: "Báo cáo", icon: "bar-chart-outline" },
 ];
-
-const roleLabel: Record<string, string> = {
-  admin: "Quản trị viên",
-  manager: "Quản lý",
-  chef: "Điều hành",
-};
 
 function AdminDashboardContent() {
   const {
@@ -98,7 +95,7 @@ function AdminDashboardContent() {
             <View className="items-center rounded-2xl bg-white/15 px-3 py-2">
               <Ionicons name="person-circle-outline" size={22} color="#fff" />
               <Text className="mt-1 text-[10px] font-bold text-white">
-                {roleLabel[normalizedRole] || "Quản lý"}
+                {getRoleLabel(normalizedRole)}
               </Text>
             </View>
           </View>

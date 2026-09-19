@@ -128,69 +128,25 @@ export async function cancelCanteenOrder(
   return data;
 }
 
-export async function listCanteenOrders(
-  token: string,
-  params: OrderListQuery = {},
-) {
-  const { data } = await axios.get<PaginatedOrders>(
-    `${ipNR}/canteen/orders`,
-    { ...getAuthHeader(token), params },
-  );
-  return data;
-}
-
-export async function confirmCanteenOrder(token: string, orderId: string) {
-  const { data } = await axios.patch<CanteenOrder>(
-    `${ipNR}/canteen/orders/${encodeURIComponent(orderId)}/confirm`,
-    {},
-    getAuthHeader(token),
-  );
-  return data;
-}
-
-export async function completeCanteenOrder(token: string, orderId: string) {
-  const { data } = await axios.patch<CanteenOrder>(
-    `${ipNR}/canteen/orders/${encodeURIComponent(orderId)}/complete`,
-    {},
-    getAuthHeader(token),
-  );
-  return data;
-}
-
-export async function getKitchenQueue(token: string) {
-  const { data } = await axios.get<CanteenOrder[]>(
-    `${ipNR}/canteen/kitchen/queue`,
-    getAuthHeader(token),
-  );
-  return Array.isArray(data) ? data : [];
-}
-
-export async function getNextKitchenOrder(token: string) {
-  const { data } = await axios.post<CanteenOrder>(
-    `${ipNR}/canteen/kitchen/next`,
-    {},
-    getAuthHeader(token),
-  );
-  return data;
-}
-
-export async function setKitchenOrderCooking(
+export async function confirmCashCanteenPayment(
   token: string,
   orderId: string,
 ) {
   const { data } = await axios.patch<CanteenOrder>(
-    `${ipNR}/canteen/kitchen/orders/${encodeURIComponent(orderId)}/cooking`,
+    `${ipNR}/canteen/orders/${encodeURIComponent(orderId)}/payment/cash`,
     {},
     getAuthHeader(token),
   );
   return data;
 }
 
-export async function setKitchenOrderReady(token: string, orderId: string) {
-  const { data } = await axios.patch<CanteenOrder>(
-    `${ipNR}/canteen/kitchen/orders/${encodeURIComponent(orderId)}/ready`,
-    {},
-    getAuthHeader(token),
-  );
+export async function listCanteenOrders(
+  token: string,
+  params: OrderListQuery = {},
+) {
+  const { data } = await axios.get<PaginatedOrders>(`${ipNR}/canteen/orders`, {
+    ...getAuthHeader(token),
+    params,
+  });
   return data;
 }

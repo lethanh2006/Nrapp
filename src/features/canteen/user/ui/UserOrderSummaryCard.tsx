@@ -17,12 +17,14 @@ import { Text, View } from "react-native";
 
 type UserOrderSummaryCardProps = {
   order: CanteenOrder;
+  tableName?: string;
   showOwner?: boolean;
   footer?: ReactNode;
 };
 
 export default function UserOrderSummaryCard({
   order,
+  tableName,
   showOwner = false,
   footer,
 }: UserOrderSummaryCardProps) {
@@ -38,6 +40,9 @@ export default function UserOrderSummaryCard({
           </Text>
           <Text className="mt-1 text-[11px] font-semibold text-slate-400">
             {formatDateTime(order.createdAt)}
+          </Text>
+          <Text className="mt-1 text-[11px] font-bold text-blue-700">
+            {tableName ?? (order.tableId ? "Bàn đang chọn" : "Chưa có bàn")}
           </Text>
           {showOwner ? (
             <Text className="mt-1 text-[11px] font-bold text-slate-500">
@@ -73,7 +78,8 @@ export default function UserOrderSummaryCard({
               </Text>
               {item.selectedOptions?.length ? (
                 <Text className="mt-0.5 text-[11px] text-slate-400">
-                  + {item.selectedOptions.map((option) => option.name).join(", ")}
+                  +{" "}
+                  {item.selectedOptions.map((option) => option.name).join(", ")}
                 </Text>
               ) : null}
               {item.note ? (

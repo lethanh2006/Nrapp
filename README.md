@@ -14,8 +14,8 @@ lịch làm, đơn nhân sự và chấm công QR.
 
 Ứng dụng có hai khu giao diện tách biệt:
 
-- Khu admin: `admin`, `manager`, `chef`, `cashier`, `waiter`.
-- Khu user: `user`, `vip`; role chưa biết hiện cũng được đưa về khu user.
+- Khu admin: `admin`.
+- Khu user: `user`; role cũ hoặc chưa biết được đưa về khu user.
 
 ## Tài liệu nên đọc
 
@@ -42,15 +42,15 @@ URL / thao tác người dùng
 
 Các lớp chính:
 
-| Vị trí | Trách nhiệm |
-| --- | --- |
-| `app/` | Expo Router, layout, URL và route guard |
-| `src/application/` | Phân khu role, quyền và route constants |
-| `src/features/` | Screen, UI, hook và state theo tính năng |
-| `src/services/` | REST endpoint, payload, response và domain type |
-| `src/shared/` | Hạ tầng thật sự dùng chung toàn ứng dụng |
-| `src/components/` | Component khung dùng ở nhiều tính năng |
-| `src/utils/` | URL Gateway, Axios và chuẩn hóa lỗi HTTP |
+| Vị trí             | Trách nhiệm                                     |
+| ------------------ | ----------------------------------------------- |
+| `app/`             | Expo Router, layout, URL và route guard         |
+| `src/application/` | Phân khu role, quyền và route constants         |
+| `src/features/`    | Screen, UI, hook và state theo tính năng        |
+| `src/services/`    | REST endpoint, payload, response và domain type |
+| `src/shared/`      | Hạ tầng thật sự dùng chung toàn ứng dụng        |
+| `src/components/`  | Component khung dùng ở nhiều tính năng          |
+| `src/utils/`       | URL Gateway, Axios và chuẩn hóa lỗi HTTP        |
 
 Luồng khởi động:
 
@@ -94,14 +94,10 @@ Quy tắc bắt buộc:
 
 ## Role và quyền frontend
 
-| Role | Khu UI | Tài khoản | Task | Lịch/chấm công |
-| --- | --- | --- | --- | --- |
-| `admin` | admin | Quản lý | Quản lý | Quản lý |
-| `manager` | admin | Chỉ xem | Quản lý | Quản lý |
-| `chef` | admin | Chỉ xem | Quản lý | Quản lý |
-| `cashier` | admin | Chỉ xem | Cá nhân | Cá nhân |
-| `waiter` | admin | Chỉ xem | Cá nhân | Cá nhân |
-| `user`, `vip` | user | Chỉ xem | Cá nhân | Cá nhân |
+| Role    | Khu UI | Tài khoản | Task    | Lịch/chấm công |
+| ------- | ------ | --------- | ------- | -------------- |
+| `admin` | admin  | Quản lý   | Quản lý | Quản lý        |
+| `user`  | user   | Chỉ xem   | Cá nhân | Cá nhân        |
 
 Đây chỉ là lớp điều hướng và ẩn/hiện thao tác ở frontend. Gateway/backend vẫn
 phải kiểm tra quyền cho từng endpoint.

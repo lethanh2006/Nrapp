@@ -7,14 +7,8 @@ import {
 
 export const USER_ROLE = "user" as const;
 
-export const ADMIN_ROLES = [
-  "admin",
-  "manager",
-  "chef",
-  "cashier",
-  "waiter",
-] as const;
-export const USER_AREA_ROLES = ["user", "vip"] as const;
+export const ADMIN_ROLES = ["admin"] as const;
+export const USER_AREA_ROLES = ["user"] as const;
 
 export type AdminRole = (typeof ADMIN_ROLES)[number];
 export type UserRole = (typeof USER_AREA_ROLES)[number];
@@ -22,12 +16,7 @@ export type AppArea = "admin" | "user";
 
 export const ROLE_LABELS: Record<KnownAppRole, string> = {
   admin: "Quản trị viên",
-  manager: "Quản lý",
-  chef: "Bếp trưởng",
-  cashier: "Thu ngân",
-  waiter: "Phục vụ",
   user: "Nhân viên",
-  vip: "Khách VIP",
 };
 
 export const ROLE_OPTIONS = KNOWN_APP_ROLES.map((value) => ({
@@ -50,10 +39,10 @@ export const canManageAccounts = (role?: AppRole | null): boolean =>
   normalizeAppRole(role) === "admin";
 
 export const canManageTasks = (role?: AppRole | null): boolean =>
-  includesRole(["admin", "manager", "chef"] as const, role);
+  normalizeAppRole(role) === "admin";
 
 export const canManageWorkSchedule = (role?: AppRole | null): boolean =>
-  includesRole(["admin", "manager", "chef"] as const, role);
+  normalizeAppRole(role) === "admin";
 
 export const getAreaForRole = (role?: AppRole | null): AppArea =>
   isAdminRole(role) ? "admin" : "user";

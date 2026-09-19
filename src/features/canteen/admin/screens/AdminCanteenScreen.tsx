@@ -1,27 +1,24 @@
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
-import AdminCanteenAnalytics from "@/src/features/canteen/admin/ui/AdminCanteenAnalytics";
 import AdminCategoryManager from "@/src/features/canteen/admin/ui/AdminCategoryManager";
-import AdminInventoryManager from "@/src/features/canteen/admin/ui/AdminInventoryManager";
 import AdminMenuCatalog from "@/src/features/canteen/admin/ui/AdminMenuCatalog";
 import AdminOrderFilters from "@/src/features/canteen/admin/ui/AdminOrderFilters";
+import AdminOrderSummaryCard from "@/src/features/canteen/admin/ui/AdminOrderSummaryCard";
 import AdminTableManager from "@/src/features/canteen/admin/ui/AdminTableManager";
 import { getCanteenErrorMessage } from "@/src/features/canteen/shared/model/presentation";
-import AdminOrderSummaryCard from "@/src/features/canteen/admin/ui/AdminOrderSummaryCard";
 import {
+  confirmCashCanteenPayment,
   cancelCanteenOrder,
-  completeCanteenOrder,
-  confirmCanteenOrder,
-  getKitchenQueue,
-  getNextKitchenOrder,
   listCanteenOrders,
-  setKitchenOrderCooking,
-  setKitchenOrderReady,
 } from "@/src/services/canteen/canteen.service";
 import {
   type CanteenOrder,
   type OrderPaymentStatus,
   type OrderStatus,
 } from "@/src/services/canteen/constant";
+import {
+  listCanteenTables,
+  type CanteenTable,
+} from "@/src/services/canteen/table.service";
 import { getRoleLabel } from "@/src/application/access/roles";
 import { normalizeAppRole } from "@/src/services/user/constant";
 import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
@@ -44,44 +41,23 @@ import {
   View,
 } from "react-native";
 
-type OperationsTab =
-  | "orders"
-  | "kitchen"
-  | "catalog"
-  | "categories"
-  | "tables"
-  | "inventory"
-  | "analytics";
+type OperationsTab = "orders" | "catalog" | "categories" | "tables";
 type StatusFilter = OrderStatus | "ALL";
 type PaymentFilter = OrderPaymentStatus | "ALL";
-type OrderAction = "confirm" | "complete" | "cancel";
+type OrderAction = "cash" | "cancel";
 type IoniconName = ComponentProps<typeof Ionicons>["name"];
 
-type OperationTabItem = {
+const OPERATION_TAB_ITEMS: {
   value: OperationsTab;
   label: string;
   description: string;
   icon: IoniconName;
-};
-
-const OPERATOR_ROLES = ["admin", "manager", "cashier", "waiter"];
-const KITCHEN_ROLES = ["admin", "manager", "chef"];
-const CATALOG_ROLES = ["admin", "manager"];
-const TABLE_ROLES = ["admin", "manager", "waiter"];
-const INVENTORY_ROLES = ["admin", "manager", "chef"];
-
-const OPERATION_TAB_ITEMS: OperationTabItem[] = [
+}[] = [
   {
     value: "orders",
-    label: "Đơn hàng",
-    description: "Duyệt, giao món và xử lý thanh toán",
+    label: "Đơn & thu tiền",
+    description: "Xem món theo bàn và xác nhận tiền mặt",
     icon: "receipt-outline",
-  },
-  {
-    value: "kitchen",
-    label: "Nhà bếp",
-    description: "Điều phối hàng đợi và tiến độ chế biến",
-    icon: "flame-outline",
   },
   {
     value: "catalog",
@@ -92,26 +68,14 @@ const OPERATION_TAB_ITEMS: OperationTabItem[] = [
   {
     value: "categories",
     label: "Danh mục",
-    description: "Sắp xếp nhóm món hiển thị trên thực đơn",
+    description: "Sắp xếp nhóm món hiển thị",
     icon: "albums-outline",
   },
   {
     value: "tables",
     label: "Bàn ăn",
-    description: "Cấp bàn và theo dõi trạng thái phục vụ",
+    description: "Theo dõi 20 bàn và trạng thái phục vụ",
     icon: "grid-outline",
-  },
-  {
-    value: "inventory",
-    label: "Kho",
-    description: "Nhập lô, xuất dùng và theo dõi hạn sử dụng",
-    icon: "cube-outline",
-  },
-  {
-    value: "analytics",
-    label: "Thống kê",
-    description: "Theo dõi các món được đặt nhiều nhất",
-    icon: "stats-chart-outline",
   },
 ];
 
@@ -134,7 +98,6 @@ function LoadErrorCard({
         {message}
       </Text>
       <Pressable
-        accessibilityLabel="Thử tải lại dữ liệu"
         accessibilityRole="button"
         className="mt-4 flex-row items-center rounded-2xl bg-red-600 px-4 py-3 active:bg-red-700"
         onPress={onRetry}
@@ -149,33 +112,52 @@ function LoadErrorCard({
 export default function AdminCanteenScreen() {
   const { user, getToken } = useAuthSession();
   const role = normalizeAppRole(user?.role);
-  const canOperateOrders = OPERATOR_ROLES.includes(role);
-  const canUseKitchen = KITCHEN_ROLES.includes(role);
-  const canManageCatalog = CATALOG_ROLES.includes(role);
-  const canUseTables = TABLE_ROLES.includes(role);
-  const canUseInventory = INVENTORY_ROLES.includes(role);
-
+  const canOperate = role === "admin";
   const [tab, setTab] = useState<OperationsTab>("orders");
   const [resourceRefreshKey, setResourceRefreshKey] = useState(0);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("ALL");
   const [page, setPage] = useState(1);
   const [orders, setOrders] = useState<CanteenOrder[]>([]);
+  const [tables, setTables] = useState<CanteenTable[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [totalOrders, setTotalOrders] = useState(0);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [ordersError, setOrdersError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [actionKey, setActionKey] = useState<string | null>(null);
-  const [cancelReasons, setCancelReasons] = useState<Record<string, string>>({});
+  const [cancelReasons, setCancelReasons] = useState<Record<string, string>>(
+    {},
+  );
   const actionLock = useRef(false);
   const ordersRequestId = useRef(0);
+  const tableNames = useMemo(
+    () => new Map(tables.map((table) => [table._id, table.name])),
+    [tables],
+  );
 
-  const [queue, setQueue] = useState<CanteenOrder[]>([]);
-  const [cookingOrders, setCookingOrders] = useState<CanteenOrder[]>([]);
-  const [kitchenLoading, setKitchenLoading] = useState(true);
-  const [kitchenError, setKitchenError] = useState<string | null>(null);
-  const kitchenRequestId = useRef(0);
+  const loadTables = useCallback(
+    async (showError = false) => {
+      try {
+        const token = await getToken();
+        if (!token) return;
+        const result = await listCanteenTables(token, {
+          page: 1,
+          limit: 100,
+          sortBy: "name",
+          sortOrder: "asc",
+        });
+        setTables(result.data);
+      } catch (error) {
+        if (showError)
+          Alert.alert(
+            "Lỗi",
+            getCanteenErrorMessage(error, "Không tải được danh sách bàn"),
+          );
+      }
+    },
+    [getToken],
+  );
 
   const loadOrders = useCallback(
     async (showLoading = true) => {
@@ -184,20 +166,16 @@ export default function AdminCanteenScreen() {
         if (showLoading) setOrdersLoading(true);
         const token = await getToken();
         if (!token) {
-          if (requestId === ordersRequestId.current) {
-            setOrdersError("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
-          }
+          setOrdersError("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
           return;
         }
         const result = await listCanteenOrders(token, {
           page,
           limit: 20,
           status: statusFilter === "ALL" ? undefined : statusFilter,
-          paymentStatus:
-            paymentFilter === "ALL" ? undefined : paymentFilter,
+          paymentStatus: paymentFilter === "ALL" ? undefined : paymentFilter,
         });
         if (requestId !== ordersRequestId.current) return;
-
         const nextTotalPages = Math.max(result.pagination?.totalPages || 1, 1);
         if (page > nextTotalPages) {
           setPage(nextTotalPages);
@@ -208,78 +186,26 @@ export default function AdminCanteenScreen() {
         setTotalOrders(result.pagination?.total || 0);
         setOrdersError(null);
       } catch (error) {
-        if (requestId === ordersRequestId.current) {
+        if (requestId === ordersRequestId.current)
           setOrdersError(
             getCanteenErrorMessage(error, "Không tải được danh sách đơn hàng"),
           );
-        }
       } finally {
-        if (showLoading && requestId === ordersRequestId.current) {
+        if (showLoading && requestId === ordersRequestId.current)
           setOrdersLoading(false);
-        }
       }
     },
     [getToken, page, paymentFilter, statusFilter],
   );
 
-  const loadKitchen = useCallback(
-    async (showLoading = true) => {
-      const requestId = ++kitchenRequestId.current;
-      if (!canUseKitchen) {
-        setQueue([]);
-        setCookingOrders([]);
-        setKitchenError(null);
-        setKitchenLoading(false);
-        return;
-      }
-      try {
-        if (showLoading) setKitchenLoading(true);
-        const token = await getToken();
-        if (!token) {
-          if (requestId === kitchenRequestId.current) {
-            setKitchenError("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
-          }
-          return;
-        }
-        const [confirmed, cooking] = await Promise.all([
-          getKitchenQueue(token),
-          listCanteenOrders(token, {
-            status: "COOKING",
-            page: 1,
-            limit: 100,
-          }),
-        ]);
-        if (requestId !== kitchenRequestId.current) return;
-        setQueue(confirmed);
-        setCookingOrders(Array.isArray(cooking.orders) ? cooking.orders : []);
-        setKitchenError(null);
-      } catch (error) {
-        if (requestId === kitchenRequestId.current) {
-          setKitchenError(
-            getCanteenErrorMessage(error, "Không tải được hàng đợi nhà bếp"),
-          );
-        }
-      } finally {
-        if (showLoading && requestId === kitchenRequestId.current) {
-          setKitchenLoading(false);
-        }
-      }
-    },
-    [canUseKitchen, getToken],
-  );
-
+  useEffect(() => {
+    void loadTables(true);
+  }, [loadTables]);
   useEffect(() => {
     if (tab === "orders") void loadOrders();
   }, [loadOrders, tab]);
 
-  useEffect(() => {
-    if (tab === "kitchen") void loadKitchen();
-  }, [loadKitchen, tab]);
-
-  const runOrderAction = async (
-    action: OrderAction,
-    order: CanteenOrder,
-  ) => {
+  const runOrderAction = async (action: OrderAction, order: CanteenOrder) => {
     if (actionLock.current) return;
     actionLock.current = true;
     const key = `${action}:${order._id}`;
@@ -287,25 +213,27 @@ export default function AdminCanteenScreen() {
       setActionKey(key);
       const token = await getToken();
       if (!token) {
-        Alert.alert("Lỗi", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+        Alert.alert(
+          "Lỗi",
+          "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+        );
         return;
       }
-      if (action === "confirm") {
-        await confirmCanteenOrder(token, order._id);
-      } else if (action === "complete") {
-        await completeCanteenOrder(token, order._id);
-      } else {
-        await cancelCanteenOrder(token, order._id, cancelReasons[order._id]);
-      }
+      if (action === "cash") await confirmCashCanteenPayment(token, order._id);
+      else await cancelCanteenOrder(token, order._id, cancelReasons[order._id]);
       await loadOrders(false);
-      if (action === "cancel") {
+      if (action === "cancel")
         setCancelReasons((current) => {
           const next = { ...current };
           delete next[order._id];
           return next;
         });
-      }
-      Alert.alert("Thành công", `Đã cập nhật đơn ${order.orderNumber}`);
+      Alert.alert(
+        "Đã cập nhật",
+        action === "cash"
+          ? `Đã xác nhận thu tiền mặt cho ${order.orderNumber}.`
+          : `Đã hủy ${order.orderNumber}.`,
+      );
     } catch (error) {
       Alert.alert(
         "Lỗi",
@@ -318,218 +246,128 @@ export default function AdminCanteenScreen() {
     }
   };
 
-  const confirmCancel = (order: CanteenOrder) => {
+  const confirmCash = (order: CanteenOrder) =>
     Alert.alert(
-      "Xác nhận hủy đơn",
-      `Hủy đơn ${order.orderNumber}? Thao tác này không thể hoàn tác.`,
+      "Xác nhận thu tiền mặt",
+      `Bạn đã nhận đủ ${order.finalAmount.toLocaleString("vi-VN")} đ cho ${order.orderNumber}?`,
       [
-        { text: "Không", style: "cancel" },
+        { text: "Chưa", style: "cancel" },
         {
-          text: "Hủy đơn",
-          style: "destructive",
-          onPress: () => runOrderAction("cancel", order),
+          text: "Đã nhận tiền",
+          onPress: () => void runOrderAction("cash", order),
         },
       ],
     );
-  };
 
-  const runKitchenAction = async (
-    action: "next" | "cooking" | "ready",
-    order?: CanteenOrder,
-  ) => {
-    if (actionLock.current) return;
-    actionLock.current = true;
-    const key = `${action}:${order?._id ?? "next"}`;
-    try {
-      setActionKey(key);
-      const token = await getToken();
-      if (!token) {
-        Alert.alert("Lỗi", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
-        return;
-      }
-      if (action === "next") {
-        const claimed = await getNextKitchenOrder(token);
-        Alert.alert("Đã nhận đơn", `Bắt đầu chế biến ${claimed.orderNumber}`);
-      } else if (action === "cooking" && order) {
-        await setKitchenOrderCooking(token, order._id);
-      } else if (action === "ready" && order) {
-        await setKitchenOrderReady(token, order._id);
-      }
-      await loadKitchen(false);
-    } catch (error) {
-      Alert.alert(
-        "Lỗi",
-        getCanteenErrorMessage(
-          error,
-          "Không cập nhật được hàng đợi nhà bếp",
-        ),
-      );
-      void loadKitchen(false);
-    } finally {
-      actionLock.current = false;
-      setActionKey(null);
-    }
-  };
+  const confirmCancel = (order: CanteenOrder) =>
+    Alert.alert("Xác nhận hủy đơn", `Hủy đơn ${order.orderNumber}?`, [
+      { text: "Không", style: "cancel" },
+      {
+        text: "Hủy đơn",
+        style: "destructive",
+        onPress: () => void runOrderAction("cancel", order),
+      },
+    ]);
 
   const onRefresh = async () => {
     if (refreshing) return;
     setRefreshing(true);
     try {
-      if (tab === "orders") await loadOrders(false);
-      else if (tab === "kitchen") await loadKitchen(false);
-      else setResourceRefreshKey((current) => current + 1);
+      await Promise.all([loadOrders(false), loadTables()]);
+      setResourceRefreshKey((current) => current + 1);
     } finally {
       setRefreshing(false);
     }
   };
-
-  const operationTabs = useMemo(
-    () =>
-      OPERATION_TAB_ITEMS.filter(({ value }) => {
-        if (value === "kitchen") return canUseKitchen;
-        if (value === "catalog" || value === "categories" || value === "analytics") {
-          return canManageCatalog;
-        }
-        if (value === "tables") return canUseTables;
-        if (value === "inventory") return canUseInventory;
-        return true;
-      }),
-    [canManageCatalog, canUseInventory, canUseKitchen, canUseTables],
-  );
-
-  const activeTab =
-    operationTabs.find((item) => item.value === tab) ??
-    OPERATION_TAB_ITEMS[0];
-
-  useEffect(() => {
-    if (!operationTabs.some((item) => item.value === tab)) {
-      setTab("orders");
-    }
-  }, [operationTabs, tab]);
-
-  const pageStats = useMemo(
-    () => ({
-      newOrders: orders.filter((order) => order.status === "CREATED").length,
-      inKitchen: orders.filter(
-        (order) => order.status === "CONFIRMED" || order.status === "COOKING",
-      ).length,
-      ready: orders.filter((order) => order.status === "READY").length,
-    }),
-    [orders],
-  );
-
-  const hasOrderFilters = statusFilter !== "ALL" || paymentFilter !== "ALL";
-
-  const applyOrderFilters = (
-    status: StatusFilter,
-    payment: PaymentFilter,
-  ) => {
+  const applyOrderFilters = (status: StatusFilter, payment: PaymentFilter) => {
     setPage(1);
     setStatusFilter(status);
     setPaymentFilter(payment);
   };
-
   const resetOrderFilters = () => applyOrderFilters("ALL", "ALL");
+  const hasOrderFilters = statusFilter !== "ALL" || paymentFilter !== "ALL";
+  const pageStats = useMemo(
+    () => ({
+      pendingCash: orders.filter(
+        (order) =>
+          order.paymentMethod === "CASH" &&
+          order.paymentStatus === "PENDING" &&
+          order.status !== "CANCELLED",
+      ).length,
+      completed: orders.filter(
+        (order) =>
+          order.paymentStatus === "PAID" || order.status === "COMPLETED",
+      ).length,
+      cancelled: orders.filter((order) => order.status === "CANCELLED").length,
+    }),
+    [orders],
+  );
 
   const renderOrderActions = (order: CanteenOrder) => {
-    if (!canOperateOrders) {
+    if (!canOperate)
       return (
         <Text className="text-center text-xs font-semibold text-slate-400">
-          Vai trò của bạn chỉ được theo dõi đơn hàng.
+          Chỉ admin được xác nhận thu tiền.
         </Text>
       );
-    }
-
-    const canConfirm =
-      order.status === "CREATED" &&
-      (order.paymentMethod === "CASH" || order.paymentStatus === "PAID");
-    const canComplete = order.status === "READY";
+    const canCollect =
+      order.paymentMethod === "CASH" &&
+      order.paymentStatus === "PENDING" &&
+      order.status !== "CANCELLED";
     const canCancel =
-      order.paymentStatus !== "PAID" &&
-      (order.status === "CREATED" || order.status === "CONFIRMED");
-    const waitingForElectronicPayment =
-      order.status === "CREATED" &&
-      order.paymentMethod !== "CASH" &&
-      order.paymentStatus !== "PAID";
-    if (
-      !canConfirm &&
-      !canComplete &&
-      !canCancel &&
-      !waitingForElectronicPayment
-    ) {
-      return null;
-    }
-
+      order.status === "CREATED" && order.paymentStatus === "PENDING";
+    if (!canCollect && !canCancel) return null;
     return (
       <View>
-        {waitingForElectronicPayment ? (
-          <Text className="mb-2 text-center text-xs font-bold text-amber-600">
-            Chờ hệ thống ghi nhận thanh toán điện tử trước khi xác nhận đơn.
-          </Text>
+        {canCollect ? (
+          <Pressable
+            className="mb-2 flex-row items-center justify-center rounded-2xl bg-emerald-600 py-3 active:bg-emerald-700"
+            disabled={actionKey !== null}
+            onPress={() => confirmCash(order)}
+          >
+            {actionKey === `cash:${order._id}` ? (
+              <ActivityIndicator color="white" size="small" />
+            ) : (
+              <>
+                <Ionicons name="cash-outline" size={17} color="white" />
+                <Text className="ml-2 text-xs font-black text-white">
+                  Đã thu tiền mặt
+                </Text>
+              </>
+            )}
+          </Pressable>
         ) : null}
         {canCancel ? (
-          <TextInput
-            className="mb-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-700"
-            editable={actionKey === null}
-            maxLength={500}
-            onChangeText={(reason) =>
-              setCancelReasons((current) => ({
-                ...current,
-                [order._id]: reason,
-              }))
-            }
-            placeholder="Lý do hủy (không bắt buộc)"
-            placeholderTextColor="#94a3b8"
-            value={cancelReasons[order._id] ?? ""}
-          />
-        ) : null}
-        <View className="flex-row">
-          {canConfirm ? (
+          <>
+            <TextInput
+              className="mb-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-xs text-slate-700"
+              editable={actionKey === null}
+              maxLength={500}
+              onChangeText={(reason) =>
+                setCancelReasons((current) => ({
+                  ...current,
+                  [order._id]: reason,
+                }))
+              }
+              placeholder="Lý do hủy (không bắt buộc)"
+              placeholderTextColor="#94a3b8"
+              value={cancelReasons[order._id] ?? ""}
+            />
             <Pressable
-              className="mr-2 flex-1 items-center rounded-2xl bg-red-600 py-3"
-              disabled={actionKey !== null}
-              onPress={() => runOrderAction("confirm", order)}
-            >
-              {actionKey === `confirm:${order._id}` ? (
-                <ActivityIndicator color="white" size="small" />
-              ) : (
-                <Text className="text-xs font-black text-white">Xác nhận</Text>
-              )}
-            </Pressable>
-          ) : null}
-          {canComplete ? (
-            <Pressable
-              className="mr-2 flex-1 items-center rounded-2xl bg-emerald-600 py-3"
-              disabled={actionKey !== null}
-              onPress={() => runOrderAction("complete", order)}
-            >
-              {actionKey === `complete:${order._id}` ? (
-                <ActivityIndicator color="white" size="small" />
-              ) : (
-                <Text className="text-xs font-black text-white">
-                  {order.paymentMethod === "CASH" &&
-                  order.paymentStatus === "PENDING" &&
-                  order.finalAmount > 0
-                    ? "Giao món & thu tiền"
-                    : "Giao món & hoàn tất"}
-                </Text>
-              )}
-            </Pressable>
-          ) : null}
-          {canCancel ? (
-            <Pressable
-              className="flex-1 items-center rounded-2xl border border-rose-200 bg-rose-50 py-3"
+              className="items-center rounded-2xl border border-rose-200 bg-rose-50 py-3"
               disabled={actionKey !== null}
               onPress={() => confirmCancel(order)}
             >
               {actionKey === `cancel:${order._id}` ? (
                 <ActivityIndicator color="#e11d48" size="small" />
               ) : (
-                <Text className="text-xs font-black text-rose-600">Hủy đơn</Text>
+                <Text className="text-xs font-black text-rose-600">
+                  Hủy đơn
+                </Text>
               )}
             </Pressable>
-          ) : null}
-        </View>
+          </>
+        ) : null}
       </View>
     );
   };
@@ -544,15 +382,8 @@ export default function AdminCanteenScreen() {
           className="absolute -right-12 -top-16 h-40 w-40 rounded-full"
           style={{ backgroundColor: "rgba(239, 68, 68, 0.2)" }}
         />
-        <View
-          className="absolute -bottom-16 left-8 h-32 w-32 rounded-full"
-          style={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}
-        />
         <View className="flex-row items-center">
-          <View
-            className="h-12 w-12 items-center justify-center rounded-2xl bg-red-600"
-            style={{ elevation: 2 }}
-          >
+          <View className="h-12 w-12 items-center justify-center rounded-2xl bg-red-600">
             <Ionicons name="storefront" size={24} color="white" />
           </View>
           <View className="ml-3 flex-1">
@@ -560,7 +391,7 @@ export default function AdminCanteenScreen() {
               Khu vực quản lý
             </Text>
             <Text className="mt-0.5 text-xl font-black text-white">
-              Vận hành căn tin
+              Căn tin nhân viên
             </Text>
           </View>
           <View
@@ -576,22 +407,11 @@ export default function AdminCanteenScreen() {
             </Text>
           </View>
         </View>
-        <View className="mt-4 flex-row items-start">
-          <View className="mr-2 mt-1.5 h-2 w-2 rounded-full bg-red-300" />
-          <View className="flex-1">
-            <Text className="text-sm font-black text-white">
-              {activeTab.label}
-            </Text>
-            <Text
-              className="mt-1 text-xs leading-5 text-red-100"
-              style={{ color: "rgba(254, 202, 202, 0.7)" }}
-            >
-              {activeTab.description}
-            </Text>
-          </View>
-        </View>
+        <Text className="mt-4 text-xs leading-5 text-red-100">
+          Theo dõi món theo bàn và xác nhận tiền mặt — không còn các bước bếp,
+          kho hay QR.
+        </Text>
       </View>
-
       <View className="border-b border-slate-100 bg-slate-50 pb-3 pt-3">
         <ScrollView
           contentContainerStyle={{ paddingHorizontal: 16 }}
@@ -599,27 +419,15 @@ export default function AdminCanteenScreen() {
           showsHorizontalScrollIndicator={false}
         >
           <View className="flex-row" style={{ gap: 8 }}>
-            {/* Keep the shadow static: conditional NativeWind shadows can
-                trigger a misleading React Navigation context error in dev. */}
-            {operationTabs.map(({ value, label, icon }) => {
+            {OPERATION_TAB_ITEMS.map(({ value, label, icon }) => {
               const selected = tab === value;
-              const badge =
-                value === "orders"
-                  ? pageStats.newOrders + pageStats.ready
-                  : value === "kitchen"
-                    ? queue.length + cookingOrders.length
-                    : 0;
+              const badge = value === "orders" ? pageStats.pendingCash : 0;
               return (
                 <Pressable
-                  accessibilityLabel={`Mở mục ${label}`}
                   accessibilityRole="tab"
                   accessibilityState={{ selected }}
+                  className={`min-w-[100px] items-center rounded-2xl border px-3 py-2.5 ${selected ? "border-red-600 bg-red-600" : "border-slate-100 bg-white"}`}
                   key={value}
-                  className={`min-w-[88px] items-center rounded-2xl border px-3 py-2.5 ${
-                    selected
-                      ? "border-red-600 bg-red-600"
-                      : "border-slate-100 bg-white"
-                  }`}
                   onPress={() => setTab(value)}
                   style={{ elevation: 1 }}
                 >
@@ -629,14 +437,12 @@ export default function AdminCanteenScreen() {
                     size={18}
                   />
                   <Text
-                    className={`mt-1 text-[10px] font-black ${
-                      selected ? "text-white" : "text-slate-600"
-                    }`}
+                    className={`mt-1 text-[10px] font-black ${selected ? "text-white" : "text-slate-600"}`}
                   >
                     {label}
                   </Text>
                   {badge > 0 ? (
-                    <View className="absolute right-1.5 top-1.5 min-w-4 items-center justify-center rounded-full bg-rose-600 px-1 py-0.5">
+                    <View className="absolute right-1.5 top-1.5 min-w-4 items-center justify-center rounded-full bg-amber-500 px-1 py-0.5">
                       <Text className="text-[8px] font-black text-white">
                         {badge > 99 ? "99+" : badge}
                       </Text>
@@ -648,7 +454,6 @@ export default function AdminCanteenScreen() {
           </View>
         </ScrollView>
       </View>
-
       <ScrollView
         className="flex-1"
         contentContainerStyle={{ padding: 16, paddingBottom: 36 }}
@@ -660,47 +465,42 @@ export default function AdminCanteenScreen() {
         {tab === "orders" ? (
           <>
             <View className="mb-4 flex-row" style={{ gap: 8 }}>
-              <View
-                className="flex-1 overflow-hidden rounded-2xl border border-slate-100 bg-white p-3"
-                style={{ elevation: 2 }}
-              >
-                <View className="absolute left-0 top-0 h-full w-1 bg-blue-500" />
-                <Ionicons name="sparkles-outline" size={17} color="#2563eb" />
+              <View className="flex-1 overflow-hidden rounded-2xl border border-amber-100 bg-white p-3">
+                <Ionicons name="cash-outline" size={17} color="#d97706" />
                 <Text className="mt-2 text-[9px] font-black uppercase text-slate-500">
-                  Mới trên trang
+                  Chờ thu tiền
                 </Text>
-                <Text className="mt-1 text-2xl font-black text-blue-700">
-                  {pageStats.newOrders}
+                <Text className="mt-1 text-2xl font-black text-amber-700">
+                  {pageStats.pendingCash}
                 </Text>
               </View>
-              <View
-                className="flex-1 overflow-hidden rounded-2xl border border-slate-100 bg-white p-3"
-                style={{ elevation: 2 }}
-              >
-                <View className="absolute left-0 top-0 h-full w-1 bg-red-500" />
-                <Ionicons name="flame-outline" size={17} color="#dc2626" />
+              <View className="flex-1 overflow-hidden rounded-2xl border border-emerald-100 bg-white p-3">
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={17}
+                  color="#059669"
+                />
                 <Text className="mt-2 text-[9px] font-black uppercase text-slate-500">
-                  Trong bếp
-                </Text>
-                <Text className="mt-1 text-2xl font-black text-red-600">
-                  {pageStats.inKitchen}
-                </Text>
-              </View>
-              <View
-                className="flex-1 overflow-hidden rounded-2xl border border-slate-100 bg-white p-3"
-                style={{ elevation: 2 }}
-              >
-                <View className="absolute left-0 top-0 h-full w-1 bg-emerald-500" />
-                <Ionicons name="checkmark-circle-outline" size={17} color="#059669" />
-                <Text className="mt-2 text-[9px] font-black uppercase text-slate-500">
-                  Chờ giao
+                  Đã hoàn tất
                 </Text>
                 <Text className="mt-1 text-2xl font-black text-emerald-700">
-                  {pageStats.ready}
+                  {pageStats.completed}
+                </Text>
+              </View>
+              <View className="flex-1 overflow-hidden rounded-2xl border border-slate-100 bg-white p-3">
+                <Ionicons
+                  name="close-circle-outline"
+                  size={17}
+                  color="#64748b"
+                />
+                <Text className="mt-2 text-[9px] font-black uppercase text-slate-500">
+                  Đã hủy
+                </Text>
+                <Text className="mt-1 text-2xl font-black text-slate-700">
+                  {pageStats.cancelled}
                 </Text>
               </View>
             </View>
-
             <AdminOrderFilters
               onApply={applyOrderFilters}
               page={page}
@@ -709,7 +509,6 @@ export default function AdminCanteenScreen() {
               totalOrders={totalOrders}
               totalPages={totalPages}
             />
-
             {ordersLoading ? (
               <View className="items-center py-20">
                 <ActivityIndicator size="large" color="#dc2626" />
@@ -726,11 +525,11 @@ export default function AdminCanteenScreen() {
               <View className="items-center rounded-3xl border border-slate-100 bg-white px-5 py-14">
                 <Ionicons name="receipt-outline" size={42} color="#cbd5e1" />
                 <Text className="mt-3 text-sm font-black text-slate-700">
-                  Không có đơn phù hợp bộ lọc
+                  Không có đơn phù hợp
                 </Text>
                 {hasOrderFilters ? (
                   <Pressable
-                    className="mt-4 rounded-2xl bg-red-600 px-4 py-3 active:bg-red-700"
+                    className="mt-4 rounded-2xl bg-red-600 px-4 py-3"
                     onPress={resetOrderFilters}
                   >
                     <Text className="text-xs font-black text-white">
@@ -746,207 +545,46 @@ export default function AdminCanteenScreen() {
                   key={order._id}
                   order={order}
                   showOwner
+                  tableName={
+                    order.tableId ? tableNames.get(order.tableId) : undefined
+                  }
                 />
               ))
             )}
-
             {!ordersLoading && !ordersError && totalPages > 1 ? (
               <View className="mt-2 flex-row">
                 <Pressable
-                  accessibilityLabel="Mở trang đơn hàng trước"
                   className="mr-2 flex-1 items-center rounded-2xl border border-slate-200 bg-white py-3"
                   disabled={page <= 1}
                   onPress={() => setPage((current) => Math.max(1, current - 1))}
                 >
-                  <Text className="text-xs font-black text-slate-600">Trang trước</Text>
+                  <Text className="text-xs font-black text-slate-600">
+                    Trang trước
+                  </Text>
                 </Pressable>
                 <Pressable
-                  accessibilityLabel="Mở trang đơn hàng sau"
                   className="flex-1 items-center rounded-2xl bg-red-700 py-3"
                   disabled={page >= totalPages}
                   onPress={() =>
                     setPage((current) => Math.min(totalPages, current + 1))
                   }
                 >
-                  <Text className="text-xs font-black text-white">Trang sau</Text>
+                  <Text className="text-xs font-black text-white">
+                    Trang sau
+                  </Text>
                 </Pressable>
               </View>
             ) : null}
           </>
-        ) : tab === "catalog" && canManageCatalog ? (
+        ) : tab === "catalog" ? (
           <AdminMenuCatalog refreshKey={resourceRefreshKey} />
-        ) : tab === "categories" && canManageCatalog ? (
+        ) : tab === "categories" ? (
           <AdminCategoryManager refreshKey={resourceRefreshKey} />
-        ) : tab === "tables" && canUseTables ? (
-          <AdminTableManager
-            canManageStructure={canManageCatalog}
-            refreshKey={resourceRefreshKey}
-          />
-        ) : tab === "inventory" && canUseInventory ? (
-          <AdminInventoryManager
-            canManageResources={canManageCatalog}
-            refreshKey={resourceRefreshKey}
-          />
-        ) : tab === "analytics" && canManageCatalog ? (
-          <AdminCanteenAnalytics refreshKey={resourceRefreshKey} />
-        ) : !canUseKitchen ? (
-          <View className="items-center rounded-3xl border border-slate-100 bg-white px-6 py-14">
-            <Ionicons name="lock-closed-outline" size={42} color="#94a3b8" />
-            <Text className="mt-3 text-center text-base font-black text-slate-700">
-              Không có quyền vào nhà bếp
-            </Text>
-            <Text className="mt-2 text-center text-xs leading-5 text-slate-400">
-              Chức năng này dành cho quản trị viên, quản lý và đầu bếp.
-            </Text>
-          </View>
-        ) : kitchenLoading ? (
-          <View className="items-center py-20">
-            <ActivityIndicator size="large" color="#dc2626" />
-            <Text className="mt-3 text-xs font-semibold text-slate-400">
-              Đang tải hàng đợi nhà bếp…
-            </Text>
-          </View>
-        ) : kitchenError ? (
-          <LoadErrorCard
-            message={kitchenError}
-            onRetry={() => void loadKitchen()}
-          />
         ) : (
-          <>
-            <View
-              className="mb-4 overflow-hidden rounded-3xl border border-red-100 bg-white p-4"
-              style={{ elevation: 2 }}
-            >
-              <View className="absolute -right-8 -top-10 h-28 w-28 rounded-full bg-red-50" />
-              <View className="absolute -bottom-12 -left-8 h-24 w-24 rounded-full bg-blue-50" />
-              <View className="flex-row items-start">
-                <View className="h-11 w-11 items-center justify-center rounded-2xl bg-red-600">
-                  <Ionicons name="flame" size={22} color="white" />
-                </View>
-                <View className="ml-3 flex-1">
-                  <Text className="text-base font-black text-slate-900">
-                    Điều phối chế biến
-                  </Text>
-                  <Text className="mt-1 text-xs leading-5 text-slate-500">
-                    Tự động chọn đơn có điểm ưu tiên cao nhất và chuyển sang đang nấu.
-                  </Text>
-                </View>
-              </View>
-
-              <View className="mt-4 flex-row" style={{ gap: 8 }}>
-                <View className="flex-1 rounded-2xl border border-red-100 bg-red-50 p-3">
-                  <Text className="text-[9px] font-black uppercase text-red-600">
-                    Đang chờ
-                  </Text>
-                  <Text className="mt-1 text-2xl font-black text-red-700">
-                    {queue.length}
-                  </Text>
-                </View>
-                <View className="flex-1 rounded-2xl border border-blue-100 bg-blue-50 p-3">
-                  <Text className="text-[9px] font-black uppercase text-blue-600">
-                    Đang nấu
-                  </Text>
-                  <Text className="mt-1 text-2xl font-black text-blue-700">
-                    {cookingOrders.length}
-                  </Text>
-                </View>
-              </View>
-
-              <Pressable
-                accessibilityLabel="Nhận đơn ưu tiên tiếp theo"
-                accessibilityRole="button"
-                className="mt-3 min-h-12 flex-row items-center justify-center rounded-2xl bg-red-600 px-4 active:bg-red-700"
-                disabled={actionKey !== null || queue.length === 0}
-                onPress={() => runKitchenAction("next")}
-              >
-                {actionKey === "next:next" ? (
-                  <ActivityIndicator color="white" size="small" />
-                ) : (
-                  <>
-                    <Ionicons name="play" size={18} color="white" />
-                    <Text className="ml-2 text-xs font-black text-white">
-                      {queue.length === 0
-                        ? "Không có đơn cần nhận"
-                        : "Nhận đơn ưu tiên tiếp theo"}
-                    </Text>
-                  </>
-                )}
-              </Pressable>
-            </View>
-
-            <Text className="mb-3 text-base font-black text-slate-800">
-              Chờ chế biến ({queue.length})
-            </Text>
-            {queue.length === 0 ? (
-              <View className="mb-5 rounded-3xl bg-white p-5">
-                <Text className="text-center text-xs font-semibold text-slate-400">
-                  Không có đơn đang chờ
-                </Text>
-              </View>
-            ) : (
-              queue.map((order) => (
-                <AdminOrderSummaryCard
-                  key={order._id}
-                  order={order}
-                  showOwner
-                  footer={
-                    <View>
-                      <Text className="mb-2 text-xs font-bold text-red-600">
-                        Điểm ưu tiên: {order.priorityScore}
-                      </Text>
-                      <Pressable
-                        className="items-center rounded-2xl bg-red-600 py-3 active:bg-red-700"
-                        disabled={actionKey !== null}
-                        onPress={() => runKitchenAction("cooking", order)}
-                      >
-                        {actionKey === `cooking:${order._id}` ? (
-                          <ActivityIndicator color="white" size="small" />
-                        ) : (
-                          <Text className="text-xs font-black text-white">
-                            Bắt đầu nấu
-                          </Text>
-                        )}
-                      </Pressable>
-                    </View>
-                  }
-                />
-              ))
-            )}
-
-            <Text className="mb-3 mt-2 text-base font-black text-slate-800">
-              Đang chế biến ({cookingOrders.length})
-            </Text>
-            {cookingOrders.length === 0 ? (
-              <View className="rounded-3xl bg-white p-5">
-                <Text className="text-center text-xs font-semibold text-slate-400">
-                  Chưa có đơn đang nấu
-                </Text>
-              </View>
-            ) : (
-              cookingOrders.map((order) => (
-                <AdminOrderSummaryCard
-                  key={order._id}
-                  order={order}
-                  showOwner
-                  footer={
-                    <Pressable
-                      className="items-center rounded-2xl bg-emerald-600 py-3"
-                      disabled={actionKey !== null}
-                      onPress={() => runKitchenAction("ready", order)}
-                    >
-                      {actionKey === `ready:${order._id}` ? (
-                        <ActivityIndicator color="white" size="small" />
-                      ) : (
-                        <Text className="text-xs font-black text-white">
-                          Đánh dấu sẵn sàng
-                        </Text>
-                      )}
-                    </Pressable>
-                  }
-                />
-              ))
-            )}
-          </>
+          <AdminTableManager
+            canManageStructure
+            refreshKey={resourceRefreshKey}
+          />
         )}
       </ScrollView>
     </View>

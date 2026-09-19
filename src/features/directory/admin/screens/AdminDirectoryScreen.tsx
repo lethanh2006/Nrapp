@@ -31,18 +31,11 @@ import {
   View,
 } from "react-native";
 
-const ROLE_BADGES: Record<
-  KnownAppRole,
-  { background: string; text: string }
-> = {
-  admin: { background: "bg-red-50", text: "text-red-700" },
-  manager: { background: "bg-violet-50", text: "text-violet-700" },
-  chef: { background: "bg-orange-50", text: "text-orange-700" },
-  cashier: { background: "bg-emerald-50", text: "text-emerald-700" },
-  waiter: { background: "bg-cyan-50", text: "text-cyan-700" },
-  user: { background: "bg-blue-50", text: "text-blue-700" },
-  vip: { background: "bg-amber-50", text: "text-amber-700" },
-};
+const ROLE_BADGES: Record<KnownAppRole, { background: string; text: string }> =
+  {
+    admin: { background: "bg-red-50", text: "text-red-700" },
+    user: { background: "bg-blue-50", text: "text-blue-700" },
+  };
 
 const normalizeSearchText = (value: string) =>
   value
@@ -81,7 +74,9 @@ export default function AdminDirectoryScreen() {
       try {
         const token = await getToken();
         if (!token) {
-          setErrorMessage("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+          setErrorMessage(
+            "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+          );
           return;
         }
         const { data } = await getAllUsers(token);
@@ -145,7 +140,10 @@ export default function AdminDirectoryScreen() {
       setBusyUserId(target._id);
       const token = await getToken();
       if (!token) {
-        Alert.alert("Lỗi", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+        Alert.alert(
+          "Lỗi",
+          "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+        );
         return;
       }
       await updateUserRoleByAdmin(token, target._id, selectedRole);
@@ -196,7 +194,10 @@ export default function AdminDirectoryScreen() {
       setBusyUserId(target._id);
       const token = await getToken();
       if (!token) {
-        Alert.alert("Lỗi", "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
+        Alert.alert(
+          "Lỗi",
+          "Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.",
+        );
         return;
       }
       await deleteUserByAdmin(token, target._id);
@@ -352,7 +353,9 @@ export default function AdminDirectoryScreen() {
                 onPress={() => confirmRemoveUser(item)}
               >
                 <Ionicons name="trash-outline" size={17} color="#dc2626" />
-                <Text className="ml-1.5 text-xs font-black text-red-600">Xóa</Text>
+                <Text className="ml-1.5 text-xs font-black text-red-600">
+                  Xóa
+                </Text>
               </Pressable>
               <Pressable
                 className="flex-[1.6] flex-row items-center justify-center rounded-2xl bg-red-600 py-3 active:bg-red-700"
@@ -381,7 +384,9 @@ export default function AdminDirectoryScreen() {
       ListEmptyComponent={
         <View className="items-center rounded-3xl border border-slate-100 bg-white px-5 py-10">
           {initialLoading ? (
-            <ActivityIndicator color={area === "admin" ? "#dc2626" : "#2563eb"} />
+            <ActivityIndicator
+              color={area === "admin" ? "#dc2626" : "#2563eb"}
+            />
           ) : (
             <Ionicons
               name={errorMessage ? "cloud-offline-outline" : "people-outline"}
@@ -429,7 +434,9 @@ export default function AdminDirectoryScreen() {
                 <Ionicons name="arrow-back" size={20} color="white" />
               </Pressable>
               <View className="flex-1">
-                <Text className="text-xl font-black text-white">Danh bạ nhân sự</Text>
+                <Text className="text-xl font-black text-white">
+                  Danh bạ nhân sự
+                </Text>
                 <Text className="mt-1 text-xs leading-5 text-white/80">
                   {hasAccountPermission
                     ? "Tìm kiếm, phân quyền và quản lý tài khoản."
@@ -450,7 +457,9 @@ export default function AdminDirectoryScreen() {
                 className="ml-2 rounded-xl bg-amber-100 px-3 py-2 active:bg-amber-200"
                 onPress={() => void loadUsers()}
               >
-                <Text className="text-[10px] font-black text-amber-800">Tải lại</Text>
+                <Text className="text-[10px] font-black text-amber-800">
+                  Tải lại
+                </Text>
               </Pressable>
             </View>
           ) : null}

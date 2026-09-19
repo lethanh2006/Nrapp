@@ -1,7 +1,6 @@
 import { useAuthSession } from "@/src/features/auth/model/AuthSessionContext";
 import { getCanteenErrorMessage } from "@/src/features/canteen/shared/model/presentation";
 import {
-  allocateCanteenTables,
   createCanteenTable,
   deleteCanteenTable,
   listCanteenTables,
@@ -33,11 +32,7 @@ const TABLE_STATUS_LABELS: Record<CanteenTableStatus, string> = {
   reserved: "Đã đặt",
 };
 
-const TABLE_STATUSES: CanteenTableStatus[] = [
-  "empty",
-  "occupied",
-  "reserved",
-];
+const TABLE_STATUSES: CanteenTableStatus[] = ["empty", "occupied", "reserved"];
 
 export default function AdminTableManager({
   canManageStructure = true,
@@ -51,27 +46,31 @@ export default function AdminTableManager({
   const [name, setName] = useState("");
   const [capacity, setCapacity] = useState("4");
   const [qrCodeUrl, setQrCodeUrl] = useState("");
-  const [partySize, setPartySize] = useState("");
 
-  const loadTables = useCallback(async (showLoading = true) => {
-    try {
-      if (showLoading) setLoading(true);
-      const result = await listCanteenTables({
-        page: 1,
-        limit: 100,
-        sortBy: "name",
-        sortOrder: "asc",
-      });
-      setTables(result.data);
-    } catch (error) {
-      Alert.alert(
-        "Lỗi",
-        getCanteenErrorMessage(error, "Không tải được danh sách bàn"),
-      );
-    } finally {
-      if (showLoading) setLoading(false);
-    }
-  }, []);
+  const loadTables = useCallback(
+    async (showLoading = true) => {
+      try {
+        if (showLoading) setLoading(true);
+        const token = await getToken();
+        if (!token) return;
+        const result = await listCanteenTables(token, {
+          page: 1,
+          limit: 100,
+          sortBy: "name",
+          sortOrder: "asc",
+        });
+        setTables(result.data);
+      } catch (error) {
+        Alert.alert(
+          "Lỗi",
+          getCanteenErrorMessage(error, "Không tải được danh sách bàn"),
+        );
+      } finally {
+        if (showLoading) setLoading(false);
+      }
+    },
+    [getToken],
+  );
 
   useEffect(() => {
     void loadTables();
@@ -189,36 +188,6 @@ export default function AdminTableManager({
     );
   };
 
-  const allocateTables = async () => {
-    const normalizedPartySize = Number(partySize.trim());
-    if (!Number.isSafeInteger(normalizedPartySize) || normalizedPartySize < 1) {
-      Alert.alert(
-        "Số khách không hợp lệ",
-        "Vui lòng nhập số khách nguyên từ 1 trở lên",
-      );
-      return;
-    }
-    try {
-      setBusyKey("allocate");
-      const token = await getToken();
-      if (!token) return;
-      const result = await allocateCanteenTables(token, normalizedPartySize);
-      setPartySize("");
-      await loadTables(false);
-      Alert.alert(
-        "Đã cấp bàn",
-        `${result.message}. Tổng sức chứa ${result.allocationDetails.totalCapacity}, dư ${result.allocationDetails.wasteCapacity} chỗ.`,
-      );
-    } catch (error) {
-      Alert.alert(
-        "Không thể cấp bàn",
-        getCanteenErrorMessage(error, "Không đủ bàn trống phù hợp"),
-      );
-    } finally {
-      setBusyKey(null);
-    }
-  };
-
   if (loading) {
     return (
       <View className="items-center py-20">
@@ -229,38 +198,6 @@ export default function AdminTableManager({
 
   return (
     <View>
-      <View
-        className="mb-4 overflow-hidden rounded-3xl border border-red-100 bg-white p-4"
-        style={{ elevation: 2 }}
-      >
-        <View className="absolute -right-10 -top-12 h-28 w-28 rounded-full bg-red-50" />
-        <Text className="text-base font-black text-slate-900">Cấp bàn tự động</Text>
-        <Text className="mt-1 text-xs leading-5 text-slate-500">
-          Hệ thống chọn một bàn vừa đủ hoặc gộp các bàn trống.
-        </Text>
-        <View className="mt-3 flex-row">
-          <TextInput
-            className="mr-2 flex-1 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-bold text-slate-800"
-            keyboardType="number-pad"
-            onChangeText={setPartySize}
-            placeholder="Số khách"
-            placeholderTextColor="#94a3b8"
-            value={partySize}
-          />
-          <Pressable
-            className="items-center justify-center rounded-2xl bg-red-600 px-5 active:bg-red-700"
-            disabled={busyKey !== null}
-            onPress={allocateTables}
-          >
-            {busyKey === "allocate" ? (
-              <ActivityIndicator color="white" size="small" />
-            ) : (
-              <Text className="text-xs font-black text-white">Cấp bàn</Text>
-            )}
-          </Pressable>
-        </View>
-      </View>
-
       {canManageStructure ? (
         <View className="mb-4 rounded-3xl border border-red-100 bg-white p-4">
           <View className="flex-row items-center justify-between">
@@ -272,7 +209,9 @@ export default function AdminTableManager({
                 className="rounded-xl bg-slate-100 px-3 py-2"
                 onPress={resetForm}
               >
-                <Text className="text-xs font-black text-slate-600">Tạo mới</Text>
+                <Text className="text-xs font-black text-slate-600">
+                  Tạo mới
+                </Text>
               </Pressable>
             ) : null}
           </View>
@@ -350,7 +289,10 @@ export default function AdminTableManager({
                 <Text className="mt-1 text-xs font-bold text-red-600">
                   Sức chứa {table.capacity} người
                 </Text>
-                <Text className="mt-2 text-[11px] leading-4 text-slate-400" selectable>
+                <Text
+                  className="mt-2 text-[11px] leading-4 text-slate-400"
+                  selectable
+                >
                   QR: {table.qrCodeUrl || "Chưa có"}
                 </Text>
               </View>
@@ -412,11 +354,13 @@ export default function AdminTableManager({
                   className="mr-2 flex-1 items-center rounded-xl bg-red-600 py-2.5 active:bg-red-700"
                   onPress={() => startEditing(table)}
                 >
-                  <Text className="text-xs font-black text-white">Chỉnh sửa</Text>
+                  <Text className="text-xs font-black text-white">
+                    Chỉnh sửa
+                  </Text>
                 </Pressable>
                 <Pressable
                   accessibilityLabel={`Xóa ${table.name}`}
-                    className="h-10 w-10 items-center justify-center rounded-xl bg-rose-50"
+                  className="h-10 w-10 items-center justify-center rounded-xl bg-rose-50"
                   disabled={busyKey !== null || table.status !== "empty"}
                   onPress={() => confirmRemove(table)}
                 >

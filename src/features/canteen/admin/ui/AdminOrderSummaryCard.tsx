@@ -18,12 +18,14 @@ import { Text, View } from "react-native";
 
 type AdminOrderSummaryCardProps = {
   order: CanteenOrder;
+  tableName?: string;
   showOwner?: boolean;
   footer?: ReactNode;
 };
 
 export default function AdminOrderSummaryCard({
   order,
+  tableName,
   showOwner = false,
   footer,
 }: AdminOrderSummaryCardProps) {
@@ -60,7 +62,9 @@ export default function AdminOrderSummaryCard({
                 }`}
               >
                 <Ionicons
-                  name={order.tableId ? "restaurant-outline" : "bag-handle-outline"}
+                  name={
+                    order.tableId ? "restaurant-outline" : "bag-handle-outline"
+                  }
                   size={11}
                   color={order.tableId ? "#2563eb" : "#d97706"}
                 />
@@ -69,7 +73,9 @@ export default function AdminOrderSummaryCard({
                     order.tableId ? "text-blue-700" : "text-amber-700"
                   }`}
                 >
-                  {order.tableId ? `Tại bàn · ${shortId(order.tableId)}` : "Mang đi"}
+                  {order.tableId
+                    ? `Tại bàn · ${tableName ?? shortId(order.tableId)}`
+                    : "Chưa chọn bàn"}
                 </Text>
               </View>
             </View>
@@ -103,7 +109,8 @@ export default function AdminOrderSummaryCard({
               </Text>
               {item.selectedOptions?.length ? (
                 <Text className="mt-0.5 text-[11px] text-slate-400">
-                  + {item.selectedOptions.map((option) => option.name).join(", ")}
+                  +{" "}
+                  {item.selectedOptions.map((option) => option.name).join(", ")}
                 </Text>
               ) : null}
               {item.note ? (
