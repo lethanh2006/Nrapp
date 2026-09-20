@@ -15,7 +15,6 @@ export interface CanteenTable {
   _id: string;
   name: string;
   capacity: number;
-  qrCodeUrl: string;
   status: CanteenTableStatus;
   createdAt?: string;
   updatedAt?: string;
@@ -24,7 +23,6 @@ export interface CanteenTable {
 export interface CreateCanteenTableInput {
   name: string;
   capacity: number;
-  qrCodeUrl?: string;
 }
 
 export type UpdateCanteenTableInput = Partial<CreateCanteenTableInput>;

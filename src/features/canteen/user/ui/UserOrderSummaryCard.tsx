@@ -9,7 +9,6 @@ import {
   formatMoney,
   ORDER_STATUS_COLORS,
   PAYMENT_STATUS_COLORS,
-  shortId,
 } from "@/src/features/canteen/shared/model/presentation";
 import { Ionicons } from "@expo/vector-icons";
 import type { ReactNode } from "react";
@@ -18,18 +17,18 @@ import { Text, View } from "react-native";
 type UserOrderSummaryCardProps = {
   order: CanteenOrder;
   tableName?: string;
-  showOwner?: boolean;
   footer?: ReactNode;
 };
 
 export default function UserOrderSummaryCard({
   order,
   tableName,
-  showOwner = false,
   footer,
 }: UserOrderSummaryCardProps) {
-  const statusColors = ORDER_STATUS_COLORS[order.status];
-  const paymentColors = PAYMENT_STATUS_COLORS[order.paymentStatus];
+  const statusColors =
+    ORDER_STATUS_COLORS[order.status] ?? ORDER_STATUS_COLORS.CANCELLED;
+  const paymentColors =
+    PAYMENT_STATUS_COLORS[order.paymentStatus] ?? PAYMENT_STATUS_COLORS.PENDING;
 
   return (
     <View className="mb-3 overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm">
@@ -44,11 +43,6 @@ export default function UserOrderSummaryCard({
           <Text className="mt-1 text-[11px] font-bold text-blue-700">
             {tableName ?? (order.tableId ? "Bàn đang chọn" : "Chưa có bàn")}
           </Text>
-          {showOwner ? (
-            <Text className="mt-1 text-[11px] font-bold text-slate-500">
-              Người đặt: {shortId(order.userId)} · {order.userRole}
-            </Text>
-          ) : null}
         </View>
         <View
           className="rounded-full border px-2.5 py-1"
@@ -61,7 +55,7 @@ export default function UserOrderSummaryCard({
             className="text-[10px] font-black uppercase"
             style={{ color: statusColors.text }}
           >
-            {ORDER_STATUS_LABELS[order.status]}
+            {ORDER_STATUS_LABELS[order.status] ?? "Đơn lịch sử"}
           </Text>
         </View>
       </View>
@@ -104,7 +98,8 @@ export default function UserOrderSummaryCard({
         <View className="mt-1 flex-row items-center justify-between border-t border-dashed border-slate-200 pt-3">
           <View>
             <Text className="text-[10px] font-bold uppercase text-slate-400">
-              {ORDER_PAYMENT_METHOD_LABELS[order.paymentMethod]}
+              {ORDER_PAYMENT_METHOD_LABELS[order.paymentMethod] ??
+                "Phương thức cũ"}
             </Text>
             <View
               className="mt-1 self-start rounded-full px-2 py-0.5"
@@ -114,16 +109,12 @@ export default function UserOrderSummaryCard({
                 className="text-[10px] font-bold"
                 style={{ color: paymentColors.text }}
               >
-                {ORDER_PAYMENT_STATUS_LABELS[order.paymentStatus]}
+                {ORDER_PAYMENT_STATUS_LABELS[order.paymentStatus] ??
+                  "Thanh toán cũ"}
               </Text>
             </View>
           </View>
           <View className="items-end">
-            {order.discountAmount > 0 ? (
-              <Text className="text-[10px] text-slate-400 line-through">
-                {formatMoney(order.totalAmount)}
-              </Text>
-            ) : null}
             <Text className="text-lg font-black text-rose-600">
               {formatMoney(order.finalAmount)}
             </Text>

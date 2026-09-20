@@ -107,14 +107,6 @@ export async function getMyCanteenOrders(token: string) {
   return Array.isArray(data) ? data : [];
 }
 
-export async function getCanteenOrder(token: string, orderId: string) {
-  const { data } = await axios.get<CanteenOrder>(
-    `${ipNR}/canteen/orders/${encodeURIComponent(orderId)}`,
-    getAuthHeader(token),
-  );
-  return data;
-}
-
 export async function cancelCanteenOrder(
   token: string,
   orderId: string,

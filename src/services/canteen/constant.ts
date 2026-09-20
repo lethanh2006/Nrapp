@@ -1,21 +1,9 @@
-export type OrderStatus =
-  | "CREATED"
-  | "CONFIRMED"
-  | "COOKING"
-  | "READY"
-  | "COMPLETED"
-  | "PAID"
-  | "CANCELLED";
+export type OrderStatus = "CREATED" | "COMPLETED" | "CANCELLED";
 
-export type OrderPaymentStatus = "PENDING" | "PAID" | "REFUNDED";
+export type OrderPaymentStatus = "PENDING" | "PAID";
 /** Phương thức được phép tạo đơn ở giai đoạn hiện tại. */
 export type CreateOrderPaymentMethod = "CASH";
-export type OrderPaymentMethod =
-  | CreateOrderPaymentMethod
-  /** Giữ kiểu cũ để hiển thị an toàn các đơn lịch sử. */
-  | "VNPAY"
-  | "VIETQR"
-  | "MOMO";
+export type OrderPaymentMethod = CreateOrderPaymentMethod;
 
 export interface MenuItemOption {
   name: string;
@@ -98,13 +86,10 @@ export interface CanteenOrder {
   tableId?: string | null;
   items: OrderItem[];
   totalAmount: number;
-  discountAmount: number;
   finalAmount: number;
   status: OrderStatus;
-  priorityScore: number;
   paymentStatus: OrderPaymentStatus;
   paymentMethod: OrderPaymentMethod;
-  paymentId?: string;
   paidAt?: string;
   cancelledAt?: string;
   cancelledBy?: string;
@@ -138,33 +123,21 @@ export interface PaginatedOrders {
 
 export const ORDER_STATUSES: OrderStatus[] = [
   "CREATED",
-  "CONFIRMED",
-  "COOKING",
-  "READY",
   "COMPLETED",
-  "PAID",
   "CANCELLED",
 ];
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   CREATED: "Mới tạo",
-  CONFIRMED: "Đã xác nhận",
-  COOKING: "Đang nấu",
-  READY: "Sẵn sàng",
   COMPLETED: "Hoàn thành",
-  PAID: "Đã thanh toán",
   CANCELLED: "Đã hủy",
 };
 
 export const ORDER_PAYMENT_STATUS_LABELS: Record<OrderPaymentStatus, string> = {
   PENDING: "Chờ thanh toán",
   PAID: "Đã thanh toán",
-  REFUNDED: "Đã hoàn tiền",
 };
 
 export const ORDER_PAYMENT_METHOD_LABELS: Record<OrderPaymentMethod, string> = {
   CASH: "Tiền mặt",
-  VIETQR: "VietQR",
-  VNPAY: "VNPay (cũ)",
-  MOMO: "MoMo (cũ)",
 };

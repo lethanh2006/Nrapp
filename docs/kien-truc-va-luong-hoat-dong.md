@@ -155,13 +155,9 @@ Nrapp/
 | `services/workschedule/constant.ts`             | Toàn bộ type/payload/response của workschedule                         |
 | `services/canteen/canteen.service.ts`           | Menu, order và xác nhận thanh toán tiền mặt                            |
 | `services/canteen/category.service.ts`          | CRUD danh mục món                                                      |
-| `services/canteen/inventory.service.ts`         | Nguyên liệu, lô, cảnh báo hạn và tiêu hao                              |
-| `services/canteen/table.service.ts`             | Bàn, trạng thái và phân bàn                                            |
-| `services/canteen/analytics.service.ts`         | Top món căn tin                                                        |
+| `services/canteen/table.service.ts`             | Quản lý bàn và trạng thái                                            |
 | `services/canteen/admin-resource.ts`            | Chuẩn hóa list/pagination của resource admin                           |
 | `services/canteen/constant.ts`                  | Menu, order, trạng thái và query types                                 |
-| `services/payment/payment.service.ts`           | Tích hợp thanh toán mở rộng, chưa dùng trong luồng căn tin hiện tại    |
-| `services/payment/constant.ts`                  | Payment record và trạng thái giao dịch                                 |
 
 ## 4. Vòng đời ứng dụng, đăng nhập và refresh token
 
@@ -333,7 +329,7 @@ Các hàm nguồn tại `src/application/access/roles.ts`:
 - `canManageWorkSchedule`: chỉ `admin`.
 - `getRoleLabel`: nhãn tiếng Việt.
 
-`normalizeAppRole` đưa role rỗng hoặc role cũ không còn hỗ trợ về `user`.
+`normalizeAppRole` chuẩn hóa chữ thường và đưa role rỗng về `user`.
 `getAreaForRole` chỉ đưa `admin` vào khu quản trị; mọi tài khoản còn lại vào khu
 user.
 
@@ -670,7 +666,7 @@ cancelled   → todo
 | `canteen/admin/screens/AdminCanteenScreen.tsx` | Đơn theo bàn, xác nhận tiền mặt và quản trị danh mục |
 | `canteen/admin/ui/AdminMenuCatalog.tsx`        | CRUD món, undo/redo menu                             |
 | `canteen/admin/ui/AdminCategoryManager.tsx`    | CRUD danh mục                                        |
-| `canteen/admin/ui/AdminTableManager.tsx`       | Bàn, trạng thái và phân bàn                          |
+| `canteen/admin/ui/AdminTableManager.tsx`       | Quản lý bàn và trạng thái                          |
 | `canteen/admin/ui/AdminOrderSummaryCard.tsx`   | Thẻ đơn cho vận hành                                 |
 | `canteen/shared/model/presentation.ts`         | Format tiền/ngày/ID, màu status, lỗi                 |
 
@@ -690,7 +686,7 @@ flowchart TD
 
 Chi tiết:
 
-- Search menu debounce 350 ms và gọi `/canteen/menu/search?q=...`.
+- Search menu debounce 300 ms và gọi `/canteen/menu/search?q=...`.
 - Một dòng giỏ được định danh bằng `menuItemId + tập option`, nên cùng món với
   option khác là hai dòng riêng.
 - Tổng tiền được tính lại từ giá món, giá option và số lượng.
@@ -720,8 +716,9 @@ dụng cho đơn chưa thanh toán còn ở trạng thái `CREATED/PENDING`.
 | user  |      Xem đơn của mình |         Không | Chọn bàn khi gọi món |
 
 Đây là điều kiện hiển thị/thao tác trong frontend. Backend vẫn phải kiểm tra
-role cho từng endpoint. Các nghiệp vụ bếp, kho, nguyên liệu và QR Casso chưa
-được đưa vào luồng tiện ích nhân viên hiện tại.
+role cho từng endpoint. Đã xóa mã nguồn bếp, kho, nguyên liệu, thống kê, QR/Casso
+và service không có caller khỏi luồng căn tin. Bộ lọc chỉ còn trạng thái mới tạo,
+hoàn thành, đã hủy; thanh toán chỉ còn chờ thu và đã thu.
 
 ### 7.8 Lịch làm, đơn nhân sự và chấm công
 
@@ -990,14 +987,12 @@ Mọi endpoint Todo đều gửi token.
 | POST   | `/canteen/admin/menu/redo`         | `redoCanteenMenuChange`     |       Có |
 | POST   | `/canteen/orders`                  | `createCanteenOrder`        |       Có |
 | GET    | `/canteen/orders/my-orders`        | `getMyCanteenOrders`        |       Có |
-| GET    | `/canteen/orders/:id`              | `getCanteenOrder`           |       Có |
 | PATCH  | `/canteen/orders/:id/cancel`       | `cancelCanteenOrder`        |       Có |
 | GET    | `/canteen/orders`                  | `listCanteenOrders`         |       Có |
 | PATCH  | `/canteen/orders/:id/payment/cash` | `confirmCashCanteenPayment` |       Có |
 | GET    | `/canteen/tables`                  | `listCanteenTables`         |       Có |
 
-`getCanteenOrder` đã được khai báo nhưng chưa có caller ngoài service. Các hàm
-còn lại trong bảng được nối vào `UserCanteenScreen`, `AdminCanteenScreen` hoặc
+Các hàm trong bảng được nối vào `UserCanteenScreen`, `AdminCanteenScreen` hoặc
 `AdminMenuCatalog` tùy nghiệp vụ.
 
 ### 9.5 Căn tin: tài nguyên và thanh toán
@@ -1013,8 +1008,10 @@ còn lại trong bảng được nối vào `UserCanteenScreen`, `AdminCanteenSc
 | DELETE `/canteen/tables/:id`       | `deleteCanteenTable`       | `AdminTableManager`    |       Có |
 | PATCH `/canteen/tables/:id/status` | `updateCanteenTableStatus` | `AdminTableManager`    |       Có |
 
-Các service inventory, analytics và payment QR vẫn có thể tồn tại để phục vụ
-phạm vi khác trong tương lai, nhưng chưa được gọi từ luồng căn tin nhân viên.
+Không còn API kho, thống kê, phân bàn tự động hoặc thanh toán QR trong app.
+Thư viện QR vẫn phục vụ chấm công, độc lập với căn tin.
+Dữ liệu đơn cũ nhận nhãn dự phòng khi gặp trạng thái ngoài hợp đồng hiện tại;
+không khôi phục các thao tác nghiệp vụ đã bỏ.
 
 ### 9.6 Lịch làm, đơn và chấm công
 
@@ -1059,7 +1056,6 @@ Tất cả endpoint workschedule đều gửi Bearer token.
 | `services/chat/constant.ts`          | Chat, message, upload image                  |
 | `services/todo/constant.ts`          | Task, pagination, transition, label/màu      |
 | `services/canteen/constant.ts`       | Menu, cart input, order, payment status      |
-| `services/payment/constant.ts`       | PaymentRecord cho tích hợp thanh toán mở rộng |
 | `services/workschedule/constant.ts`  | Lịch, policy, đơn, attendance, heatmap       |
 | `services/canteen/admin-resource.ts` | Response/pagination chung tài nguyên căn tin |
 
@@ -1124,7 +1120,6 @@ local như AdminDirectory đang làm.
 | Tin tức Home user là dữ liệu hard-code                    | Chưa có API và màn chi tiết                                  |
 | Route tạo đơn phía admin-area chưa có nút mở              | Route tồn tại nhưng người dùng không đi tới bằng UI hiện tại |
 | Route con admin utilities thiếu guard quyền thao tác      | Tài khoản user có thể mở màn rồi phụ thuộc backend từ chối   |
-| `getCanteenOrder`, `getLatestOrderPayment` chưa có caller | API đã khai báo nhưng chưa nối vào UI                        |
 | Controller Chat admin/user gần như nhân đôi               | Sửa luồng dữ liệu phải đồng bộ hai file                      |
 | Route auth còn giữ nghiệp vụ form trực tiếp               | Không theo mẫu route mỏng của feature mới                    |
 | Route con utilities chưa có route constants               | Chuỗi `Href` còn nằm trực tiếp trong screen                  |

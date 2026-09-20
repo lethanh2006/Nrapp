@@ -22,7 +22,6 @@ import {
 } from "react-native";
 
 type Props = {
-  canManageStructure?: boolean;
   refreshKey?: number;
 };
 
@@ -34,10 +33,7 @@ const TABLE_STATUS_LABELS: Record<CanteenTableStatus, string> = {
 
 const TABLE_STATUSES: CanteenTableStatus[] = ["empty", "occupied", "reserved"];
 
-export default function AdminTableManager({
-  canManageStructure = true,
-  refreshKey = 0,
-}: Props) {
+export default function AdminTableManager({ refreshKey = 0 }: Props) {
   const { getToken } = useAuthSession();
   const [tables, setTables] = useState<CanteenTable[]>([]);
   const [loading, setLoading] = useState(true);
@@ -45,7 +41,6 @@ export default function AdminTableManager({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [name, setName] = useState("");
   const [capacity, setCapacity] = useState("4");
-  const [qrCodeUrl, setQrCodeUrl] = useState("");
 
   const loadTables = useCallback(
     async (showLoading = true) => {
@@ -80,14 +75,12 @@ export default function AdminTableManager({
     setEditingId(null);
     setName("");
     setCapacity("4");
-    setQrCodeUrl("");
   };
 
   const startEditing = (table: CanteenTable) => {
     setEditingId(table._id);
     setName(table.name);
     setCapacity(String(table.capacity));
-    setQrCodeUrl(table.qrCodeUrl ?? "");
   };
 
   const saveTable = async () => {
@@ -108,7 +101,6 @@ export default function AdminTableManager({
     const payload: CreateCanteenTableInput = {
       name: normalizedName,
       capacity: normalizedCapacity,
-      ...(qrCodeUrl.trim() ? { qrCodeUrl: qrCodeUrl.trim() } : {}),
     };
     const key = editingId ? `save:${editingId}` : "create";
     try {
@@ -198,63 +190,50 @@ export default function AdminTableManager({
 
   return (
     <View>
-      {canManageStructure ? (
-        <View className="mb-4 rounded-3xl border border-red-100 bg-white p-4">
-          <View className="flex-row items-center justify-between">
-            <Text className="text-base font-black text-slate-900">
-              {editingId ? "Chỉnh sửa bàn" : "Tạo bàn mới"}
-            </Text>
-            {editingId ? (
-              <Pressable
-                className="rounded-xl bg-slate-100 px-3 py-2"
-                onPress={resetForm}
-              >
-                <Text className="text-xs font-black text-slate-600">
-                  Tạo mới
-                </Text>
-              </Pressable>
-            ) : null}
-          </View>
-          <TextInput
-            className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-800"
-            maxLength={80}
-            onChangeText={setName}
-            placeholder="Tên bàn *"
-            placeholderTextColor="#94a3b8"
-            value={name}
-          />
-          <TextInput
-            className="mt-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700"
-            keyboardType="number-pad"
-            onChangeText={setCapacity}
-            placeholder="Sức chứa *"
-            placeholderTextColor="#94a3b8"
-            value={capacity}
-          />
-          <TextInput
-            autoCapitalize="none"
-            className="mt-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700"
-            onChangeText={setQrCodeUrl}
-            placeholder="URL QR (để trống để tự tạo)"
-            placeholderTextColor="#94a3b8"
-            value={qrCodeUrl}
-          />
-          <Pressable
-            className="mt-3 items-center rounded-2xl bg-red-600 py-3.5"
-            disabled={busyKey !== null}
-            onPress={saveTable}
-          >
-            {busyKey === "create" || busyKey === `save:${editingId}` ? (
-              <ActivityIndicator color="white" size="small" />
-            ) : (
-              <Text className="text-sm font-black text-white">
-                {editingId ? "Lưu thay đổi" : "Tạo bàn"}
-              </Text>
-            )}
-          </Pressable>
+      <View className="mb-4 rounded-3xl border border-red-100 bg-white p-4">
+        <View className="flex-row items-center justify-between">
+          <Text className="text-base font-black text-slate-900">
+            {editingId ? "Chỉnh sửa bàn" : "Tạo bàn mới"}
+          </Text>
+          {editingId ? (
+            <Pressable
+              className="rounded-xl bg-slate-100 px-3 py-2"
+              onPress={resetForm}
+            >
+              <Text className="text-xs font-black text-slate-600">Tạo mới</Text>
+            </Pressable>
+          ) : null}
         </View>
-      ) : null}
-
+        <TextInput
+          className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm font-semibold text-slate-800"
+          maxLength={80}
+          onChangeText={setName}
+          placeholder="Tên bàn *"
+          placeholderTextColor="#94a3b8"
+          value={name}
+        />
+        <TextInput
+          className="mt-2 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700"
+          keyboardType="number-pad"
+          onChangeText={setCapacity}
+          placeholder="Sức chứa *"
+          placeholderTextColor="#94a3b8"
+          value={capacity}
+        />
+        <Pressable
+          className="mt-3 items-center rounded-2xl bg-red-600 py-3.5"
+          disabled={busyKey !== null}
+          onPress={saveTable}
+        >
+          {busyKey === "create" || busyKey === `save:${editingId}` ? (
+            <ActivityIndicator color="white" size="small" />
+          ) : (
+            <Text className="text-sm font-black text-white">
+              {editingId ? "Lưu thay đổi" : "Tạo bàn"}
+            </Text>
+          )}
+        </Pressable>
+      </View>
       <View className="mb-3 flex-row items-center justify-between">
         <Text className="text-base font-black text-slate-800">
           {tables.length} bàn ăn
@@ -288,12 +267,6 @@ export default function AdminTableManager({
                 </Text>
                 <Text className="mt-1 text-xs font-bold text-red-600">
                   Sức chứa {table.capacity} người
-                </Text>
-                <Text
-                  className="mt-2 text-[11px] leading-4 text-slate-400"
-                  selectable
-                >
-                  QR: {table.qrCodeUrl || "Chưa có"}
                 </Text>
               </View>
               <View
@@ -348,30 +321,26 @@ export default function AdminTableManager({
                 );
               })}
             </View>
-            {canManageStructure ? (
-              <View className="mt-2 flex-row">
-                <Pressable
-                  className="mr-2 flex-1 items-center rounded-xl bg-red-600 py-2.5 active:bg-red-700"
-                  onPress={() => startEditing(table)}
-                >
-                  <Text className="text-xs font-black text-white">
-                    Chỉnh sửa
-                  </Text>
-                </Pressable>
-                <Pressable
-                  accessibilityLabel={`Xóa ${table.name}`}
-                  className="h-10 w-10 items-center justify-center rounded-xl bg-rose-50"
-                  disabled={busyKey !== null || table.status !== "empty"}
-                  onPress={() => confirmRemove(table)}
-                >
-                  {busyKey === `delete:${table._id}` ? (
-                    <ActivityIndicator color="#e11d48" size="small" />
-                  ) : (
-                    <Ionicons color="#e11d48" name="trash-outline" size={17} />
-                  )}
-                </Pressable>
-              </View>
-            ) : null}
+            <View className="mt-2 flex-row">
+              <Pressable
+                className="mr-2 flex-1 items-center rounded-xl bg-red-600 py-2.5 active:bg-red-700"
+                onPress={() => startEditing(table)}
+              >
+                <Text className="text-xs font-black text-white">Chỉnh sửa</Text>
+              </Pressable>
+              <Pressable
+                accessibilityLabel={`Xóa ${table.name}`}
+                className="h-10 w-10 items-center justify-center rounded-xl bg-rose-50"
+                disabled={busyKey !== null || table.status !== "empty"}
+                onPress={() => confirmRemove(table)}
+              >
+                {busyKey === `delete:${table._id}` ? (
+                  <ActivityIndicator color="#e11d48" size="small" />
+                ) : (
+                  <Ionicons color="#e11d48" name="trash-outline" size={17} />
+                )}
+              </Pressable>
+            </View>
           </View>
         ))
       )}

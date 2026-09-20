@@ -26,11 +26,7 @@ type AdminOrderFiltersProps = {
 const STATUS_ICONS: Record<StatusFilter, IconName> = {
   ALL: "apps-outline",
   CREATED: "add-circle-outline",
-  CONFIRMED: "checkmark-circle-outline",
-  COOKING: "flame-outline",
-  READY: "notifications-outline",
   COMPLETED: "checkmark-done-outline",
-  PAID: "card-outline",
   CANCELLED: "close-circle-outline",
 };
 
@@ -38,16 +34,10 @@ const PAYMENT_ICONS: Record<PaymentFilter, IconName> = {
   ALL: "wallet-outline",
   PENDING: "time-outline",
   PAID: "checkmark-circle-outline",
-  REFUNDED: "arrow-undo-outline",
 };
 
 const STATUS_OPTIONS = ["ALL", ...ORDER_STATUSES] as StatusFilter[];
-const PAYMENT_OPTIONS: PaymentFilter[] = [
-  "ALL",
-  "PENDING",
-  "PAID",
-  "REFUNDED",
-];
+const PAYMENT_OPTIONS: PaymentFilter[] = ["ALL", "PENDING", "PAID"];
 
 const getStatusLabel = (status: StatusFilter) =>
   status === "ALL" ? "Tất cả trạng thái" : ORDER_STATUS_LABELS[status];
@@ -68,7 +58,8 @@ export default function AdminOrderFilters({
   const [draftStatus, setDraftStatus] = useState<StatusFilter>(statusFilter);
   const [draftPayment, setDraftPayment] =
     useState<PaymentFilter>(paymentFilter);
-  const activeCount = Number(statusFilter !== "ALL") + Number(paymentFilter !== "ALL");
+  const activeCount =
+    Number(statusFilter !== "ALL") + Number(paymentFilter !== "ALL");
 
   const openFilters = () => {
     setDraftStatus(statusFilter);
@@ -105,9 +96,7 @@ export default function AdminOrderFilters({
             style={{ elevation: 2 }}
           >
             <Ionicons name="options-outline" size={18} color="#dc2626" />
-            <Text className="ml-2 text-xs font-black text-red-700">
-              Bộ lọc
-            </Text>
+            <Text className="ml-2 text-xs font-black text-red-700">Bộ lọc</Text>
             {activeCount > 0 ? (
               <View className="ml-2 h-5 min-w-5 items-center justify-center rounded-full bg-red-600 px-1">
                 <Text className="text-[10px] font-black text-white">
@@ -119,7 +108,10 @@ export default function AdminOrderFilters({
         </View>
 
         {activeCount > 0 ? (
-          <View className="mt-3 flex-row flex-wrap items-center" style={{ gap: 8 }}>
+          <View
+            className="mt-3 flex-row flex-wrap items-center"
+            style={{ gap: 8 }}
+          >
             {statusFilter !== "ALL" ? (
               <View className="min-h-9 flex-row items-center rounded-full border border-red-200 bg-red-50 pl-3 pr-1.5">
                 <Text className="text-[11px] font-bold text-red-700">
@@ -155,7 +147,7 @@ export default function AdminOrderFilters({
             <Pressable
               accessibilityLabel="Xóa tất cả bộ lọc"
               accessibilityRole="button"
-            className="min-h-9 justify-center px-1"
+              className="min-h-9 justify-center px-1"
               onPress={() => onApply("ALL", "ALL")}
             >
               <Text className="text-[11px] font-black text-slate-500">
@@ -303,7 +295,10 @@ export default function AdminOrderFilters({
               </View>
             </ScrollView>
 
-            <View className="flex-row border-t border-slate-100 px-5 pt-4" style={{ gap: 10 }}>
+            <View
+              className="flex-row border-t border-slate-100 px-5 pt-4"
+              style={{ gap: 10 }}
+            >
               <Pressable
                 accessibilityLabel="Đặt lại lựa chọn bộ lọc"
                 accessibilityRole="button"

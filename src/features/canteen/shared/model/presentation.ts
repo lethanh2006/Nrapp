@@ -9,19 +9,11 @@ export const ORDER_STATUS_COLORS: Record<
   { background: string; border: string; text: string }
 > = {
   CREATED: { background: "#eff6ff", border: "#bfdbfe", text: "#2563eb" },
-  CONFIRMED: {
-    background: "#f5f3ff",
-    border: "#ddd6fe",
-    text: "#7c3aed",
-  },
-  COOKING: { background: "#fff7ed", border: "#fed7aa", text: "#ea580c" },
-  READY: { background: "#ecfdf5", border: "#a7f3d0", text: "#059669" },
   COMPLETED: {
     background: "#f0fdf4",
     border: "#bbf7d0",
     text: "#15803d",
   },
-  PAID: { background: "#ecfeff", border: "#a5f3fc", text: "#0e7490" },
   CANCELLED: {
     background: "#f8fafc",
     border: "#cbd5e1",
@@ -35,7 +27,6 @@ export const PAYMENT_STATUS_COLORS: Record<
 > = {
   PENDING: { background: "#fffbeb", text: "#b45309" },
   PAID: { background: "#ecfdf5", text: "#047857" },
-  REFUNDED: { background: "#f8fafc", text: "#475569" },
 };
 
 export function formatMoney(value: number) {

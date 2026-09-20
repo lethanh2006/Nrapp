@@ -19,18 +19,18 @@ import { Text, View } from "react-native";
 type AdminOrderSummaryCardProps = {
   order: CanteenOrder;
   tableName?: string;
-  showOwner?: boolean;
   footer?: ReactNode;
 };
 
 export default function AdminOrderSummaryCard({
   order,
   tableName,
-  showOwner = false,
   footer,
 }: AdminOrderSummaryCardProps) {
-  const statusColors = ORDER_STATUS_COLORS[order.status];
-  const paymentColors = PAYMENT_STATUS_COLORS[order.paymentStatus];
+  const statusColors =
+    ORDER_STATUS_COLORS[order.status] ?? ORDER_STATUS_COLORS.CANCELLED;
+  const paymentColors =
+    PAYMENT_STATUS_COLORS[order.paymentStatus] ?? PAYMENT_STATUS_COLORS.PENDING;
 
   return (
     <View
@@ -45,41 +45,39 @@ export default function AdminOrderSummaryCard({
           <Text className="mt-1 text-[11px] font-semibold text-slate-400">
             {formatDateTime(order.createdAt)}
           </Text>
-          {showOwner ? (
+          <View
+            className="mt-2 flex-row flex-wrap items-center"
+            style={{ gap: 6 }}
+          >
+            <View className="flex-row items-center rounded-full bg-slate-100 px-2 py-1">
+              <Ionicons name="person-outline" size={11} color="#64748b" />
+              <Text className="ml-1 text-[10px] font-bold text-slate-600">
+                {getRoleLabel(order.userRole)} · {shortId(order.userId)}
+              </Text>
+            </View>
             <View
-              className="mt-2 flex-row flex-wrap items-center"
-              style={{ gap: 6 }}
+              className={`flex-row items-center rounded-full px-2 py-1 ${
+                order.tableId ? "bg-blue-50" : "bg-amber-50"
+              }`}
             >
-              <View className="flex-row items-center rounded-full bg-slate-100 px-2 py-1">
-                <Ionicons name="person-outline" size={11} color="#64748b" />
-                <Text className="ml-1 text-[10px] font-bold text-slate-600">
-                  {getRoleLabel(order.userRole)} · {shortId(order.userId)}
-                </Text>
-              </View>
-              <View
-                className={`flex-row items-center rounded-full px-2 py-1 ${
-                  order.tableId ? "bg-blue-50" : "bg-amber-50"
+              <Ionicons
+                name={
+                  order.tableId ? "restaurant-outline" : "bag-handle-outline"
+                }
+                size={11}
+                color={order.tableId ? "#2563eb" : "#d97706"}
+              />
+              <Text
+                className={`ml-1 text-[10px] font-bold ${
+                  order.tableId ? "text-blue-700" : "text-amber-700"
                 }`}
               >
-                <Ionicons
-                  name={
-                    order.tableId ? "restaurant-outline" : "bag-handle-outline"
-                  }
-                  size={11}
-                  color={order.tableId ? "#2563eb" : "#d97706"}
-                />
-                <Text
-                  className={`ml-1 text-[10px] font-bold ${
-                    order.tableId ? "text-blue-700" : "text-amber-700"
-                  }`}
-                >
-                  {order.tableId
-                    ? `Tại bàn · ${tableName ?? shortId(order.tableId)}`
-                    : "Chưa chọn bàn"}
-                </Text>
-              </View>
+                {order.tableId
+                  ? `Tại bàn · ${tableName ?? shortId(order.tableId)}`
+                  : "Chưa chọn bàn"}
+              </Text>
             </View>
-          ) : null}
+          </View>
         </View>
         <View
           className="rounded-full border px-2.5 py-1"
@@ -92,7 +90,7 @@ export default function AdminOrderSummaryCard({
             className="text-[10px] font-black uppercase"
             style={{ color: statusColors.text }}
           >
-            {ORDER_STATUS_LABELS[order.status]}
+            {ORDER_STATUS_LABELS[order.status] ?? "Đơn lịch sử"}
           </Text>
         </View>
       </View>
@@ -135,7 +133,8 @@ export default function AdminOrderSummaryCard({
         <View className="mt-1 flex-row items-center justify-between border-t border-dashed border-slate-200 pt-3">
           <View>
             <Text className="text-[10px] font-bold uppercase text-slate-400">
-              {ORDER_PAYMENT_METHOD_LABELS[order.paymentMethod]}
+              {ORDER_PAYMENT_METHOD_LABELS[order.paymentMethod] ??
+                "Phương thức cũ"}
             </Text>
             <View
               className="mt-1 self-start rounded-full px-2 py-0.5"
@@ -145,16 +144,12 @@ export default function AdminOrderSummaryCard({
                 className="text-[10px] font-bold"
                 style={{ color: paymentColors.text }}
               >
-                {ORDER_PAYMENT_STATUS_LABELS[order.paymentStatus]}
+                {ORDER_PAYMENT_STATUS_LABELS[order.paymentStatus] ??
+                  "Thanh toán cũ"}
               </Text>
             </View>
           </View>
           <View className="items-end">
-            {order.discountAmount > 0 ? (
-              <Text className="text-[10px] text-slate-400 line-through">
-                {formatMoney(order.totalAmount)}
-              </Text>
-            ) : null}
             <Text className="text-lg font-black text-red-600">
               {formatMoney(order.finalAmount)}
             </Text>

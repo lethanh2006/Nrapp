@@ -50,31 +50,26 @@ type IoniconName = ComponentProps<typeof Ionicons>["name"];
 const OPERATION_TAB_ITEMS: {
   value: OperationsTab;
   label: string;
-  description: string;
   icon: IoniconName;
 }[] = [
   {
     value: "orders",
     label: "Đơn & thu tiền",
-    description: "Xem món theo bàn và xác nhận tiền mặt",
     icon: "receipt-outline",
   },
   {
     value: "catalog",
     label: "Thực đơn",
-    description: "Cập nhật món, giá và trạng thái mở bán",
     icon: "restaurant-outline",
   },
   {
     value: "categories",
     label: "Danh mục",
-    description: "Sắp xếp nhóm món hiển thị",
     icon: "albums-outline",
   },
   {
     value: "tables",
     label: "Bàn ăn",
-    description: "Theo dõi 20 bàn và trạng thái phục vụ",
     icon: "grid-outline",
   },
 ];
@@ -408,8 +403,7 @@ export default function AdminCanteenScreen() {
           </View>
         </View>
         <Text className="mt-4 text-xs leading-5 text-red-100">
-          Theo dõi món theo bàn và xác nhận tiền mặt — không còn các bước bếp,
-          kho hay QR.
+          Theo dõi món theo bàn và xác nhận khi đã nhận đủ tiền mặt.
         </Text>
       </View>
       <View className="border-b border-slate-100 bg-slate-50 pb-3 pt-3">
@@ -544,7 +538,6 @@ export default function AdminCanteenScreen() {
                   footer={renderOrderActions(order)}
                   key={order._id}
                   order={order}
-                  showOwner
                   tableName={
                     order.tableId ? tableNames.get(order.tableId) : undefined
                   }
@@ -581,10 +574,7 @@ export default function AdminCanteenScreen() {
         ) : tab === "categories" ? (
           <AdminCategoryManager refreshKey={resourceRefreshKey} />
         ) : (
-          <AdminTableManager
-            canManageStructure
-            refreshKey={resourceRefreshKey}
-          />
+          <AdminTableManager refreshKey={resourceRefreshKey} />
         )}
       </ScrollView>
     </View>
