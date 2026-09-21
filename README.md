@@ -8,6 +8,12 @@ The app is configured as version `1.0.4` with Android `versionCode` `6`. The
 latest release APK is available from the
 [GitHub Releases page](https://github.com/lethanh2006/Nrapp/releases/latest).
 
+## Documentation
+
+- [Architecture and request flow](docs/kien-truc-va-luong-hoat-dong.md)
+- [Realtime chat flow](docs/chat-flow.md)
+- [Latest APK release](https://github.com/lethanh2006/Nrapp/releases/latest/download/Nrapp.apk)
+
 ## Product areas
 
 - Email/password registration and two-step OTP login.
