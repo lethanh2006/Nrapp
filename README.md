@@ -1,80 +1,78 @@
 # Nrapp
 
-Nrapp is the Expo/React Native client for NRApp's internal operations platform.
-It connects to the NRApp API Gateway for authentication, user data, realtime
-chat, tasks, canteen ordering, work schedules, HR requests, and QR attendance.
+Nrapp là ứng dụng Expo/React Native cho nền tảng vận hành nội bộ NRApp. Ứng dụng
+kết nối tới API Gateway NRApp để sử dụng xác thực, dữ liệu người dùng, chat
+realtime, công việc, gọi món căn tin, lịch làm việc, đơn nhân sự và chấm công
+QR.
 
-The app is configured as version `1.0.4` with Android `versionCode` `6`. The
-latest release APK is available from the
-[GitHub Releases page](https://github.com/lethanh2006/Nrapp/releases/latest).
+Ứng dụng đang được cấu hình ở version `1.0.4`, Android `versionCode` `6`. APK
+phát hành mới nhất có tại [trang GitHub Releases](https://github.com/lethanh2006/Nrapp/releases/latest).
 
-## Documentation
+## Tài liệu
 
-- [Architecture and request flow](docs/kien-truc-va-luong-hoat-dong.md)
-- [Realtime chat flow](docs/chat-flow.md)
-- [Latest APK release](https://github.com/lethanh2006/Nrapp/releases/latest/download/Nrapp.apk)
+- [Kiến trúc và luồng request](docs/kien-truc-va-luong-hoat-dong.md)
+- [Luồng chat realtime](docs/chat-flow.md)
+- [APK phát hành mới nhất](https://github.com/lethanh2006/Nrapp/releases/latest/download/Nrapp.apk)
 
-## Product areas
+## Các nhóm chức năng
 
-- Email/password registration and two-step OTP login.
-- Google sign-in, refresh-token session recovery, and account settings.
-- User directory and profile management.
-- Realtime one-to-one chat through REST and Socket.IO, including supported image
-  uploads.
-- Task creation, assignment, filtering, status changes, and personal task views.
-- Canteen menu browsing, table orders, order history, and admin menu/order/table
-  management. The current order contract supports cash payment.
-- Monthly work schedules, leave/late/overtime and related work requests, policy
-  management, reports, and QR attendance.
+- Đăng ký bằng email/mật khẩu và đăng nhập hai bước bằng OTP.
+- Đăng nhập Google, khôi phục phiên bằng refresh token và quản lý tài khoản.
+- Danh bạ người dùng và quản lý hồ sơ.
+- Chat realtime một-một qua REST và Socket.IO, bao gồm tải ảnh được hỗ trợ.
+- Tạo, giao, lọc, đổi trạng thái công việc và xem công việc cá nhân.
+- Xem thực đơn căn tin, gọi món theo bàn, xem lịch sử đơn và quản lý thực đơn,
+  đơn hàng, bàn ở khu admin. Hợp đồng hiện tại chỉ hỗ trợ thanh toán tiền mặt.
+- Lịch làm việc theo tháng, đơn nghỉ/đi muộn/tăng ca và các đơn nhân sự liên
+  quan, quản lý chính sách, báo cáo và chấm công QR.
 
-Admin and user navigation are separated in the Expo Router tree. Backend
-authorization remains authoritative; hiding a screen in the app is not a
-permission check.
+Điều hướng admin và user được tách riêng trong cây Expo Router. Backend vẫn là
+nơi quyết định quyền; việc ẩn một màn hình trên app không thay thế kiểm tra
+quyền.
 
-## Source layout
+## Cấu trúc source
 
 ```text
 app/
-├── (auth)/                 # register, login, OTP verification
+├── (auth)/                 # đăng ký, đăng nhập, xác thực OTP
 └── (main)/
-    ├── admin/              # admin navigation and screens
-    └── user/               # user navigation and screens
+    ├── admin/              # điều hướng và màn hình admin
+    └── user/               # điều hướng và màn hình user
 
 src/features/<feature>/
-├── admin/                  # admin screens, UI, and hooks
-├── user/                   # user screens and UI
-└── shared/                 # role-neutral model or utilities only
+├── admin/                  # màn hình, UI và hook cho admin
+├── user/                   # màn hình và UI cho user
+└── shared/                 # model hoặc tiện ích trung lập với role
 
-src/services/               # REST and Socket.IO clients plus domain types
-src/application/            # roles, access checks, and route constants
-src/shared/                 # genuinely cross-feature UI, hooks, and models
-src/utils/                  # Axios, Gateway URL, and HTTP error helpers
+src/services/               # REST, Socket.IO và type theo domain
+src/application/            # role, kiểm tra quyền và hằng số route
+src/shared/                 # UI, hook và model thực sự dùng chung
+src/utils/                  # Axios, URL Gateway và xử lý lỗi HTTP
 ```
 
-The ESLint configuration enforces the admin/user/shared import boundaries. Keep
-business calls in `src/services`, keep route files thin, and do not move a
-role-specific screen into `shared`.
+Cấu hình ESLint kiểm tra ranh giới import giữa admin/user/shared. Hãy đặt lời
+gọi nghiệp vụ trong `src/services`, giữ file route mỏng và không chuyển màn hình
+riêng của một role vào `shared`.
 
-## Configuration
+## Cấu hình
 
-Copy `.env.example` to `.env.local`:
+Sao chép `.env.example` thành `.env.local`:
 
 ```env
 EXPO_PUBLIC_API_URL=http://YOUR_GATEWAY_HOST:3000/api
 EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID=YOUR_WEB_CLIENT_ID.apps.googleusercontent.com
 ```
 
-Optional settings are `EXPO_PUBLIC_API_TIMEOUT_MS`,
-`EXPO_PUBLIC_SOCKET_URL`, `EXPO_PUBLIC_SOCKET_PATH`, `EXPO_PUBLIC_API_PORT`, and
-`EXPO_PUBLIC_API_PATH`. `EXPO_PUBLIC_*` values are bundled into the client and
-must contain public configuration only; never put a secret in them.
+Các biến tùy chọn gồm `EXPO_PUBLIC_API_TIMEOUT_MS`,
+`EXPO_PUBLIC_SOCKET_URL`, `EXPO_PUBLIC_SOCKET_PATH`, `EXPO_PUBLIC_API_PORT` và
+`EXPO_PUBLIC_API_PATH`. Giá trị `EXPO_PUBLIC_*` được đóng gói vào client và chỉ
+được chứa cấu hình công khai; không đặt secret vào đây.
 
-Use a Gateway URL reachable from the device. Android Emulator can use
-`10.0.2.2` only through the fallback host/port settings when a full API URL is
-not provided. A physical device needs a Gateway address reachable over the LAN
-or tunnel.
+Hãy dùng URL Gateway mà thiết bị có thể truy cập. Android Emulator chỉ dùng
+`10.0.2.2` thông qua các biến host/port dự phòng khi chưa cấu hình URL API đầy
+đủ. Thiết bị thật cần địa chỉ Gateway có thể truy cập qua LAN hoặc tunnel.
 
-## Local development
+## Chạy local
 
 ```bash
 npm ci
@@ -82,7 +80,7 @@ cp .env.example .env.local
 npm start
 ```
 
-Available scripts:
+Các script có sẵn:
 
 ```bash
 npm run android
@@ -94,26 +92,25 @@ npm run lint
 npx tsc --noEmit
 ```
 
-`npm run reset-project` is the Expo starter script and should not be run on the
-developed source tree.
+`npm run reset-project` là script mẫu của Expo và không được chạy trên source
+đang phát triển.
 
-## EAS builds and updates
+## Build và cập nhật bằng EAS
 
-The build profiles in `eas.json` are:
+Các profile build trong `eas.json`:
 
-- `preview`: internal Android APK for device testing.
-- `production`: Android App Bundle for store distribution.
-- `production-apk`: production-channel APK for internal distribution.
+- `preview`: APK Android nội bộ để kiểm thử trên thiết bị.
+- `production`: Android App Bundle để phát hành lên store.
+- `production-apk`: APK dùng channel production cho phân phối nội bộ.
 
-For example:
+Ví dụ:
 
 ```bash
 eas build --platform android --profile preview
 eas build --platform android --profile production
 ```
 
-The `eas-update.yml` workflow runs on pushes to `main` and manual dispatches. It
-requires the `EXPO_TOKEN` repository secret, installs dependencies, runs ESLint
-and TypeScript checks, then publishes an Android update to the `production`
-channel. The app checks for updates on launch and falls back to the cached bundle
-when an update is not immediately available.
+Workflow `eas-update.yml` chạy khi push vào `main` hoặc chạy thủ công. Workflow
+cần repository secret `EXPO_TOKEN`, cài dependency, chạy ESLint và kiểm tra
+TypeScript, sau đó publish bản cập nhật Android lên channel `production`. App
+kiểm tra update khi mở và dùng bundle đã cache nếu chưa thể tải bản mới ngay.
