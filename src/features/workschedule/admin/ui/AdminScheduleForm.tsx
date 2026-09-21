@@ -26,7 +26,6 @@ interface Props {
 
 const typeOptions: { value: EntryType; label: string }[] = [
   { value: "office", label: "Tại công ty" },
-  { value: "remote", label: "Làm từ xa" },
   { value: "day_off", label: "Ngày nghỉ" },
   { value: "leave", label: "Nghỉ phép" },
 ];
@@ -113,7 +112,7 @@ export default function AdminScheduleForm({
           })}
         </View>
         {entry.type !== "day_off" ? (
-          <View className="mt-3 flex-row rounded-xl bg-slate-200/60 p-1">
+          <View className="mt-3 flex-row" style={{ gap: 8 }}>
             {periodOptions.map((option) => {
               const selected = (entry.period || "full_day") === option.value;
               return (
@@ -125,7 +124,7 @@ export default function AdminScheduleForm({
                   onPress={() =>
                     onChangeEntry(selectedKey, "period", option.value)
                   }
-                  className={`flex-1 items-center rounded-lg py-2.5 ${selected ? "bg-white" : "bg-transparent"} ${disabled ? "opacity-60" : ""}`}
+                  className={`min-h-12 flex-1 items-center justify-center rounded-xl border px-2 py-2.5 ${selected ? "border-red-300 bg-red-50" : "border-slate-200 bg-white"} ${disabled ? "opacity-60" : ""}`}
                 >
                   <Text
                     className={`text-[11px] font-bold ${selected ? "text-red-700" : "text-slate-500"}`}

@@ -45,59 +45,46 @@ export default function UserMonthlyOverviewScreen() {
   const changeMonth = (offset: number) =>
     setMonth(previous => new Date(previous.getFullYear(), previous.getMonth() + offset, 1));
 
-  const metrics: { label: string; value: number | string; icon: IconName; color: string; box: string }[] = [
+  const metrics: { label: string; value: number | string; icon: IconName }[] = [
     {
       label: "Buổi đăng ký làm",
       value: schedule?.stats.registered_sessions || 0,
       icon: "calendar-outline",
-      color: "#2563eb",
-      box: "bg-blue-50",
     },
     {
       label: "Buổi đã duyệt",
       value: schedule?.stats.approved_sessions || 0,
       icon: "checkmark-circle-outline",
-      color: "#059669",
-      box: "bg-emerald-50",
     },
     {
       label: "Xin nghỉ đã duyệt",
       value: requests?.approved_by_type.leave || 0,
       icon: "bed-outline",
-      color: "#e11d48",
-      box: "bg-rose-50",
     },
     {
       label: "Đi muộn đã duyệt",
       value: requests?.approved_by_type.late || 0,
       icon: "time-outline",
-      color: "#d97706",
-      box: "bg-amber-50",
     },
     {
       label: "Về sớm đã duyệt",
       value: requests?.approved_by_type.early || 0,
       icon: "exit-outline",
-      color: "#ea580c",
-      box: "bg-orange-50",
     },
     {
       label: "Giờ OT đã duyệt",
       value: requests?.approved_overtime_hours || 0,
       icon: "flash-outline",
-      color: "#7c3aed",
-      box: "bg-violet-50",
     },
   ];
 
   const distribution = [
-    { label: "Tại công ty", value: schedule?.stats.office_sessions || 0, color: "bg-blue-500" },
+    { label: "Tại công ty", value: schedule?.stats.office_sessions || 0 },
     {
-      label: "Remote",
+      label: "Làm từ xa",
       value: (schedule?.stats.remote_sessions || 0) + (requests?.approved_by_type.remote || 0),
-      color: "bg-violet-500",
     },
-    { label: "Nghỉ phép", value: schedule?.stats.leave_sessions || 0, color: "bg-orange-500" },
+    { label: "Nghỉ phép", value: schedule?.stats.leave_sessions || 0 },
   ];
   const maxDistribution = Math.max(1, ...distribution.map(item => item.value));
 
@@ -129,23 +116,32 @@ export default function UserMonthlyOverviewScreen() {
           </View>
         ) : (
           <>
-            <View className="flex-row flex-wrap justify-between">
-              {metrics.map(metric => (
-                <View className="mb-3 w-[48.5%] rounded-3xl border border-slate-200 bg-white p-4" key={metric.label}>
-                  <View className={`h-9 w-9 items-center justify-center rounded-xl ${metric.box}`}>
-                    <Ionicons name={metric.icon} size={18} color={metric.color} />
+            <View className="overflow-hidden rounded-3xl border border-slate-200 bg-white">
+              <View className="flex-row flex-wrap">
+                {metrics.map((metric, index) => (
+                  <View
+                    className={`w-1/2 p-4 ${
+                      index % 2 === 0 ? "border-r border-slate-100" : ""
+                    } ${index < metrics.length - 2 ? "border-b border-slate-100" : ""}`}
+                    key={metric.label}
+                  >
+                    <View className="h-8 w-8 items-center justify-center rounded-lg bg-blue-50">
+                      <Ionicons name={metric.icon} size={17} color="#2563eb" />
+                    </View>
+                    <Text className="mt-3 text-xl font-black text-slate-900">
+                      {metric.value}
+                    </Text>
+                    <Text className="mt-1 text-[11px] font-semibold leading-4 text-slate-500">
+                      {metric.label}
+                    </Text>
                   </View>
-                  <Text className="mt-3 text-2xl font-black text-slate-900">{metric.value}</Text>
-                  <Text className="mt-1 text-[11px] font-semibold leading-4 text-slate-500">
-                    {metric.label}
-                  </Text>
-                </View>
-              ))}
+                ))}
+              </View>
             </View>
 
-            <View className="mt-1 rounded-3xl border border-slate-200 bg-white p-4">
+            <View className="mt-4 rounded-3xl border border-slate-200 bg-white p-4">
               <Text className="text-sm font-black text-slate-800">Phân bổ buổi đã duyệt</Text>
-              <Text className="mt-1 text-[11px] text-slate-500">So sánh hình thức làm việc trong tháng</Text>
+              <Text className="mt-1 text-[11px] text-slate-500">Theo hình thức làm việc trong tháng</Text>
               <View className="mt-5 gap-4">
                 {distribution.map(item => (
                   <View key={item.label}>
@@ -155,7 +151,7 @@ export default function UserMonthlyOverviewScreen() {
                     </View>
                     <View className="h-2 overflow-hidden rounded-full bg-slate-100">
                       <View
-                        className={`h-full rounded-full ${item.color}`}
+                        className="h-full rounded-full bg-blue-600"
                         style={{ width: `${(item.value / maxDistribution) * 100}%` }}
                       />
                     </View>
@@ -164,17 +160,33 @@ export default function UserMonthlyOverviewScreen() {
               </View>
             </View>
 
-            <View className="mt-4 rounded-3xl bg-slate-900 p-4">
+            <View className="mt-4 rounded-3xl border border-slate-200 bg-white p-4">
               <View className="flex-row items-center justify-between">
-                <View>
-                  <Text className="text-xs font-semibold text-slate-300">Tổng đơn trong tháng</Text>
-                  <Text className="mt-1 text-3xl font-black text-white">{requests?.total || 0}</Text>
-                </View>
-                <View className="items-end">
-                  <Text className="text-xs font-bold text-amber-300">Chờ duyệt: {requests?.pending || 0}</Text>
-                  <Text className="mt-1 text-xs font-bold text-emerald-300">Đã duyệt: {requests?.approved || 0}</Text>
-                  <Text className="mt-1 text-xs font-bold text-rose-300">Từ chối: {requests?.rejected || 0}</Text>
-                </View>
+                <Text className="text-sm font-black text-slate-800">
+                  Đơn trong tháng
+                </Text>
+                <Text className="text-2xl font-black text-blue-600">
+                  {requests?.total || 0}
+                </Text>
+              </View>
+              <View className="mt-4 flex-row border-t border-slate-100 pt-4">
+                {[
+                  ["Chờ duyệt", requests?.pending || 0],
+                  ["Đã duyệt", requests?.approved || 0],
+                  ["Từ chối", requests?.rejected || 0],
+                ].map(([label, value], index) => (
+                  <View
+                    className={`flex-1 items-center ${index ? "border-l border-slate-100" : ""}`}
+                    key={String(label)}
+                  >
+                    <Text className="text-lg font-black text-slate-900">
+                      {value}
+                    </Text>
+                    <Text className="mt-1 text-[10px] font-semibold text-slate-500">
+                      {label}
+                    </Text>
+                  </View>
+                ))}
               </View>
             </View>
           </>

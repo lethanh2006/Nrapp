@@ -24,13 +24,11 @@ import { useFocusEffect } from "expo-router";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   ActivityIndicator,
-  Modal,
   Pressable,
   ScrollView,
   Text,
   View,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type Draft = Partial<IScheduleEntry>;
 const STATUS = {
@@ -67,11 +65,9 @@ export function MonthlyRegistrationScreen({
     month: string;
     entries: Record<string, Draft>;
   }>({ month: "", entries: {} });
-  const [editorOpen, setEditorOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const requestRef = useRef(0);
   const savingRef = useRef(false);
-  const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const accent = tone === "admin" ? "#dc2626" : "#2563eb";
   const buttonClass = tone === "admin" ? "bg-red-600" : "bg-blue-600";
@@ -193,7 +189,7 @@ export function MonthlyRegistrationScreen({
   const workEntries = Object.entries(entriesByDate).filter(
     ([key, entry]) =>
       !legacyDates.has(key) &&
-      (entry.type === "office" || entry.type === "remote"),
+      entry.type === "office",
   );
   const workDays = workEntries.length;
   const sessions = workEntries.reduce(
@@ -221,7 +217,7 @@ export function MonthlyRegistrationScreen({
       },
     }));
   };
-  const applyWeekdays = (type: "office" | "remote") => {
+  const applyWeekdays = () => {
     if (readOnly || !month) return;
     setDraft((previous) => {
       const entries = { ...previous.entries };
@@ -245,7 +241,7 @@ export function MonthlyRegistrationScreen({
         )
           continue;
         entries[key] = {
-          type,
+          type: "office",
           period: "full_day",
           note: entriesByDate[key]?.note || "",
         };
@@ -256,7 +252,12 @@ export function MonthlyRegistrationScreen({
   const submit = () => {
     if (readOnly || !month || !futureWorkDays || savingRef.current) return;
     const entries: IScheduleEntry[] = Object.entries(entriesByDate)
-      .filter(([key, entry]) => !legacyDates.has(key) && Boolean(entry.type))
+      .filter(
+        ([key, entry]) =>
+          !legacyDates.has(key) &&
+          Boolean(entry.type) &&
+          (key < todayKey || entry.type === "office"),
+      )
       .map(([date, entry]) => ({
         date,
         type: entry.type!,
@@ -323,6 +324,7 @@ export function MonthlyRegistrationScreen({
         <>
           <ScrollView
             contentContainerStyle={{ padding: 16, paddingBottom: 24 }}
+            keyboardShouldPersistTaps="handled"
           >
             <View className="mb-4 flex-row items-start rounded-2xl border border-slate-200 bg-white p-3">
               <Ionicons
@@ -365,7 +367,6 @@ export function MonthlyRegistrationScreen({
               entriesByDate={entriesByDate}
               onSelectDate={(date) => {
                 setSelectedDate(date);
-                setEditorOpen(true);
               }}
               onChangeMonth={() => {}}
               minMonth={visibleMonth}
@@ -379,9 +380,71 @@ export function MonthlyRegistrationScreen({
               tone={tone}
             />
             <Text className="mx-1 mt-3 text-xs leading-5 text-slate-500">
-              Chạm một ngày để chọn nơi làm và ca làm. Ngày đã qua được tô xám
-              và khóa. Ngày để trống là ngày nghỉ.
+              Chọn ngày trên lịch để chỉnh ca. Ngày để trống là ngày nghỉ.
             </Text>
+            <View className="mt-4 rounded-3xl bg-white p-4">
+              <WorkDayScheduleEditor
+                date={selectedDate}
+                entry={selectedEntry}
+                readOnly={dayReadOnly}
+                readOnlyReason={
+                  selectedKey < todayKey
+                    ? "Ngày đã qua không thể chỉnh sửa."
+                    : lockedReason
+                }
+                tone={tone}
+                onChange={(field, value) => updateDay({ [field]: value })}
+                onClear={() =>
+                  updateDay({ type: undefined, period: "full_day", note: "" })
+                }
+              />
+              {!readOnly ? (
+                <View className="mt-5 border-t border-slate-100 pt-4">
+                  <Text className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
+                    Thao tác nhanh
+                  </Text>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel="Chọn T2 đến T6 cả tháng tại công ty, cả ngày"
+                    className="mt-2 min-h-14 flex-row items-center rounded-2xl bg-slate-50 px-3 py-2.5"
+                    onPress={applyWeekdays}
+                  >
+                    <View
+                      className={`h-9 w-9 items-center justify-center rounded-xl ${
+                        tone === "admin" ? "bg-red-50" : "bg-blue-50"
+                      }`}
+                    >
+                      <Ionicons
+                        name="calendar-outline"
+                        size={18}
+                        color={accent}
+                      />
+                    </View>
+                    <View className="ml-3 flex-1">
+                      <Text className="text-xs font-bold text-slate-800">
+                        Đi làm cả ngày từ T2 đến T6
+                      </Text>
+                      <Text className="mt-0.5 text-[10px] text-slate-500">
+                        Áp dụng cho các ngày chưa qua trong tháng
+                      </Text>
+                    </View>
+                    <Ionicons
+                      name="chevron-forward"
+                      size={18}
+                      color="#94a3b8"
+                    />
+                  </Pressable>
+                  {unsaved ? (
+                    <View className="mt-3 flex-row items-center">
+                      <View className="mr-2 h-1.5 w-1.5 rounded-full bg-amber-500" />
+                      <Text className="text-[10px] font-semibold text-amber-700">
+                        Có thay đổi chưa gửi duyệt
+                      </Text>
+                    </View>
+                  ) : null}
+                </View>
+              ) : null}
+            </View>
             {legacyDates.size ? (
               <Text className="mx-1 mt-2 text-xs leading-5 text-slate-500">
                 Ngày thuộc lịch tuần cũ được giữ nguyên và khóa. Bạn có thể xem
@@ -397,43 +460,6 @@ export function MonthlyRegistrationScreen({
                   {request.reject_reason?.trim() ||
                     "Quản lý chưa ghi lý do cụ thể."}
                 </Text>
-              </View>
-            ) : null}
-            {!readOnly ? (
-              <View className="mt-4 rounded-2xl border border-slate-200 bg-white p-4">
-                <Text className="text-sm font-bold text-slate-900">
-                  Chọn nhanh T2 – T6 trong tháng
-                </Text>
-                <Text className="mb-3 mt-1 text-xs leading-5 text-slate-500">
-                  Áp dụng ca cả ngày cho các ngày chưa qua. T7 và CN chọn trực
-                  tiếp trên lịch.
-                </Text>
-                <View className="flex-row" style={{ gap: 8 }}>
-                  {(
-                    [
-                      ["office", "business-outline", "Tại công ty"],
-                      ["remote", "home-outline", "Làm từ xa"],
-                    ] as const
-                  ).map(([type, icon, label]) => (
-                    <Pressable
-                      accessibilityRole="button"
-                      accessibilityLabel={`Chọn T2 đến T6 cả tháng: ${label}, cả ngày`}
-                      className="min-h-12 flex-1 flex-row items-center justify-center rounded-xl border border-slate-200 bg-slate-50 px-2"
-                      key={type}
-                      onPress={() => applyWeekdays(type)}
-                    >
-                      <Ionicons name={icon} size={18} color={accent} />
-                      <Text className="ml-2 text-xs font-bold text-slate-700">
-                        {label}
-                      </Text>
-                    </Pressable>
-                  ))}
-                </View>
-                {unsaved ? (
-                  <Text className="mt-3 text-xs font-semibold text-amber-700">
-                    Có thay đổi chưa gửi duyệt.
-                  </Text>
-                ) : null}
               </View>
             ) : null}
           </ScrollView>
@@ -473,62 +499,6 @@ export function MonthlyRegistrationScreen({
           </View>
         </>
       )}
-      <Modal
-        visible={editorOpen}
-        transparent
-        animationType="slide"
-        onRequestClose={() => setEditorOpen(false)}
-      >
-        <View
-          className="flex-1 justify-end"
-          style={{ backgroundColor: "rgba(15, 23, 42, 0.42)" }}
-        >
-          <Pressable
-            accessibilityLabel="Đóng chi tiết ngày"
-            accessibilityRole="button"
-            className="min-h-10 flex-1"
-            onPress={() => setEditorOpen(false)}
-          />
-          <View
-            className="rounded-t-3xl bg-white px-4"
-            style={{
-              maxHeight: "85%",
-              paddingBottom: Math.max(insets.bottom, 16),
-            }}
-          >
-            <View className="items-center pb-1 pt-3">
-              <View className="h-1.5 w-10 rounded-full bg-slate-200" />
-            </View>
-            <ScrollView keyboardShouldPersistTaps="handled">
-              <WorkDayScheduleEditor
-                date={selectedDate}
-                entry={selectedEntry}
-                readOnly={dayReadOnly}
-                readOnlyReason={
-                  selectedKey < todayKey
-                    ? "Ngày đã qua không thể chỉnh sửa."
-                    : lockedReason
-                }
-                tone={tone}
-                saved={Boolean(request) && !draft.entries[selectedKey]}
-                onChange={(field, value) => updateDay({ [field]: value })}
-                onClear={() =>
-                  updateDay({ type: undefined, period: "full_day", note: "" })
-                }
-              />
-            </ScrollView>
-            <Pressable
-              accessibilityRole="button"
-              className={`mt-4 min-h-12 items-center justify-center rounded-2xl ${buttonClass}`}
-              onPress={() => setEditorOpen(false)}
-            >
-              <Text className="text-sm font-bold text-white">
-                {dayReadOnly ? "Đóng" : "Xong"}
-              </Text>
-            </Pressable>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }

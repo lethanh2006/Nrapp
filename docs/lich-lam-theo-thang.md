@@ -6,8 +6,8 @@ Ngày bắt đầu/kết thúc là **thời gian nhận đăng ký**, đồng th
 
 User và tài khoản đăng ký cá nhân trong khu admin dùng chung luồng:
 
-1. Bảng tháng cố định theo đợt; chạm ngày để chọn nơi làm, ca và ghi chú.
-2. Chọn nhanh T2–T6 áp dụng ca cả ngày cho các ngày chưa qua trong tháng; cuối tuần chọn riêng.
+1. Bảng tháng cố định theo đợt; chạm ngày để chỉnh trực tiếp ca tại công ty và ghi chú ngay dưới lịch.
+2. Chọn nhanh T2–T6 áp dụng ca cả ngày tại công ty cho các ngày chưa qua trong tháng; cuối tuần chọn riêng.
 3. Nút gửi hiển thị tổng ngày/buổi. Chỉ gửi khi có ít nhất một ngày làm chưa qua.
 4. Một tài khoản có một yêu cầu mỗi tháng. Lịch đã gửi hoặc duyệt chỉ xem; lịch từ chối cho sửa và gửi lại khi đợt còn mở.
 5. Entry của ngày quá khứ được giữ nguyên khi gửi lại/điều chỉnh, không thêm, sửa hoặc xóa.
@@ -27,6 +27,10 @@ Mở phần cấu hình chỉ để xem, không tự đổi ngày bắt đầu h
 Khi rời trang đăng ký có thay đổi chưa gửi, ứng dụng cho chọn **Ở lại** hoặc **Rời trang**. Gửi lỗi vẫn giữ các ngày đã chọn để thử lại; gửi thành công chuyển sang trạng thái chờ duyệt.
 
 BE kiểm tra lại tháng, hạn đăng ký và ngày quá khứ cho mọi vai trò. Không có dữ liệu policy hoặc lỗi tải dữ liệu thì FE khóa gửi và cho tải lại.
+
+### Ghi chú tách đăng ký làm từ xa
+
+Frontend lịch tháng không còn cho tạo mới entry `remote`; làm từ xa được tạo bằng đơn nhân sự riêng. Khi gửi lại lịch, FE vẫn giữ nguyên entry remote cũ ở ngày quá khứ vì đây là dữ liệu đã khóa. Backend hiện chưa bắt buộc đổi ngay nếu vẫn chấp nhận payload cũ, nhưng nên bổ sung validation không nhận `remote` mới ở ngày hiện tại/tương lai trong API tạo/gửi lại lịch tháng. Khi tổng hợp lịch và chấm công, backend cần ghép đơn làm từ xa đã duyệt vào đúng ngày/ca; dữ liệu lịch tháng `remote` cũ vẫn cần được hỗ trợ đọc trong giai đoạn chuyển đổi.
 
 ## Cập nhật và kiểm tra
 
