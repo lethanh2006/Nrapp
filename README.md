@@ -20,9 +20,12 @@ phát hành mới nhất có tại [trang GitHub Releases](https://github.com/le
 - Đăng nhập Google, khôi phục phiên bằng refresh token và quản lý tài khoản.
 - Danh bạ người dùng và quản lý hồ sơ.
 - Chat realtime một-một qua REST và Socket.IO, bao gồm tải ảnh được hỗ trợ.
-- Tạo, giao, lọc, đổi trạng thái công việc và xem công việc cá nhân.
+- Tạo, giao, lọc, sắp xếp và đổi trạng thái công việc; hỗ trợ ưu tiên khẩn cấp,
+  tiến độ %, cập nhật hạn chót và danh sách quá hạn/sắp đến hạn.
 - Xem thực đơn căn tin, gọi món theo bàn, xem lịch sử đơn và quản lý thực đơn,
   đơn hàng, bàn ở khu admin. Hợp đồng hiện tại chỉ hỗ trợ thanh toán tiền mặt.
+- Đánh giá đơn đã thanh toán ngay trong lịch sử đơn: chọn 1–5 sao, viết nhận xét
+  và xem phản hồi. Admin có tab **Đánh giá** để lọc, xem thống kê và phản hồi.
 - Lịch làm việc theo tháng, đơn nghỉ/đi muộn/tăng ca và các đơn nhân sự liên
   quan, quản lý chính sách, báo cáo và chấm công QR.
 
@@ -89,7 +92,7 @@ npm run android:tunnel
 npm run ios
 npm run web
 npm run lint
-npx tsc --noEmit
+npm run typecheck
 ```
 
 `npm run reset-project` là script mẫu của Expo và không được chạy trên source

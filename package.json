@@ -12,7 +12,8 @@
     "android:tunnel": "expo start --tunnel --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "lint": "eslint app src"
+    "lint": "eslint app src",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",

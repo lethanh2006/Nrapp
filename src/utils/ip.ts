@@ -55,6 +55,10 @@ function getExpoHost() {
 }
 
 function getDevelopmentUrl() {
+  if (Platform.OS === "web") {
+    return `http://localhost:${apiPort}${apiPath}`;
+  }
+
   const expoHost = getExpoHost();
 
   if (isAndroidEmulator()) {
