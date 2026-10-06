@@ -10,13 +10,16 @@ import {
   Text,
   View,
 } from "react-native";
+import { AppAlert as Alert } from "@/src/shared/ui/AppAlert";
 import {
   ASSIGNEE_STATUS_TRANSITIONS,
   MANAGEMENT_STATUS_TRANSITIONS,
   PRIORITY_MAP,
+  PRIORITY_OPTIONS,
   STATUS_MAP,
   type RelatedUser,
   type TaskItem,
+  type TaskPriority,
   type TaskStatus,
   type UpdateTaskInput,
 } from "@/src/services/todo/constant";
@@ -35,6 +38,8 @@ type Props = {
   onSelectAssignUser: (taskId: string, userId: string) => void;
   onAssignTask: (taskId: string) => void;
   onUpdateStatus: (taskId: string, status: TaskStatus) => void;
+  onUpdatePriority?: (taskId: string, priority: TaskPriority) => void;
+  onUpdateProgress?: (taskId: string, progress: number) => void;
   onUpdateTask: (taskId: string, input: UpdateTaskInput) => Promise<boolean>;
   onRemoveTask: (taskId: string) => void;
 };
@@ -72,11 +77,14 @@ export default function AdminTodoTaskListCard({
   onSelectAssignUser,
   onAssignTask,
   onUpdateStatus,
+  onUpdatePriority,
+  onUpdateProgress,
   onUpdateTask,
   onRemoveTask,
 }: Props) {
   const isAdminArea = area === "admin";
   const [editingTaskId, setEditingTaskId] = useState<string | null>(null);
+  const [pickingPriorityTaskId, setPickingPriorityTaskId] = useState<string | null>(null);
 
   useEffect(() => {
     if (editingTaskId && !tasks.some((task) => task._id === editingTaskId)) {
@@ -153,14 +161,29 @@ export default function AdminTodoTaskListCard({
                   <Text className="text-sm font-bold text-slate-800 flex-1 mr-2 leading-relaxed">
                     {task.title}
                   </Text>
-                  <View
+                  <Pressable
+                    disabled={!onUpdatePriority}
+                    onPress={() => {
+                      if (task.status === "done" || task.status === "cancelled") {
+                        Alert.alert(
+                          "Thông báo",
+                          "Không thể thay đổi mức độ ưu tiên của công việc đã hoàn thành hoặc đã huỷ.",
+                        );
+                        return;
+                      }
+                      setPickingPriorityTaskId(
+                        pickingPriorityTaskId === task._id ? null : task._id,
+                      );
+                    }}
                     className={`px-2 py-0.5 rounded-lg border flex-row items-center ${priorityInfo.bgClass} ${priorityInfo.borderClass}`}
                   >
                     <Ionicons
                       name={priorityInfo.icon as any}
                       size={10}
                       color={
-                        task.priority === "high"
+                        task.priority === "urgent"
+                          ? "#b91c1c"
+                          : task.priority === "high"
                           ? "#f43f5e"
                           : task.priority === "medium"
                           ? "#d97706"
@@ -173,8 +196,82 @@ export default function AdminTodoTaskListCard({
                     >
                       {priorityInfo.label}
                     </Text>
-                  </View>
+                    {onUpdatePriority && task.status !== "done" && task.status !== "cancelled" ? (
+                      <Ionicons
+                        name="chevron-down"
+                        size={10}
+                        color={
+                          task.priority === "urgent"
+                            ? "#b91c1c"
+                            : task.priority === "high"
+                            ? "#f43f5e"
+                            : "#64748b"
+                        }
+                        style={{ marginLeft: 3 }}
+                      />
+                    ) : null}
+                  </Pressable>
                 </View>
+
+                {/* Inline Quick Priority Picker */}
+                {pickingPriorityTaskId === task._id && (
+                  <View className="mt-2.5 rounded-xl border border-slate-200 bg-slate-50 p-2.5">
+                    <View className="flex-row items-center justify-between mb-2 px-0.5">
+                      <Text className="text-[11px] font-bold text-slate-700">
+                        Đổi nhanh mức ưu tiên:
+                      </Text>
+                      <Pressable onPress={() => setPickingPriorityTaskId(null)}>
+                        <Ionicons name="close-circle" size={16} color="#94a3b8" />
+                      </Pressable>
+                    </View>
+                    <View className="flex-row flex-wrap" style={{ gap: 6 }}>
+                      {PRIORITY_OPTIONS.map((opt) => {
+                        const info = PRIORITY_MAP[opt];
+                        const isCurrent = task.priority === opt;
+                        return (
+                          <Pressable
+                            key={opt}
+                            onPress={() => {
+                              setPickingPriorityTaskId(null);
+                              if (!isCurrent) {
+                                onUpdatePriority?.(task._id, opt);
+                              }
+                            }}
+                            className={`flex-row items-center px-2.5 py-1.5 rounded-lg border ${
+                              isCurrent
+                                ? "border-slate-800 bg-slate-800"
+                                : `${info.bgClass} ${info.borderClass}`
+                            }`}
+                          >
+                            <Ionicons
+                              name={info.icon as any}
+                              size={12}
+                              color={
+                                isCurrent
+                                  ? "#ffffff"
+                                  : opt === "urgent"
+                                  ? "#b91c1c"
+                                  : opt === "high"
+                                  ? "#f43f5e"
+                                  : opt === "medium"
+                                  ? "#d97706"
+                                  : "#64748b"
+                              }
+                              style={{ marginRight: 4 }}
+                            />
+                            <Text
+                              className={`text-[11px] font-bold ${
+                                isCurrent ? "text-white" : info.textClass
+                              }`}
+                            >
+                              {info.label}
+                            </Text>
+                          </Pressable>
+                        );
+                      })}
+                    </View>
+                  </View>
+                )}
 
                 {/* Description */}
                 {!!task.description && (
@@ -258,6 +355,82 @@ export default function AdminTodoTaskListCard({
                     </Text>
                   </View>
                 )}
+
+                {/* Progress Bar & Quick Updater */}
+                <View className="mt-3 rounded-xl bg-white p-3 border border-slate-100">
+                  <View className="flex-row items-center justify-between">
+                    <View className="flex-row items-center">
+                      <Ionicons
+                        name="trending-up-outline"
+                        size={13}
+                        color="#64748b"
+                        style={{ marginRight: 4 }}
+                      />
+                      <Text className="text-[11px] font-bold text-slate-600">
+                        Tiến độ hoàn thành
+                      </Text>
+                    </View>
+                    <Text className="text-xs font-black text-slate-800">
+                      {task.progress ?? (task.status === "done" ? 100 : 0)}%
+                    </Text>
+                  </View>
+                  <View className="mt-2 h-2 w-full overflow-hidden rounded-full bg-slate-100">
+                    <View
+                      className={`h-full rounded-full ${
+                        (task.progress ?? 0) >= 100
+                          ? "bg-emerald-500"
+                          : (task.progress ?? 0) >= 50
+                          ? "bg-amber-500"
+                          : (task.progress ?? 0) > 0
+                          ? "bg-blue-500"
+                          : "bg-slate-300"
+                      }`}
+                      style={{
+                        width: `${Math.min(
+                          Math.max(
+                            task.progress ?? (task.status === "done" ? 100 : 0),
+                            0,
+                          ),
+                          100,
+                        )}%`,
+                      }}
+                    />
+                  </View>
+                  {task.status === "in_progress" && onUpdateProgress ? (
+                    <View className="mt-2.5 flex-row items-center justify-between border-t border-slate-100 pt-2">
+                      <Text className="text-[10px] font-semibold text-slate-400">
+                        Cập nhật nhanh:
+                      </Text>
+                      <View className="flex-row" style={{ gap: 5 }}>
+                        {[25, 50, 75, 100].map((p) => {
+                          const currentProg = task.progress ?? 0;
+                          return (
+                            <Pressable
+                              key={p}
+                              disabled={currentProg === p}
+                              onPress={() => onUpdateProgress(task._id, p)}
+                              className={`rounded-md px-2 py-1 border ${
+                                currentProg === p
+                                  ? `${isAdminArea ? "border-red-600 bg-red-600" : "border-blue-600 bg-blue-600"}`
+                                  : "border-slate-200 bg-slate-50"
+                              }`}
+                            >
+                              <Text
+                                className={`text-[10px] font-bold ${
+                                  currentProg === p
+                                    ? "text-white"
+                                    : "text-slate-600"
+                                }`}
+                              >
+                                {p}%
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  ) : null}
+                </View>
 
                 {/* Current Status Badge */}
                 <View className="flex-row items-center mt-3">

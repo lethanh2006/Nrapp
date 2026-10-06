@@ -7,6 +7,7 @@ import type {
   MyTaskQuery,
   TaskItem,
   TaskPage,
+  TaskPriority,
   TaskStatus,
   UpdateTaskInput,
 } from "@/src/services/todo/constant";
@@ -80,6 +81,58 @@ export async function updateTodoStatus(
     { status },
     getAuthHeader(token),
   );
+}
+
+export async function updateTodoPriority(
+  token: string,
+  taskId: string,
+  priority: TaskPriority,
+) {
+  return axios.patch(
+    `${ipNR}/todo/${encodeURIComponent(taskId)}/priority`,
+    { priority },
+    getAuthHeader(token),
+  );
+}
+
+export async function updateTodoProgress(
+  token: string,
+  taskId: string,
+  progress: number,
+) {
+  return axios.patch<{ task: TaskItem }>(
+    `${ipNR}/todo/${encodeURIComponent(taskId)}/progress`,
+    { progress },
+    getAuthHeader(token),
+  );
+}
+
+export async function updateTodoDeadline(
+  token: string,
+  taskId: string,
+  deadline: string,
+) {
+  return axios.patch<{ task: TaskItem }>(
+    `${ipNR}/todo/${encodeURIComponent(taskId)}/deadline`,
+    { deadline },
+    getAuthHeader(token),
+  );
+}
+
+export async function getOverdueTasks(token: string) {
+  const { data } = await axios.get<{ tasks: TaskItem[]; total: number }>(
+    `${ipNR}/todo/overdue`,
+    getAuthHeader(token),
+  );
+  return data;
+}
+
+export async function getUpcomingDeadlineTasks(token: string, days = 3) {
+  const { data } = await axios.get<{ tasks: TaskItem[]; total: number }>(
+    `${ipNR}/todo/upcoming-deadline`,
+    { ...getAuthHeader(token), params: { days } },
+  );
+  return data;
 }
 
 export async function deleteTodoTask(token: string, taskId: string) {
